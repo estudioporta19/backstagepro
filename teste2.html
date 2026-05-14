@@ -238,14 +238,69 @@
     </main>
 
     <script>
-        /* ... existing logic ... */
+        // Inicialização do estado da aplicação
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_data')) || {
+            events: [],
+            staff: {
+                "101": { name: "TÉCNICO EXEMPLO" }
+            },
+            venues: {
+                "TNM": "Teatro Nacional"
+            },
+            activeEventId: null
+        };
+
+        // Função para guardar permanentemente no browser
+        function saveData() {
+            localStorage.setItem('backstage_pro_data', JSON.stringify(appData));
+        }
+
+        function switchTab(tab) {
+            const tabs = ['events', 'staff', 'venues', 'counter'];
+            tabs.forEach(t => {
+                const view = document.getElementById(t + 'View');
+                const btn = document.getElementById('btn-tab-' + t);
+                if(view) view.classList.add('hidden');
+                if(btn) btn.classList.remove('active');
+            });
+
+            const targetView = document.getElementById(tab + 'View');
+            const targetBtn = document.getElementById('btn-tab-' + tab);
+            
+            if(targetView) targetView.classList.remove('hidden');
+            if(targetBtn) targetBtn.classList.add('active');
+            
+            if(tab === 'staff') renderStaffList();
+            if(tab === 'venues') renderVenueList();
+            if(tab === 'counter') updateMonthlyCount();
+            if(tab === 'events') renderEventList();
+        }
+
+        function createNewEvent() {
+            switchTab('events');
+            
+            const id = 'ev_' + Date.now();
+            const newEv = {
+                id,
+                name: "Novo Espetáculo",
+                date: new Date().toISOString().split('T')[0],
+                venue: "",
+                shifts: [
+                    { id: 's1', label: 'MONTAGEM', time: '10:00', luz: '', som: '', prod: '', foh: '' },
+                    { id: 's2', label: 'ESPETÁCULO', time: '21:30', luz: '', som: '', prod: '', foh: '' }
+                ]
+            };
+            appData.events.unshift(newEv);
+            saveData();
+            selectEvent(id);
+            renderEventList();
+        }
 
         function addStaffMember() {
             let code = document.getElementById('newStaffCode').value.trim();
             const name = document.getElementById('newStaffName').value.trim();
             if(!name) return;
 
-            // Se o código estiver vazio, gera o próximo número
             if(!code) {
                 const existingCodes = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
                 code = existingCodes.length > 0 ? (Math.max(...existingCodes) + 1).toString() : "101";
@@ -264,7 +319,6 @@
             const name = document.getElementById('newVenueName').value.trim();
             if(!name) return;
 
-            // Se o código estiver vazio, gera um prefixo automático
             if(!code) {
                 const existingCodes = Object.keys(appData.venues).filter(c => c.startsWith('LOC'));
                 code = 'LOC' + (existingCodes.length + 1);
