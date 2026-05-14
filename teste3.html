@@ -31,7 +31,7 @@
             background-color: #0d0d0d; 
             border: 1px solid #1a1a1a; 
             color: #efefef; 
-            min-height: 38px; 
+            min-height: 34px; 
             font-size: 11px;
             line-height: 1.4;
             width: 100%;
@@ -39,14 +39,11 @@
             border-radius: 6px;
             resize: none;
             overflow: hidden;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
             display: block; 
         }
         
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
-
-        /* Esconder elementos de impressão no editor para evitar duplicação */
-        .print-only { display: none; }
 
         @media print {
             .no-print { display: none !important; }
@@ -55,6 +52,14 @@
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
+
+        .delete-btn {
+            opacity: 0;
+            transition: all 0.2s;
+        }
+        .event-card:hover .delete-btn {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -117,7 +122,7 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 no-print">
-                                <button onclick="addShift()" class="bg-zinc-900 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-zinc-400">+ Horário</button>
+                                <button onclick="addShift()" class="bg-zinc-900 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-zinc-400 hover:bg-zinc-800 transition">+ Horário</button>
                                 <button onclick="printSingleEvent()" class="bg-white text-black px-4 py-2 rounded-lg text-[9px] font-black uppercase shadow-lg hover:bg-zinc-200 transition">Imprimir Ficha</button>
                                 <button onclick="printAllEvents()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase transition">Imprimir Todas</button>
                             </div>
@@ -127,7 +132,7 @@
                             <table class="w-full text-left">
                                 <thead>
                                     <tr class="bg-zinc-900/50 text-[8px] font-black text-zinc-500 uppercase tracking-widest">
-                                        <th class="p-3 w-32">Fase / Hora</th>
+                                        <th class="p-3 w-40">Fase / Hora</th>
                                         <th class="p-3 border-l border-zinc-800">Técnicos</th>
                                         <th class="p-3 border-l border-zinc-800">Produção</th>
                                         <th class="p-3 border-l border-zinc-800">Bilheteira</th>
@@ -172,6 +177,7 @@
         <div id="counterView" class="hidden">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-black uppercase italic">Resumo de Turnos Totais</h2>
+                <button onclick="printTurnos()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg text-[10px] font-black uppercase transition shadow-lg">Imprimir Contagem</button>
             </div>
             <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </div>
@@ -213,12 +219,32 @@
                 if (!b.date) return -1;
                 return a.date.localeCompare(b.date);
             });
+            
             list.innerHTML = sorted.map(ev => `
-                <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-3 rounded-xl border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/40 border-zinc-900'} hover:border-zinc-700 transition group">
-                    <div class="text-[9px] font-black text-zinc-500 uppercase">${ev.date || 'Sem data'}</div>
-                    <div class="text-xs font-bold text-white truncate">${ev.name}</div>
-                </button>
+                <div class="event-card relative group">
+                    <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-3 rounded-xl border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/40 border-zinc-900'} hover:border-zinc-700 transition">
+                        <div class="text-[9px] font-black text-zinc-500 uppercase">${ev.date || 'Sem data'}</div>
+                        <div class="text-xs font-bold text-white truncate pr-6">${ev.name}</div>
+                    </button>
+                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-3 right-3 text-zinc-700 hover:text-red-500 text-lg leading-none no-print">×</button>
+                </div>
             `).join('');
+        }
+
+        function deleteEvent(id) {
+            const ev = appData.events.find(e => e.id === id);
+            // Simulação de confirmação simples e menos intrusiva que alert
+            const confirmacao = prompt(`Para apagar "${ev.name}", escreva APAGAR:`);
+            if (confirmacao === 'APAGAR') {
+                appData.events = appData.events.filter(e => e.id !== id);
+                if (appData.activeEventId === id) {
+                    appData.activeEventId = null;
+                    document.getElementById('editorArea').classList.add('hidden');
+                    document.getElementById('emptyState').classList.remove('hidden');
+                }
+                saveData();
+                renderEventList();
+            }
         }
 
         function selectEvent(id) {
@@ -236,26 +262,51 @@
             renderEventList();
         }
 
+        function sortShifts(ev) {
+            if (!ev || !ev.shifts) return;
+            ev.shifts.sort((a, b) => {
+                const timeA = a.time || "00:00";
+                const timeB = b.time || "00:00";
+                return timeA.localeCompare(timeB);
+            });
+        }
+
         function renderShifts(ev) {
             const tbody = document.getElementById('shiftsBody');
             tbody.innerHTML = ev.shifts.map(s => `
                 <tr class="group hover:bg-zinc-900/30">
-                    <td class="p-3 align-top">
-                        <input type="text" value="${s.label}" oninput="updateShiftField('${s.id}', 'label', this.value)" class="bg-transparent border-none text-[10px] font-black text-indigo-400 uppercase w-full p-0 focus:ring-0 mb-1" placeholder="Fase">
-                        <input type="text" value="${s.time}" oninput="updateShiftField('${s.id}', 'time', this.value)" class="bg-transparent border-none text-[10px] font-bold text-zinc-500 w-full p-0 focus:ring-0" placeholder="00:00">
+                    <td class="p-2 align-top">
+                        <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" 
+                                  class="bg-transparent border-none text-[10px] font-black text-indigo-400 uppercase w-full p-0 focus:ring-0 mb-1" 
+                                  placeholder="Fase">${s.label || ''}</textarea>
+                        <input type="text" value="${s.time}" 
+                               onchange="updateShiftField('${s.id}', 'time', this.value); sortAndReRender()" 
+                               class="bg-transparent border-none text-[10px] font-bold text-zinc-500 w-full p-0 focus:ring-0" 
+                               placeholder="00:00">
                     </td>
                     ${APP_COLUMNS.map(col => `
                         <td class="p-1.5 border-l border-zinc-900/50 align-top">
                             <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" placeholder="..."> ${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
-                    <td class="p-3 no-print align-top"><button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition">×</button></td>
+                    <td class="p-3 no-print align-top text-right">
+                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition text-lg">×</button>
+                    </td>
                 </tr>
             `).join('');
             
             setTimeout(() => {
                 tbody.querySelectorAll('textarea').forEach(adjustHeight);
             }, 50);
+        }
+
+        function sortAndReRender() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if (ev) {
+                sortShifts(ev);
+                saveData();
+                renderShifts(ev);
+            }
         }
 
         function adjustHeight(el) {
@@ -318,26 +369,31 @@
         function buildEventHTML(ev) {
             const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar/Cozinha','Segurança'];
             const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
+            sortShifts(ev);
+
             const rows = ev.shifts.map(s => `
                 <tr>
-                    <td style="padding:8px;border:1px solid #ccc;font-size:9px;vertical-align:top;white-space:nowrap;background:#fafafa">
-                        <strong style="color:#4338ca;text-transform:uppercase;display:block;margin-bottom:2px">${s.label||''}</strong>
-                        <span style="color:#666;font-weight:600">${s.time||''}</span>
+                    <td style="padding:10px; border:1px solid #ddd; font-size:9px; vertical-align:top; background:#fcfcfc; line-height:1.3; overflow-wrap: break-word;">
+                        <div style="color:#4338ca; font-weight:900; text-transform:uppercase; margin-bottom:4px; font-size:10px;">${(s.label||'').toUpperCase()}</div>
+                        <div style="color:#111; font-weight:800; border-top:1px solid #eee; padding-top:2px;">${s.time||''}</div>
                     </td>
-                    ${keys.map(k => `<td style="padding:8px;border:1px solid #ccc;font-size:9px;vertical-align:top;white-space:pre-wrap;word-break:break-word">${(s[k]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>`).join('')}
+                    ${keys.map(k => `<td style="padding:10px; border:1px solid #ddd; font-size:9px; vertical-align:top; white-space:pre-wrap; word-break:break-word; line-height:1.4;">${(s[k]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>`).join('')}
                 </tr>`).join('');
 
             return `
-                <div class="ev-block" style="margin-bottom: 30px; page-break-after: always;">
-                    <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h2 style="font-size:22px;font-weight:900;margin:0 0 5px;text-transform:uppercase;letter-spacing:-0.5px">${ev.name}</h2>
-                        <p style="font-size:11px;color:#444;margin:0;font-weight:700;text-transform:uppercase;letter-spacing:1px">${ev.date}${ev.venue ? ' &bull; ' + ev.venue : ''}</p>
+                <div class="ev-block" style="margin-bottom: 40px; page-break-after: always;">
+                    <div style="border-bottom: 4px solid #000; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 style="font-size:26px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-1px">${ev.name}</h2>
+                            <p style="font-size:12px; color:#444; margin:5px 0 0; font-weight:700; text-transform:uppercase; letter-spacing:1px">${ev.date}${ev.venue ? ' &bull; ' + ev.venue : ''}</p>
+                        </div>
+                        <div style="text-align:right; font-size:8px; font-weight:900; color:#aaa; text-transform:uppercase;">Backstage PRO System</div>
                     </div>
-                    <table style="width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #ccc">
+                    <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:1px solid #ddd;">
                         <thead>
-                            <tr style="background:#f0f0f0;font-size:8px;font-weight:900;text-transform:uppercase;color:#333">
-                                <th style="padding:8px;border:1px solid #ccc;width:90px;text-align:left">Fase / Hora</th>
-                                ${cols.map(c=>`<th style="padding:8px;border:1px solid #ccc;text-align:left">${c}</th>`).join('')}
+                            <tr style="background:#f1f1f1; font-size:8px; font-weight:900; text-transform:uppercase; color:#000">
+                                <th style="padding:12px 10px; border:1px solid #ddd; width:110px; text-align:left">Fase / Hora</th>
+                                ${cols.map(c=>`<th style="padding:12px 10px; border:1px solid #ddd; text-align:left">${c}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -345,10 +401,80 @@
                 </div>`;
         }
 
+        function printTurnos() {
+            const counts = {};
+            const displayName = {};
+
+            appData.events.forEach(ev => {
+                ev.shifts.forEach(s => {
+                    const uniqueInShift = new Set();
+                    APP_COLUMNS.forEach(col => {
+                        if (s[col]) {
+                            s[col].split(/[,\n;]/).forEach(n => {
+                                const clean = n.trim();
+                                if(clean.length > 2) {
+                                    uniqueInShift.add(clean.toLowerCase());
+                                    displayName[clean.toLowerCase()] = clean;
+                                }
+                            });
+                        }
+                    });
+                    uniqueInShift.forEach(nameLower => {
+                        counts[nameLower] = (counts[nameLower] || 0) + 1;
+                    });
+                });
+            });
+
+            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+            
+            let html = `
+                <div style="padding: 20px;">
+                    <div style="border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h1 style="font-size:24px; font-weight:900; margin:0; text-transform:uppercase;">Resumo Geral de Turnos</h1>
+                        <p style="font-size:10px; color:#666; text-transform:uppercase; font-weight:700; margin-top:5px;">Gerado em: ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <thead>
+                            <tr style="background:#f4f4f4; text-transform:uppercase; font-size:10px; font-weight:900;">
+                                <th style="border:1px solid #ddd; padding:12px; text-align:left;">Membro da Equipa</th>
+                                <th style="border:1px solid #ddd; padding:12px; text-align:center; width:120px;">Total Turnos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sorted.map(([nameLower, count]) => `
+                                <tr>
+                                    <td style="border:1px solid #ddd; padding:10px; font-weight:600;">${displayName[nameLower]}</td>
+                                    <td style="border:1px solid #ddd; padding:10px; text-align:center; font-weight:800; font-size:14px;">${count}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            executePrint(html, 'Contagem de Turnos');
+        }
+
+        function executePrint(contentHtml, title = 'Backstage PRO') {
+            const win = window.open('', '_blank');
+            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+                <title>${title}</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+                    @page { size: portrait; margin: 1cm; }
+                    body { font-family: 'Inter', Arial, sans-serif; color: #000; background: #fff; line-height: 1.4; padding: 0; margin: 0; }
+                    .ev-block { page-break-inside: avoid; }
+                    table { width: 100%; border-collapse: collapse; }
+                </style>
+            </head><body>${contentHtml}</body></html>`);
+            win.document.close();
+            win.focus();
+            setTimeout(() => { win.print(); }, 500);
+        }
+
         function printSingleEvent() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(!ev) return;
-            executePrint(buildEventHTML(ev));
+            executePrint(buildEventHTML(ev), `Ficha - ${ev.name}`);
         }
 
         function printAllEvents() {
@@ -356,23 +482,7 @@
                 if(!a.date) return 1; if(!b.date) return -1;
                 return a.date.localeCompare(b.date);
             });
-            executePrint(sorted.map(ev => buildEventHTML(ev)).join(''));
-        }
-
-        function executePrint(contentHtml) {
-            const win = window.open('', '_blank');
-            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-                <title>Backstage PRO - Impressão</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-                    @page { size: landscape; margin: 1cm; }
-                    body { font-family: 'Inter', Arial, sans-serif; color: #000; background: #fff; line-height: 1.4; }
-                    .ev-block:last-child { page-break-after: avoid !important; }
-                </style>
-            </head><body>${contentHtml}</body></html>`);
-            win.document.close();
-            win.focus();
-            setTimeout(() => { win.print(); }, 500);
+            executePrint(sorted.map(ev => buildEventHTML(ev)).join(''), 'Todas as Fichas');
         }
 
         function createNewEvent() {
@@ -398,11 +508,12 @@
         function addShift() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(ev) {
-                const newShift = { id: 's'+Date.now(), label:'NOVO TURNO', time:'00:00' };
+                const newShift = { id: 's'+Date.now(), label:'NOVA FASE', time:'12:00' };
                 APP_COLUMNS.forEach(c => newShift[c] = '');
                 ev.shifts.push(newShift);
-                renderShifts(ev);
+                sortShifts(ev);
                 saveData();
+                renderShifts(ev);
             }
         }
 
@@ -422,7 +533,7 @@
 
             if(!code) {
                 const existing = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
-                code = existing.length > 0 ? (Math.max(...existing) + 1).toString() : "1";
+                code = existing.length > 0 ? (Math.max(...existing) + 1).toString() : "101";
             }
 
             appData.staff[code] = { name };
