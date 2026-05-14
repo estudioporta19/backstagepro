@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Utilização - Backstage PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #efefef; }
+        .card { background: #0d0d0d; border: 1px solid #1a1a1a; transition: all 0.2s; }
+        .card:hover { border-color: #6366f1; background: #111111; }
+        .icon-box { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); }
+    </style>
+</head>
+<body class="p-6 md:p-12 leading-relaxed">
+
+    <header class="max-w-4xl mx-auto mb-12 text-center">
+        <h1 class="text-4xl font-black italic uppercase tracking-tighter mb-2">
+            Backstage<span class="text-indigo-500">PRO</span> <span class="text-zinc-500 font-light text-2xl">Manual</span>
+        </h1>
+        <p class="text-zinc-500 text-sm font-bold uppercase tracking-widest">Guia de Operações Rápidas e Gestão Técnica</p>
+    </header>
+
+    <main class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Configuração -->
+        <section class="card p-6 rounded-3xl">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="icon-box w-10 h-10 rounded-xl flex items-center justify-center text-xl">⚙️</div>
+                <h2 class="font-black uppercase tracking-tight text-lg">1. Configuração Inicial</h2>
+            </div>
+            <p class="text-zinc-400 text-sm mb-4">Antes de criar fichas, registe a sua base de dados nos separadores laterais:</p>
+            <ul class="space-y-2 text-xs font-bold text-zinc-300">
+                <li class="flex items-center gap-2"><span class="text-indigo-500">●</span> 👥 <b>Técnicos:</b> Atribua códigos (ex: 101, LUZ1, JOAO).</li>
+                <li class="flex items-center gap-2"><span class="text-indigo-500">●</span> 📍 <b>Locais:</b> Use siglas para os espaços (ex: TNM para Teatro Nacional).</li>
+            </ul>
+        </section>
+
+        <!-- Atalhos -->
+        <section class="card p-6 rounded-3xl border-indigo-500/30 bg-indigo-500/5">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="icon-box w-10 h-10 rounded-xl flex items-center justify-center text-xl">⚡</div>
+                <h2 class="font-black uppercase tracking-tight text-lg italic text-indigo-400">Atalhos Mágicos (Shortcodes)</h2>
+            </div>
+            <p class="text-zinc-400 text-sm mb-4 font-semibold italic">A forma mais rápida de preencher escalas no mundo:</p>
+            <div class="bg-black p-3 rounded-xl border border-zinc-800 text-[11px] font-mono leading-relaxed">
+                1. Escreva o código <b class="text-white">101</b> na célula.<br>
+                2. Pressione <b class="text-indigo-400">[Espaço]</b> ou <b class="text-indigo-400">[Enter]</b>.<br>
+                3. O sistema converte para <b class="text-white">NOME DO TÉCNICO</b>.
+            </div>
+        </section>
+
+        <!-- Cronologia -->
+        <section class="card p-6 rounded-3xl">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="icon-box w-10 h-10 rounded-xl flex items-center justify-center text-xl">⏳</div>
+                <h2 class="font-black uppercase tracking-tight text-lg">2. Gestão de Horários</h2>
+            </div>
+            <p class="text-zinc-400 text-sm mb-4 font-medium">O sistema organiza o dia por si:</p>
+            <ul class="space-y-4">
+                <li class="flex gap-3">
+                    <span class="text-lg">↕️</span>
+                    <div>
+                        <b class="text-xs uppercase block text-white">Ordenação Automática</b>
+                        <p class="text-[11px] text-zinc-500">Se mudar uma hora (ex: de 20h para 08h), a linha "salta" sozinha para a posição correta.</p>
+                    </div>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-lg">↔️</span>
+                    <div>
+                        <b class="text-xs uppercase block text-white">Fase Flexível</b>
+                        <p class="text-[11px] text-zinc-500">O campo "Fase" é expansível. Escreva descrições longas; a tabela estica para não cortar texto.</p>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Impressão -->
+        <section class="card p-6 rounded-3xl">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="icon-box w-10 h-10 rounded-xl flex items-center justify-center text-xl">🖨️</div>
+                <h2 class="font-black uppercase tracking-tight text-lg">3. Saídas e Relatórios</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
+                    <span class="text-[11px] font-bold uppercase tracking-wider">Imprimir Ficha</span>
+                    <span class="text-[9px] bg-white text-black px-2 py-0.5 rounded font-black">A4 Paisagem</span>
+                </div>
+                <div class="flex items-center justify-between bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-400">Contagem de Turnos</span>
+                    <span class="text-[9px] bg-indigo-600 text-white px-2 py-0.5 rounded font-black">Freelancers</span>
+                </div>
+                <p class="text-[10px] text-zinc-500 italic mt-2 text-center">Dica: A contagem de turnos ignora nomes com menos de 3 letras para evitar erros de digitação.</p>
+            </div>
+        </section>
+
+        <!-- Backup -->
+        <section class="card p-6 rounded-3xl md:col-span-2 border-dashed border-zinc-800">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex items-center gap-4">
+                    <div class="icon-box w-10 h-10 rounded-xl flex items-center justify-center text-xl">💾</div>
+                    <div>
+                        <h2 class="font-black uppercase tracking-tight text-lg">Segurança de Dados</h2>
+                        <p class="text-zinc-500 text-xs">Os seus dados ficam guardados neste navegador.</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <div class="px-4 py-2 bg-zinc-900 rounded-xl border border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                        Exportar JSON para Backup
+                    </div>
+                    <div class="px-4 py-2 bg-zinc-900 rounded-xl border border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                        Importar em outro PC
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-12 text-center">
+        <p class="text-[9px] text-zinc-600 font-black uppercase tracking-[0.4em]">Backstage PRO - Professional Events Suite</p>
+    </footer>
+
+</body>
+</html>
