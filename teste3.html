@@ -46,32 +46,42 @@
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
         @media print {
-            @page { size: landscape; margin: 0.5cm; }
+            @page { size: landscape; margin: 0.8cm; }
             .no-print { display: none !important; }
             body { background: white !important; color: black !important; overflow: visible !important; }
             main { padding: 0 !important; overflow: visible !important; display: block !important; }
-            #editorContainer { width: 100% !important; }
+            #editorContainer, #counterView { width: 100% !important; display: block !important; }
             
             textarea { 
                 border: none !important; 
                 background: transparent !important; 
                 color: black !important; 
-                overflow: hidden !important; 
+                overflow: visible !important; 
                 white-space: pre-wrap !important;
-                /* Removido height:auto para manter o inline height do JS */
                 padding: 2px !important;
                 resize: none !important;
                 font-size: 10px !important;
+                height: auto !important; /* Na impressão permite expandir */
             }
 
-            /* Esconde o triângulo de redimensionamento em todos os browsers */
             textarea::-webkit-resizer { display: none !important; }
             
             .bg-zinc-900, .bg-zinc-950, .bg-zinc-900\/10 { background: white !important; color: black !important; }
-            .border-zinc-800, .border-zinc-900, .border-zinc-900\/50 { border-color: #eee !important; }
+            .border-zinc-800, .border-zinc-900, .border-zinc-900\/50 { border-color: #ddd !important; }
             table { width: 100% !important; border-collapse: collapse; table-layout: fixed; }
-            th, td { border: 1px solid #eee !important; padding: 4px !important; word-wrap: break-word; }
-            th { background-color: #f9f9f9 !important; color: #666 !important; }
+            th, td { border: 1px solid #ddd !important; padding: 6px !important; word-wrap: break-word; vertical-align: top; }
+            th { background-color: #f0f0f0 !important; color: black !important; font-weight: bold; }
+            
+            /* Ajuste específico para relatório de turnos na impressão */
+            .print-report-grid {
+                display: block !important;
+            }
+            .print-report-item {
+                border-bottom: 1px solid #eee;
+                padding: 8px 0;
+                display: flex;
+                justify-content: space-between;
+            }
         }
 
         ::-webkit-scrollbar { width: 6px; }
@@ -97,7 +107,7 @@
                 📍 Espaços e Locais
             </button>
             <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                📊 Contagem Mês
+                📊 Contagem Turnos
             </button>
         </nav>
 
@@ -169,7 +179,7 @@
             <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Equipa</h2>
             <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
                 <div class="flex gap-3">
-                    <input type="text" id="newStaffCode" placeholder="Cód (Opcional)" class="w-32 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <input type="text" id="newStaffCode" placeholder="Cód (Auto se vazio)" class="w-40 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
                     <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
                     <button onclick="addStaffMember()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
                 </div>
@@ -190,8 +200,11 @@
         </div>
 
         <div id="counterView" class="hidden">
-            <h2 class="text-xl font-black uppercase mb-6 italic">Turnos do Mês</h2>
-            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black uppercase italic">Resumo de Turnos Totais</h2>
+                <button onclick="window.print()" class="no-print bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg text-[9px] font-bold uppercase">Imprimir Listagem</button>
+            </div>
+            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 print-report-grid"></div>
         </div>
 
     </main>
@@ -224,7 +237,6 @@
             if(tab === 'events') renderEventList();
         }
 
-        // --- GESTÃO DE EVENTOS ---
         function createNewEvent() {
             switchTab('events');
             const id = 'ev_' + Date.now();
@@ -287,13 +299,11 @@
                 </tr>
             `).join('');
             
-            // Garantir que a altura é calculada logo ao carregar
             setTimeout(() => {
                 tbody.querySelectorAll('textarea').forEach(adjustHeight);
             }, 50);
         }
 
-        // --- LÓGICA DE INPUTS ---
         function adjustHeight(el) {
             el.style.height = 'auto';
             el.style.height = (el.scrollHeight) + 'px';
@@ -351,7 +361,6 @@
             updateActiveEvent('venue', val);
         }
 
-        // --- GESTÃO DE EQUIPA ---
         function addStaffMember() {
             let code = document.getElementById('newStaffCode').value.trim();
             const name = document.getElementById('newStaffName').value.trim();
@@ -391,15 +400,11 @@
             }
         }
 
-        // --- GESTÃO DE ESPAÇOS ---
         function addVenue() {
             let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
             const name = document.getElementById('newVenueName').value.trim();
             if(!name) return;
-
-            if(!code) {
-                code = name.substring(0, 3).toUpperCase() + (Object.keys(appData.venues).length + 1);
-            }
+            if(!code) code = name.substring(0, 3).toUpperCase() + (Object.keys(appData.venues).length + 1);
 
             appData.venues[code] = name;
             saveData();
@@ -431,40 +436,39 @@
         }
 
         function updateMonthlyCount() {
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
             const counts = {};
 
             appData.events.forEach(ev => {
-                const evDate = new Date(ev.date);
-                if(evDate.getMonth() === currentMonth && evDate.getFullYear() === currentYear) {
-                    ev.shifts.forEach(s => {
-                        const uniqueInShift = new Set();
-                        APP_COLUMNS.forEach(col => {
-                            if (s[col]) {
-                                s[col].split(/[,\n;]/).forEach(n => {
-                                    const clean = n.trim();
-                                    if(clean.length > 2) uniqueInShift.add(clean);
-                                });
-                            }
-                        });
-                        uniqueInShift.forEach(name => {
-                            counts[name] = (counts[name] || 0) + 1;
-                        });
+                ev.shifts.forEach(s => {
+                    const uniqueInShift = new Set();
+                    APP_COLUMNS.forEach(col => {
+                        if (s[col]) {
+                            // Separar por vírgula, nova linha ou ponto e vírgula
+                            const names = s[col].split(/[,\n;]/);
+                            names.forEach(n => {
+                                const clean = n.trim();
+                                if(clean.length > 2) uniqueInShift.add(clean);
+                            });
+                        }
                     });
-                }
+                    
+                    // Contar 1 turno por pessoa, por linha da tabela
+                    uniqueInShift.forEach(name => {
+                        counts[name] = (counts[name] || 0) + 1;
+                    });
+                });
             });
 
             const grid = document.getElementById('monthlyCounterGrid');
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
 
             if(sorted.length === 0) {
-                grid.innerHTML = '<div class="col-span-full py-12 text-center text-zinc-700 font-bold uppercase text-[10px] tracking-widest border border-dashed border-zinc-900 rounded-3xl">Sem registos este mês</div>';
+                grid.innerHTML = '<div class="col-span-full py-12 text-center text-zinc-700 font-bold uppercase text-[10px] tracking-widest border border-dashed border-zinc-900 rounded-3xl">Sem registos de nomes nos eventos</div>';
                 return;
             }
 
             grid.innerHTML = sorted.map(([name, count]) => `
-                <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-900 flex justify-between items-center">
+                <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-900 flex justify-between items-center print-report-item">
                     <span class="text-xs font-bold text-white">${name}</span>
                     <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/10">
                         ${count} Turnos
