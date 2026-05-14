@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backstage PRO - Gestão Total</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
+        :root {
+            --bg-main: #050505;
+            --bg-card: #0a0a0a;
+            --border: #1a1a1a;
+            --accent: #6366f1;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-main); 
+            color: #f4f4f5; 
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .sidebar { background: var(--bg-card); border-right: 1px solid var(--border); }
+        .event-card { transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border); }
+        .event-card.active { border-color: var(--accent); background: #111111; }
+
+        textarea { 
+            background-color: #0d0d0d !important; 
+            border: 1px solid #1a1a1a !important; 
+            color: #efefef !important; 
+            min-height: 50px; 
+            font-size: 11px !important;
+            line-height: 1.2;
+            width: 100%;
+        }
+        
+        textarea:focus { border-color: var(--accent) !important; outline: none; }
+
+        .tab-btn.active { border-bottom: 2px solid var(--accent); color: white; }
+
+        /* Estilos de Impressão */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            @page { size: A4 landscape; margin: 1cm; }
+            
+            #printBatchArea { display: block !important; }
+            .print-page-break { page-break-after: always; }
+            
+            .table-container { border: 1px solid #000 !important; margin-bottom: 20px !important; width: 100% !important; }
+            table { width: 100% !important; border-collapse: collapse !important; font-size: 10px !important; }
+            th, td { border: 1px solid #000 !important; padding: 6px !important; color: black !important; vertical-align: top; }
+            th { background: #f0f0f0 !important; font-weight: bold !important; text-transform: uppercase; }
+            h1, h2, h3 { color: black !important; margin: 10px 0; }
+        }
+
+        #printBatchArea { display: none; }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row min-h-screen">
+
+    <aside class="sidebar w-full md:w-64 p-5 flex flex-col gap-4 no-print shrink-0">
+        <div class="mb-2">
+            <h1 class="text-xl font-black tracking-tighter text-white uppercase italic">
+                BACKSTAGE<span class="text-indigo-500">PRO</span>
+            </h1>
+            <p class="text-[8px] text-zinc-500 uppercase font-bold tracking-[0.2em] mt-1">SALA • PRODUÇÃO • EQUIPAS</p>
+        </div>
+
+        <nav class="flex flex-col gap-1 mb-4 border-b border-zinc-800 pb-4">
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
+                📅 Agenda e Fichas
+            </button>
+            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
+                👥 Gestão de Equipa
+            </button>
+            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
+                📊 Contagem Mês
+            </button>
+        </nav>
+
+        <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg text-xs transition uppercase tracking-tighter shadow-lg shadow-indigo-500/20">
+            + Novo Dia / Evento
+        </button>
+
+        <div id="eventList" class="flex flex-col gap-2 overflow-y-auto max-h-[35vh] pr-1">
+            <!-- JS Event List -->
+        </div>
+
+        <div class="mt-auto pt-4 border-t border-zinc-800 flex flex-col gap-2">
+            <button onclick="printAllEvents()" class="w-full border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-[10px] font-bold py-2 rounded-lg uppercase transition">
+                🖨️ Imprimir Mês Completo
+            </button>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="exportFullData()" class="text-[10px] text-zinc-500 hover:text-white bg-zinc-900 py-1 rounded">💾 Backup</button>
+                <button onclick="importFullData()" class="text-[10px] text-zinc-500 hover:text-white bg-zinc-900 py-1 rounded">📂 Importar</button>
+            </div>
+            <button onclick="clearAllSystemData()" class="text-[9px] text-red-900 hover:text-red-500 transition mt-2 text-center uppercase font-bold">Apagar Base de Dados</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-4 md:p-8 max-w-full overflow-hidden">
+        
+        <!-- Vista de Agenda/Fichas -->
+        <div id="eventsView">
+            <div id="emptyState" class="h-full flex flex-col items-center justify-center text-zinc-600 italic text-sm mt-20">
+                <span class="text-4xl mb-4">🗓️</span>
+                Selecione ou crie um evento na agenda lateral.
+            </div>
+
+            <div id="editorArea" class="hidden">
+                <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b border-zinc-800 pb-4 gap-4">
+                    <div class="w-full">
+                        <input type="text" id="curEventName" oninput="saveCurrentEvent()" class="bg-transparent border-none text-2xl font-black text-white focus:ring-0 p-0 w-full mb-1 uppercase" placeholder="NOME DO ESPETÁCULO">
+                        <div class="flex flex-wrap gap-4 text-[10px] uppercase font-bold">
+                            <div class="flex items-center gap-2 text-indigo-400">
+                                📅 <input type="date" id="curEventDate" oninput="saveCurrentEvent()" class="bg-transparent border-none focus:ring-0 p-0 [color-scheme:dark]">
+                            </div>
+                            <div class="flex items-center gap-2 text-zinc-500 border-l border-zinc-800 pl-4">
+                                📍 <input type="text" id="curEventVenue" oninput="saveCurrentEvent()" class="bg-transparent border-none focus:ring-0 p-0 w-48" placeholder="LOCAL / SALA">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="no-print flex gap-2">
+                        <button onclick="deleteCurrentEvent()" class="text-[10px] uppercase font-black text-zinc-600 hover:text-red-500 px-3">Remover</button>
+                        <button onclick="printCurrentDay()" class="bg-white text-black px-6 py-2 rounded-full text-[10px] font-black uppercase hover:bg-zinc-200 transition shadow-lg shadow-white/5">Imprimir Ficha</button>
+                    </div>
+                </header>
+
+                <div class="bg-zinc-900/40 rounded-xl border border-zinc-800 overflow-x-auto table-container">
+                    <table class="w-full text-left min-w-[1000px]">
+                        <thead>
+                            <tr class="bg-zinc-800/50 text-[9px] uppercase tracking-widest font-black text-zinc-400">
+                                <th class="p-3 w-32">Fase/Turno</th>
+                                <th class="p-3 w-24 border-l border-zinc-800">Horário</th>
+                                <th class="p-3 border-l border-zinc-800">Técnica</th>
+                                <th class="p-3 border-l border-zinc-800">Produção</th>
+                                <th class="p-3 border-l border-zinc-800">Bilheteira</th>
+                                <th class="p-3 border-l border-zinc-800">Portas</th>
+                                <th class="p-3 border-l border-zinc-800">Bar/Cozinha</th>
+                                <th class="p-3 border-l border-zinc-800">Segurança</th>
+                                <th class="p-3 w-8 no-print"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="shiftsBody" class="divide-y divide-zinc-800"></tbody>
+                    </table>
+                </div>
+                <button onclick="addNewShift()" class="w-full py-3 text-[9px] font-black uppercase tracking-widest text-zinc-600 hover:text-indigo-400 hover:bg-indigo-500/5 transition no-print border-b border-zinc-800">
+                    + Adicionar Linha de Turno
+                </button>
+            </div>
+        </div>
+
+        <div id="staffView" class="hidden">
+            <header class="mb-8 border-b border-zinc-800 pb-4">
+                <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Gestão de Equipa e Atalhos</h2>
+                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Define códigos numéricos (ex: 1) para preencher nomes rapidamente nas fichas.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
+                    <h3 class="text-xs font-black text-indigo-400 uppercase mb-4 tracking-widest">Adicionar Elemento</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="newStaffCode" placeholder="Código (Ex: 1)" class="w-20 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
+                        <input type="text" id="newStaffName" placeholder="Nome Completo" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
+                        <button onclick="addStaffMember()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-[10px] font-bold uppercase">Adicionar</button>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
+                    <h3 class="text-xs font-black text-zinc-400 uppercase mb-4 tracking-widest">Dica de Utilização</h3>
+                    <p class="text-[11px] text-zinc-500 leading-relaxed">
+                        Nas fichas de turno, basta escrever o <strong class="text-white font-bold">número seguido de um espaço</strong> ou vírgula no campo de texto. O sistema substituirá automaticamente pelo nome correspondente.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-8 overflow-hidden rounded-xl border border-zinc-800">
+                <table class="w-full text-left bg-zinc-900/20">
+                    <thead>
+                        <tr class="bg-zinc-800/50 text-[9px] uppercase tracking-widest font-black text-zinc-500">
+                            <th class="p-3 w-20">Código</th>
+                            <th class="p-3">Nome do Profissional</th>
+                            <th class="p-3 w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffListTable" class="divide-y divide-zinc-800">
+                        <!-- JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="monthlyCounterView" class="hidden">
+            <!-- Mesma estrutura anterior para contagem mensal -->
+            <header class="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Resumo Mensal de Turnos</h2>
+                    <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Contagem automática baseada nas fichas preenchidas.</p>
+                </div>
+                <button onclick="printCounter()" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase hover:bg-indigo-500 transition no-print">Imprimir Contagem</button>
+            </header>
+            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+    </main>
+
+    <!-- Área Oculta para Impressão em Lote -->
+    <div id="printBatchArea"></div>
+
+    <script>
+        let appData = { 
+            events: [], 
+            staff: {}, // { "1": "Nome", "2": "Outro" }
+            activeEventId: null 
+        };
+        const STORAGE_KEY = 'backstage_pro_v5_pro';
+
+        function init() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                appData = JSON.parse(saved);
+                if (!appData.staff) appData.staff = {};
+                renderEventList();
+                if (appData.activeEventId) selectEvent(appData.activeEventId);
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            updateMonthlyCount();
+        }
+
+        function switchTab(tab) {
+            document.getElementById('eventsView').classList.toggle('hidden', tab !== 'events');
+            document.getElementById('staffView').classList.toggle('hidden', tab !== 'staff');
+            document.getElementById('monthlyCounterView').classList.toggle('hidden', tab !== 'counter');
+            
+            document.getElementById('btn-tab-events').classList.toggle('active', tab === 'events');
+            document.getElementById('btn-tab-staff').classList.toggle('active', tab === 'staff');
+            document.getElementById('btn-tab-counter').classList.toggle('active', tab === 'counter');
+            
+            if(tab === 'staff') renderStaffList();
+            if(tab === 'counter') updateMonthlyCount();
+        }
+
+        // --- GESTÃO DE STAFF ---
+
+        function addStaffMember() {
+            const code = document.getElementById('newStaffCode').value.trim();
+            const name = document.getElementById('newStaffName').value.trim();
+            if(!code || !name) return;
+            
+            appData.staff[code] = name;
+            document.getElementById('newStaffCode').value = '';
+            document.getElementById('newStaffName').value = '';
+            saveToStorage();
+            renderStaffList();
+        }
+
+        function removeStaff(code) {
+            delete appData.staff[code];
+            saveToStorage();
+            renderStaffList();
+        }
+
+        function renderStaffList() {
+            const tbody = document.getElementById('staffListTable');
+            const entries = Object.entries(appData.staff);
+            if(entries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-zinc-600 italic text-xs">Nenhum membro configurado ainda.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = entries.map(([code, name]) => `
+                <tr class="hover:bg-zinc-800/10">
+                    <td class="p-3 font-black text-indigo-400 text-xs">${code}</td>
+                    <td class="p-3 text-zinc-300 text-xs font-bold uppercase tracking-tighter">${name}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="removeStaff('${code}')" class="text-zinc-700 hover:text-red-500 text-lg">&times;</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- ENGINE DE EXPANSÃO DE CÓDIGOS ---
+
+        function processShortcodes(textarea) {
+            const val = textarea.value;
+            // Deteta números seguidos de espaço, vírgula, ponto-e-vírgula ou nova linha
+            const regex = /(\b\d+\b)([, ;\n\r])/g;
+            
+            let changed = false;
+            const newVal = val.replace(regex, (match, code, delimiter) => {
+                if (appData.staff[code]) {
+                    changed = true;
+                    return appData.staff[code] + delimiter;
+                }
+                return match;
+            });
+
+            if (changed) {
+                textarea.value = newVal;
+                return true;
+            }
+            return false;
+        }
+
+        // --- GESTÃO DE EVENTOS ---
+
+        function createNewEvent() {
+            const newEvent = {
+                id: 'ev_' + Date.now(),
+                name: 'Novo Show',
+                date: new Date().toISOString().split('T')[0],
+                venue: '',
+                shifts: [
+                    { id: 's1', label: 'Montagem', time: '09:00 - 13:00', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' },
+                    { id: 's2', label: 'Show / Portas', time: '19:00 - 00:00', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' }
+                ]
+            };
+            appData.events.push(newEvent);
+            appData.activeEventId = newEvent.id;
+            saveToStorage();
+            renderEventList();
+            switchTab('events');
+            selectEvent(newEvent.id);
+        }
+
+        function renderEventList() {
+            const list = document.getElementById('eventList');
+            list.innerHTML = appData.events.sort((a,b) => new Date(b.date) - new Date(a.date)).map(ev => `
+                <div onclick="selectEvent('${ev.id}')" class="event-card p-3 rounded-lg ${appData.activeEventId === ev.id ? 'active' : 'bg-zinc-900/50 hover:bg-zinc-800'}">
+                    <div class="text-[8px] font-black text-indigo-400 uppercase tracking-tighter">${ev.date || 'S/ DATA'}</div>
+                    <div class="font-bold text-[11px] text-zinc-200 truncate uppercase">${ev.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectEvent(id) {
+            appData.activeEventId = id;
+            const ev = appData.events.find(e => e.id === id);
+            if (!ev) return;
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('editorArea').classList.remove('hidden');
+            document.getElementById('curEventName').value = ev.name;
+            document.getElementById('curEventDate').value = ev.date;
+            document.getElementById('curEventVenue').value = ev.venue;
+            renderShifts(ev);
+            renderEventList();
+        }
+
+        function renderShifts(ev) {
+            const tbody = document.getElementById('shiftsBody');
+            tbody.innerHTML = ev.shifts.map((s, idx) => `
+                <tr>
+                    <td class="p-2">
+                        <input type="text" value="${s.label}" oninput="updateShiftField('${ev.id}', '${s.id}', 'label', this.value)" class="bg-transparent border-none text-[9px] font-black text-indigo-400 uppercase w-full p-0">
+                    </td>
+                    <td class="p-2 border-l border-zinc-800/50">
+                        <input type="text" value="${s.time || ''}" placeholder="00:00" oninput="updateShiftField('${ev.id}', '${s.id}', 'time', this.value)" class="bg-transparent border-none text-[9px] font-bold text-zinc-300 w-full p-0">
+                    </td>
+                    ${['tech', 'prod', 'bilh', 'port', 'bar', 'seg'].map(field => `
+                        <td class="p-1 border-l border-zinc-800/50">
+                            <textarea 
+                                onkeyup="if(processShortcodes(this)) { updateShiftField('${ev.id}', '${s.id}', '${field}', this.value); }"
+                                onblur="updateShiftField('${ev.id}', '${s.id}', '${field}', this.value)"
+                                placeholder="..."> ${s[field] || ''}</textarea>
+                        </td>
+                    `).join('')}
+                    <td class="p-1 no-print">
+                        <button onclick="removeShift('${ev.id}', '${s.id}')" class="text-zinc-800 hover:text-red-500 text-lg">×</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateShiftField(evId, sId, field, value) {
+            const ev = appData.events.find(e => e.id === evId);
+            const shift = ev.shifts.find(s => s.id === sId);
+            shift[field] = value;
+            saveToStorage();
+        }
+
+        function addNewShift() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            ev.shifts.push({ id: 's_' + Date.now(), label: 'Novo Turno', time: '', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' });
+            saveToStorage();
+            renderShifts(ev);
+        }
+
+        function removeShift(evId, shiftId) {
+            const ev = appData.events.find(e => e.id === evId);
+            ev.shifts = ev.shifts.filter(s => s.id !== shiftId);
+            saveToStorage();
+            renderShifts(ev);
+        }
+
+        function saveCurrentEvent() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            ev.name = document.getElementById('curEventName').value;
+            ev.date = document.getElementById('curEventDate').value;
+            ev.venue = document.getElementById('curEventVenue').value;
+            saveToStorage();
+            renderEventList();
+        }
+
+        // --- IMPRESSÃO ---
+
+        function printCurrentDay() {
+            window.print();
+        }
+
+        function printAllEvents() {
+            const container = document.getElementById('printBatchArea');
+            container.innerHTML = '';
+            
+            // Ordenar por data
+            const sorted = [...appData.events].sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            sorted.forEach(ev => {
+                const page = document.createElement('div');
+                page.className = 'print-page-break';
+                page.innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <h1 style="text-transform: uppercase; margin: 0; font-size: 20px;">Ficha de Operação: ${ev.name}</h1>
+                        <p style="font-size: 12px; margin: 5px 0;"><strong>DATA:</strong> ${ev.date} | <strong>LOCAL:</strong> ${ev.venue || 'N/A'}</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Fase</th>
+                                <th>Horário</th>
+                                <th>Técnica</th>
+                                <th>Produção</th>
+                                <th>Bilheteira</th>
+                                <th>Portas</th>
+                                <th>Bar</th>
+                                <th>Segurança</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ev.shifts.map(s => `
+                                <tr>
+                                    <td><strong>${s.label}</strong></td>
+                                    <td>${s.time}</td>
+                                    <td>${(s.tech || '').replace(/\n/g, '<br>')}</td>
+                                    <td>${(s.prod || '').replace(/\n/g, '<br>')}</td>
+                                    <td>${(s.bilh || '').replace(/\n/g, '<br>')}</td>
+                                    <td>${(s.port || '').replace(/\n/g, '<br>')}</td>
+                                    <td>${(s.bar || '').replace(/\n/g, '<br>')}</td>
+                                    <td>${(s.seg || '').replace(/\n/g, '<br>')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <hr style="margin-top: 40px; border: 0.5px solid #eee;">
+                `;
+                container.appendChild(page);
+            });
+            
+            setTimeout(() => window.print(), 500);
+        }
+
+        function updateMonthlyCount() {
+            const counts = {};
+            appData.events.forEach(ev => {
+                ev.shifts.forEach(shift => {
+                    const namesInThisShift = new Set();
+                    ['tech', 'prod', 'bilh', 'port', 'bar', 'seg'].forEach(field => {
+                        const cellContent = shift[field] || '';
+                        const names = cellContent.split(/[,\n;]/);
+                        names.forEach(n => {
+                            const clean = n.trim();
+                            if (clean.length > 1) namesInThisShift.add(clean);
+                        });
+                    });
+                    namesInThisShift.forEach(name => {
+                        counts[name] = (counts[name] || 0) + 1;
+                    });
+                });
+            });
+
+            const container = document.getElementById('monthlyCounterGrid');
+            const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-zinc-700 italic text-xs py-4 col-span-full">Sem dados...</p>';
+                return;
+            }
+            container.innerHTML = sorted.map(name => `
+                <div class="flex justify-between items-center bg-zinc-900 border border-zinc-800 p-3 rounded-xl">
+                    <span class="font-bold text-zinc-100 text-[11px] uppercase tracking-tighter">${name}</span>
+                    <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full">
+                        ${counts[name]} ${counts[name] === 1 ? 'TURNO' : 'TURNOS'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function deleteCurrentEvent() {
+            if (confirm("Apagar este evento?")) {
+                appData.events = appData.events.filter(e => e.id !== appData.activeEventId);
+                appData.activeEventId = null;
+                saveToStorage();
+                location.reload();
+            }
+        }
+
+        function clearAllSystemData() {
+            if (confirm("Apagar TUDO?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
