@@ -65,7 +65,6 @@
 
         .col-phase { width: 85px; }
 
-        /* Estilos para o Seletor de Equipa Rápido */
         #quickStaffPicker {
             position: fixed;
             z-index: 50;
@@ -90,10 +89,8 @@
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Seletor Flutuante de Equipa -->
     <div id="quickStaffPicker" class="no-print"></div>
 
-    <!-- Sidebar -->
     <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
         <div class="p-4 border-b border-zinc-900">
             <h1 class="text-lg font-black tracking-tighter italic uppercase leading-none">Backstage<span class="text-indigo-500">PRO</span></h1>
@@ -184,7 +181,6 @@
             </div>
         </div>
 
-        <!-- Views Gestão -->
         <div id="staffView" class="hidden">
             <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
             <div class="flex gap-2 mb-6 max-w-xl">
@@ -218,12 +214,35 @@
     <script>
         const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
 
+        // Lista de equipa inicial conforme pedido
+        const DEFAULT_STAFF = {
+            "rs": { name: "Rita Sousa" },
+            "mv": { name: "Madalena Victorino" },
+            "gs": { name: "Giacomo Scalisi" },
+            "ss": { name: "Sandra Sanches" },
+            "rf": { name: "Ricardo Falcão" },
+            "jm": { name: "Joaquim Madaíl" },
+            "aj": { name: "Ajudante João" },
+            "am": { name: "Ajudante Manuel" }
+        };
+
+        // Lista de locais inicial conforme pedido
+        const DEFAULT_VENUES = {
+            "TP": "Teatro de Palha",
+            "EN": "Escola Nova",
+            "NB": "Novo Bowling"
+        };
+
         let appData = JSON.parse(localStorage.getItem('backstage_pro_v3')) || {
             events: [],
-            staff: {},
-            venues: {},
+            staff: DEFAULT_STAFF,
+            venues: DEFAULT_VENUES,
             activeEventId: null
         };
+
+        // Garantir que os dados por defeito existem se for uma nova instalação ou se foram apagados
+        if (Object.keys(appData.staff).length === 0) appData.staff = DEFAULT_STAFF;
+        if (Object.keys(appData.venues).length === 0) appData.venues = DEFAULT_VENUES;
 
         function saveData() { localStorage.setItem('backstage_pro_v3', JSON.stringify(appData)); }
 
@@ -311,7 +330,6 @@
             }
         }
 
-        // --- SISTEMA DE SELEÇÃO RÁPIDA DE EQUIPA ---
         let currentEditingShift = null;
         let currentEditingField = null;
         let currentTextarea = null;
@@ -336,7 +354,6 @@
             picker.style.width = rect.width + 'px';
             picker.style.display = 'block';
 
-            // Fechar ao clicar fora
             const closePicker = (e) => {
                 if (!picker.contains(e.target) && e.target !== textarea) {
                     picker.style.display = 'none';
@@ -495,8 +512,6 @@
                 </div>
             `).join('');
         }
-
-        // --- SISTEMA DE IMPRESSÃO ---
 
         function buildEventHTML(ev) {
             const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar / Cozinha','Segurança'];
