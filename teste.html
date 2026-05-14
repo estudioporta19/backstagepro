@@ -42,6 +42,7 @@
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; color: black !important; padding: 0 !important; }
+            @page { size: A4 landscape; margin: 1cm; }
             main { padding: 0 !important; width: 100% !important; max-width: 100% !important; }
             .print-container { display: block !important; width: 100% !important; }
             
@@ -130,10 +131,11 @@
 
                 <!-- Tabela de Turnos -->
                 <div class="bg-zinc-900/40 rounded-xl border border-zinc-800 overflow-x-auto table-container">
-                    <table class="w-full text-left min-w-[900px]">
+                    <table class="w-full text-left min-w-[1000px]">
                         <thead>
                             <tr class="bg-zinc-800/50 text-[9px] uppercase tracking-widest font-black text-zinc-400">
                                 <th class="p-3 w-32">Fase/Turno</th>
+                                <th class="p-3 w-24 border-l border-zinc-800">Horário</th>
                                 <th class="p-3 border-l border-zinc-800">Técnica</th>
                                 <th class="p-3 border-l border-zinc-800">Produção</th>
                                 <th class="p-3 border-l border-zinc-800">Bilheteira</th>
@@ -206,8 +208,8 @@
                 date: new Date().toISOString().split('T')[0],
                 venue: '',
                 shifts: [
-                    { id: 's1', label: 'Montagem', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' },
-                    { id: 's2', label: 'Show / Portas', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' }
+                    { id: 's1', label: 'Montagem', time: '09:00 - 13:00', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' },
+                    { id: 's2', label: 'Show / Portas', time: '19:00 - 00:00', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' }
                 ]
             };
             appData.events.push(newEvent);
@@ -248,6 +250,9 @@
                     <td class="p-2">
                         <input type="text" value="${s.label}" oninput="updateShiftField('${ev.id}', '${s.id}', 'label', this.value)" class="bg-transparent border-none text-[9px] font-black text-indigo-400 uppercase w-full p-0">
                     </td>
+                    <td class="p-2 border-l border-zinc-800/50">
+                        <input type="text" value="${s.time || ''}" placeholder="00:00" oninput="updateShiftField('${ev.id}', '${s.id}', 'time', this.value)" class="bg-transparent border-none text-[9px] font-bold text-zinc-300 w-full p-0">
+                    </td>
                     ${['tech', 'prod', 'bilh', 'port', 'bar', 'seg'].map(field => `
                         <td class="p-1 border-l border-zinc-800/50">
                             <textarea oninput="updateShiftField('${ev.id}', '${s.id}', '${field}', this.value)" placeholder="..."> ${s[field] || ''}</textarea>
@@ -269,7 +274,7 @@
 
         function addNewShift() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            ev.shifts.push({ id: 's_' + Date.now(), label: 'Novo Turno', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' });
+            ev.shifts.push({ id: 's_' + Date.now(), label: 'Novo Turno', time: '', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' });
             saveToStorage();
             renderShifts(ev);
         }
