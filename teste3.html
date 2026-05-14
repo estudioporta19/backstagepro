@@ -18,12 +18,14 @@
             background-color: var(--bg-dark); 
             color: #efefef;
             -webkit-font-smoothing: antialiased;
+            /* Aumentado para melhor legibilidade no site */
+            font-size: 18px; 
         }
 
         .tab-btn.active { 
             color: white; 
-            border-left: 3px solid var(--accent); 
-            padding-left: 12px; 
+            border-left: 5px solid var(--accent); 
+            padding-left: 16px; 
             background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%); 
         }
         
@@ -31,12 +33,13 @@
             background-color: #0d0d0d; 
             border: 1px solid #1a1a1a; 
             color: #efefef; 
-            min-height: 34px; 
-            font-size: 11px;
+            min-height: 50px; 
+            /* Fonte maior nos campos de edição conforme solicitado */
+            font-size: 17px;
             line-height: 1.4;
             width: 100%;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 10px;
             resize: none;
             overflow: hidden;
             transition: all 0.2s;
@@ -50,8 +53,8 @@
             body { background: white !important; color: black !important; }
         }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
 
         .delete-btn {
             opacity: 0;
@@ -64,82 +67,82 @@
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <aside class="w-64 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
-        <div class="p-6 border-b border-zinc-900">
-            <h1 class="text-xl font-black tracking-tighter italic uppercase">Backstage<span class="text-indigo-500">PRO</span></h1>
-            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Full Operations Suite</p>
+    <aside class="w-80 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
+        <div class="p-8 border-b border-zinc-900">
+            <h1 class="text-3xl font-black tracking-tighter italic uppercase">Backstage<span class="text-indigo-500">PRO</span></h1>
+            <p class="text-xs text-zinc-500 font-bold uppercase tracking-[0.2em] mt-1">Full Operations Suite</p>
         </div>
 
-        <nav class="flex flex-col gap-1 mt-4 px-2">
-            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+        <nav class="flex flex-col gap-2 mt-6 px-4">
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-5 px-5 text-sm font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
                 📅 Agenda e Fichas
             </button>
-            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-4 px-5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
                 👥 Equipa Técnica
             </button>
-            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-4 px-5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
                 📍 Espaços e Locais
             </button>
-            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-4 px-5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
                 📊 Contagem Turnos
             </button>
         </nav>
 
-        <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
+        <div class="mt-auto p-6 border-t border-zinc-900 space-y-3">
             <div class="flex gap-2">
-                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Exportar</button>
-                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Importar</button>
+                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-3 rounded-lg text-xs font-bold uppercase">Exportar</button>
+                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-3 rounded-lg text-xs font-bold uppercase">Importar</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
             </div>
-            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition">
+            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest transition shadow-lg">
                 + Novo Espectáculo
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-8">
+    <main class="flex-1 overflow-y-auto bg-zinc-950 p-8 md:p-12">
         
         <div id="eventsView">
-            <div class="flex flex-col lg:flex-row gap-8">
-                <div class="w-full lg:w-64 no-print">
-                    <h2 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Próximos Espectáculos</h2>
-                    <div id="eventList" class="space-y-2"></div>
+            <div class="flex flex-col lg:flex-row gap-12">
+                <div class="w-full lg:w-80 no-print">
+                    <h2 class="text-sm font-black text-zinc-500 uppercase tracking-widest mb-6">Próximos Espectáculos</h2>
+                    <div id="eventList" class="space-y-3"></div>
                 </div>
 
                 <div id="editorContainer" class="flex-1">
-                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-700">
-                        <span class="text-3xl mb-3">📋</span>
-                        <p class="text-[10px] font-black uppercase tracking-widest">Seleccione um espectáculo</p>
+                    <div id="emptyState" class="flex flex-col items-center justify-center h-96 border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-700">
+                        <span class="text-5xl mb-4">📋</span>
+                        <p class="text-xs font-black uppercase tracking-widest">Seleccione um espectáculo para editar</p>
                     </div>
 
                     <div id="editorArea" class="hidden">
-                        <header class="flex justify-between items-end mb-8 border-b border-zinc-900 pb-6">
+                        <header class="flex justify-between items-end mb-10 border-b border-zinc-900 pb-8">
                             <div class="flex-1">
-                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-3xl font-black text-white p-0 focus:ring-0 w-full" placeholder="Nome do Espectáculo">
-                                <div class="flex gap-4 mt-2">
-                                    <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-zinc-500 text-xs font-bold uppercase focus:ring-0 p-0 [color-scheme:dark]">
-                                    <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Local (Cód. + Espaço)" class="bg-transparent border-none text-zinc-500 text-xs font-bold uppercase focus:ring-0 p-0">
+                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-5xl font-black text-white p-0 focus:ring-0 w-full" placeholder="Nome do Espectáculo">
+                                <div class="flex gap-6 mt-4">
+                                    <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-lg font-bold uppercase focus:ring-0 p-0 [color-scheme:dark] text-indigo-400">
+                                    <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Local (Cód. + Espaço)" class="bg-transparent border-none text-lg font-bold uppercase focus:ring-0 p-0 text-zinc-400">
                                 </div>
                             </div>
-                            <div class="flex gap-2 no-print">
-                                <button onclick="addShift()" class="bg-zinc-900 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-zinc-400 hover:bg-zinc-800 transition">+ Horário</button>
-                                <button onclick="printSingleEvent()" class="bg-white text-black px-4 py-2 rounded-lg text-[9px] font-black uppercase shadow-lg hover:bg-zinc-200 transition">Imprimir Ficha</button>
-                                <button onclick="printAllEvents()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase transition">Imprimir Todas</button>
+                            <div class="flex gap-3 no-print">
+                                <button onclick="addShift()" class="bg-zinc-900 px-6 py-3 rounded-xl text-xs font-black uppercase text-zinc-400 hover:bg-zinc-800 transition">+ Horário</button>
+                                <button onclick="printSingleEvent()" class="bg-white text-black px-6 py-3 rounded-xl text-xs font-black uppercase shadow-xl hover:bg-zinc-200 transition">Imprimir Ficha</button>
+                                <button onclick="printAllEvents()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl text-xs font-black uppercase transition">Imprimir Todas</button>
                             </div>
                         </header>
 
-                        <div class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-900/10">
-                            <table class="w-full text-left">
+                        <div class="overflow-x-auto rounded-2xl border border-zinc-900 bg-zinc-900/10">
+                            <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="bg-zinc-900/50 text-[8px] font-black text-zinc-500 uppercase tracking-widest">
-                                        <th class="p-3 w-40">Fase / Hora</th>
-                                        <th class="p-3 border-l border-zinc-800">Técnicos</th>
-                                        <th class="p-3 border-l border-zinc-800">Produção</th>
-                                        <th class="p-3 border-l border-zinc-800">Bilheteira</th>
-                                        <th class="p-3 border-l border-zinc-800">Portas</th>
-                                        <th class="p-3 border-l border-zinc-800">Bar/Cozinha</th>
-                                        <th class="p-3 border-l border-zinc-800">Segurança</th>
-                                        <th class="p-3 w-8 no-print"></th>
+                                    <tr class="bg-zinc-900/50 text-xs font-black text-zinc-500 uppercase tracking-widest">
+                                        <th class="p-6 w-56">Fase / Hora</th>
+                                        <th class="p-6 border-l border-zinc-800/50">Técnicos</th>
+                                        <th class="p-6 border-l border-zinc-800/50">Produção</th>
+                                        <th class="p-6 border-l border-zinc-800/50">Bilheteira</th>
+                                        <th class="p-6 border-l border-zinc-800/50">Portas</th>
+                                        <th class="p-6 border-l border-zinc-800/50">Bar/Cozinha</th>
+                                        <th class="p-6 border-l border-zinc-800/50">Segurança</th>
+                                        <th class="p-6 w-12 no-print"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="shiftsBody" class="divide-y divide-zinc-900/50"></tbody>
@@ -151,35 +154,38 @@
         </div>
 
         <div id="staffView" class="hidden">
-            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Equipa</h2>
-            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
-                <div class="flex gap-3">
-                    <input type="text" id="newStaffCode" placeholder="Cód (Auto se vazio)" class="w-40 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
-                    <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
-                    <button onclick="addStaffMember()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
+            <h2 class="text-3xl font-black uppercase mb-8 italic">Gestão de Equipa</h2>
+            <div class="bg-zinc-900/40 p-8 rounded-3xl border border-zinc-900 mb-10 max-w-3xl">
+                <div class="flex gap-4">
+                    <input type="text" id="newStaffCode" placeholder="Cód" class="w-32 bg-black border border-zinc-800 rounded-xl px-5 py-3 text-sm outline-none focus:border-indigo-500">
+                    <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome do Colaborador" class="flex-1 bg-black border border-zinc-800 rounded-xl px-5 py-3 text-sm outline-none focus:border-indigo-500">
+                    <button onclick="addStaffMember()" class="bg-indigo-600 px-8 py-3 rounded-xl text-xs font-black uppercase">Adicionar</button>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="staffGrid"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="staffGrid"></div>
         </div>
 
         <div id="venuesView" class="hidden">
-            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Espaços</h2>
-            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
-                <div class="flex gap-3">
-                    <input type="text" id="newVenueCode" placeholder="Cód (Opcional)" class="w-32 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
-                    <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Nome do Local (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
-                    <button onclick="addVenue()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
+            <h2 class="text-3xl font-black uppercase mb-8 italic">Gestão de Espaços</h2>
+            <div class="bg-zinc-900/40 p-8 rounded-3xl border border-zinc-900 mb-10 max-w-3xl">
+                <div class="flex gap-4">
+                    <input type="text" id="newVenueCode" placeholder="Cód" class="w-32 bg-black border border-zinc-800 rounded-xl px-5 py-3 text-sm outline-none focus:border-indigo-500">
+                    <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Nome do Local" class="flex-1 bg-black border border-zinc-800 rounded-xl px-5 py-3 text-sm outline-none focus:border-indigo-500">
+                    <button onclick="addVenue()" class="bg-indigo-600 px-8 py-3 rounded-xl text-xs font-black uppercase">Adicionar</button>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="venueGrid"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="venueGrid"></div>
         </div>
 
         <div id="counterView" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-black uppercase italic">Resumo de Turnos Totais</h2>
-                <button onclick="printTurnos()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg text-[10px] font-black uppercase transition shadow-lg">Imprimir Contagem</button>
+            <div class="flex justify-between items-center mb-10 border-b border-zinc-900 pb-8">
+                <div>
+                    <h2 class="text-3xl font-black uppercase italic">Resumo de Turnos</h2>
+                    <p class="text-sm text-zinc-500 font-bold uppercase tracking-widest">Contagem acumulada por colaborador</p>
+                </div>
+                <button onclick="printTurnos()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-xl text-sm font-black uppercase transition shadow-lg">Imprimir Contagem</button>
             </div>
-            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
         </div>
 
     </main>
@@ -222,18 +228,17 @@
             
             list.innerHTML = sorted.map(ev => `
                 <div class="event-card relative group">
-                    <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-3 rounded-xl border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/40 border-zinc-900'} hover:border-zinc-700 transition">
-                        <div class="text-[9px] font-black text-zinc-500 uppercase">${ev.date || 'Sem data'}</div>
-                        <div class="text-xs font-bold text-white truncate pr-6">${ev.name}</div>
+                    <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-6 rounded-2xl border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/40 border-zinc-900'} hover:border-zinc-700 transition">
+                        <div class="text-xs font-black text-indigo-400 uppercase mb-1">${ev.date || 'Sem data'}</div>
+                        <div class="text-lg font-bold text-white truncate pr-10">${ev.name}</div>
                     </button>
-                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-3 right-3 text-zinc-700 hover:text-red-500 text-lg leading-none no-print">×</button>
+                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-6 right-5 text-zinc-700 hover:text-red-500 text-2xl leading-none no-print">×</button>
                 </div>
             `).join('');
         }
 
         function deleteEvent(id) {
             const ev = appData.events.find(e => e.id === id);
-            // Simulação de confirmação simples e menos intrusiva que alert
             const confirmacao = prompt(`Para apagar "${ev.name}", escreva APAGAR:`);
             if (confirmacao === 'APAGAR') {
                 appData.events = appData.events.filter(e => e.id !== id);
@@ -275,22 +280,22 @@
             const tbody = document.getElementById('shiftsBody');
             tbody.innerHTML = ev.shifts.map(s => `
                 <tr class="group hover:bg-zinc-900/30">
-                    <td class="p-2 align-top">
+                    <td class="p-5 align-top">
                         <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" 
-                                  class="bg-transparent border-none text-[10px] font-black text-indigo-400 uppercase w-full p-0 focus:ring-0 mb-1" 
-                                  placeholder="Fase">${s.label || ''}</textarea>
+                                  class="bg-transparent border-none text-xs font-black text-indigo-400 uppercase w-full p-0 focus:ring-0 mb-1" 
+                                  placeholder="FASE">${s.label || ''}</textarea>
                         <input type="text" value="${s.time}" 
                                onchange="updateShiftField('${s.id}', 'time', this.value); sortAndReRender()" 
-                               class="bg-transparent border-none text-[10px] font-bold text-zinc-500 w-full p-0 focus:ring-0" 
+                               class="bg-transparent border-none text-xl font-black text-white w-full p-0 focus:ring-0" 
                                placeholder="00:00">
                     </td>
                     ${APP_COLUMNS.map(col => `
-                        <td class="p-1.5 border-l border-zinc-900/50 align-top">
-                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" placeholder="..."> ${s[col] || ''}</textarea>
+                        <td class="p-3 border-l border-zinc-900/50 align-top">
+                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" placeholder="..." class="min-h-[60px] text-base">${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
-                    <td class="p-3 no-print align-top text-right">
-                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition text-lg">×</button>
+                    <td class="p-6 no-print align-top text-right">
+                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition text-3xl">×</button>
                     </td>
                 </tr>
             `).join('');
@@ -373,27 +378,30 @@
 
             const rows = ev.shifts.map(s => `
                 <tr>
-                    <td style="padding:10px; border:1px solid #ddd; font-size:9px; vertical-align:top; background:#fcfcfc; line-height:1.3; overflow-wrap: break-word;">
-                        <div style="color:#4338ca; font-weight:900; text-transform:uppercase; margin-bottom:4px; font-size:10px;">${(s.label||'').toUpperCase()}</div>
-                        <div style="color:#111; font-weight:800; border-top:1px solid #eee; padding-top:2px;">${s.time||''}</div>
+                    <td style="padding:15px; border:1px solid #000; font-size:12px; vertical-align:top; background:#f0f0f0; line-height:1.4; width:150px;">
+                        <div style="color:#4338ca; font-weight:900; text-transform:uppercase; margin-bottom:5px; font-size:11px;">${(s.label||'').toUpperCase()}</div>
+                        <div style="color:#000; font-weight:900; border-top:3px solid #000; padding-top:6px; font-size:18px;">${s.time||''}</div>
                     </td>
-                    ${keys.map(k => `<td style="padding:10px; border:1px solid #ddd; font-size:9px; vertical-align:top; white-space:pre-wrap; word-break:break-word; line-height:1.4;">${(s[k]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>`).join('')}
+                    ${keys.map(k => `
+                        <td style="padding:15px; border:1px solid #000; font-size:14px; vertical-align:top; white-space:pre-wrap; word-break:normal; line-height:1.4; color:#000; font-weight:600;">
+                            ${(s[k]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+                        </td>`).join('')}
                 </tr>`).join('');
 
             return `
                 <div class="ev-block" style="margin-bottom: 40px; page-break-after: always;">
-                    <div style="border-bottom: 4px solid #000; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div style="border-bottom: 8px solid #000; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
                         <div>
-                            <h2 style="font-size:26px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-1px">${ev.name}</h2>
-                            <p style="font-size:12px; color:#444; margin:5px 0 0; font-weight:700; text-transform:uppercase; letter-spacing:1px">${ev.date}${ev.venue ? ' &bull; ' + ev.venue : ''}</p>
+                            <h2 style="font-size:48px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-2px; line-height:1">${ev.name}</h2>
+                            <p style="font-size:20px; color:#000; margin:12px 0 0; font-weight:800; text-transform:uppercase; letter-spacing:1px">${ev.date}${ev.venue ? ' &bull; ' + ev.venue : ''}</p>
                         </div>
-                        <div style="text-align:right; font-size:8px; font-weight:900; color:#aaa; text-transform:uppercase;">Backstage PRO System</div>
+                        <div style="text-align:right; font-size:12px; font-weight:900; color:#555; text-transform:uppercase;">Sistema Backstage PRO</div>
                     </div>
-                    <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:1px solid #ddd;">
+                    <table style="width:100%; border-collapse:collapse; border:4px solid #000;">
                         <thead>
-                            <tr style="background:#f1f1f1; font-size:8px; font-weight:900; text-transform:uppercase; color:#000">
-                                <th style="padding:12px 10px; border:1px solid #ddd; width:110px; text-align:left">Fase / Hora</th>
-                                ${cols.map(c=>`<th style="padding:12px 10px; border:1px solid #ddd; text-align:left">${c}</th>`).join('')}
+                            <tr style="background:#000; font-size:13px; font-weight:900; text-transform:uppercase; color:#fff">
+                                <th style="padding:18px 15px; border:1px solid #000; text-align:left">Fase / Hora</th>
+                                ${cols.map(c=>`<th style="padding:18px 15px; border:1px solid #000; text-align:left">${c}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -429,26 +437,19 @@
             
             let html = `
                 <div style="padding: 20px;">
-                    <div style="border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h1 style="font-size:24px; font-weight:900; margin:0; text-transform:uppercase;">Resumo Geral de Turnos</h1>
-                        <p style="font-size:10px; color:#666; text-transform:uppercase; font-weight:700; margin-top:5px;">Gerado em: ${new Date().toLocaleDateString()}</p>
+                    <div style="border-bottom: 8px solid #000; padding-bottom: 20px; margin-bottom: 40px;">
+                        <h1 style="font-size:42px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-1px;">Resumo Geral de Turnos</h1>
+                        <p style="font-size:16px; color:#000; text-transform:uppercase; font-weight:800; margin-top:8px;">Activos: ${sorted.length} &bull; Emissão: ${new Date().toLocaleDateString()}</p>
                     </div>
-                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                        <thead>
-                            <tr style="background:#f4f4f4; text-transform:uppercase; font-size:10px; font-weight:900;">
-                                <th style="border:1px solid #ddd; padding:12px; text-align:left;">Membro da Equipa</th>
-                                <th style="border:1px solid #ddd; padding:12px; text-align:center; width:120px;">Total Turnos</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${sorted.map(([nameLower, count]) => `
-                                <tr>
-                                    <td style="border:1px solid #ddd; padding:10px; font-weight:600;">${displayName[nameLower]}</td>
-                                    <td style="border:1px solid #ddd; padding:10px; text-align:center; font-weight:800; font-size:14px;">${count}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px 40px;">
+                        ${sorted.map(([nameLower, count]) => `
+                            <div style="border-bottom: 2px solid #ddd; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; break-inside: avoid;">
+                                <span style="font-weight:700; font-size:18px; color:#000; text-transform: uppercase;">${displayName[nameLower]}</span>
+                                <span style="background:#000; color:#fff; padding:6px 14px; border-radius:6px; font-weight:900; font-size:18px;">${count}</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `;
             executePrint(html, 'Contagem de Turnos');
@@ -459,9 +460,9 @@
             win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
                 <title>${title}</title>
                 <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-                    @page { size: portrait; margin: 1cm; }
-                    body { font-family: 'Inter', Arial, sans-serif; color: #000; background: #fff; line-height: 1.4; padding: 0; margin: 0; }
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+                    @page { size: landscape; margin: 1cm; }
+                    body { font-family: 'Inter', Arial, sans-serif; color: #000; background: #fff; line-height: 1.4; padding: 0; margin: 0; -webkit-print-color-adjust: exact; }
                     .ev-block { page-break-inside: avoid; }
                     table { width: 100%; border-collapse: collapse; }
                 </style>
@@ -547,12 +548,12 @@
         function renderStaff() {
             const grid = document.getElementById('staffGrid');
             grid.innerHTML = Object.entries(appData.staff).map(([code, data]) => `
-                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center group">
+                <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 flex justify-between items-center group">
                     <div>
-                        <div class="text-[9px] font-black text-indigo-500 uppercase">${code}</div>
-                        <div class="text-xs font-bold text-white">${data.name}</div>
+                        <div class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">${code}</div>
+                        <div class="text-lg font-bold text-white">${data.name}</div>
                     </div>
-                    <button onclick="deleteStaff('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
+                    <button onclick="deleteStaff('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition text-2xl">×</button>
                 </div>
             `).join('');
         }
@@ -580,12 +581,12 @@
         function renderVenues() {
             const grid = document.getElementById('venueGrid');
             grid.innerHTML = Object.entries(appData.venues).map(([code, name]) => `
-                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center group">
+                <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 flex justify-between items-center group">
                     <div>
-                        <div class="text-[9px] font-black text-indigo-400 uppercase">${code}</div>
-                        <div class="text-xs font-bold text-white">${name}</div>
+                        <div class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">${code}</div>
+                        <div class="text-lg font-bold text-white">${name}</div>
                     </div>
-                    <button onclick="deleteVenue('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
+                    <button onclick="deleteVenue('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition text-2xl">×</button>
                 </div>
             `).join('');
         }
@@ -624,14 +625,14 @@
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
 
             if(sorted.length === 0) {
-                grid.innerHTML = '<div class="col-span-full py-12 text-center text-zinc-700 font-bold uppercase text-[10px] tracking-widest border border-dashed border-zinc-900 rounded-3xl">Sem registos de nomes nos eventos</div>';
+                grid.innerHTML = '<div class="col-span-full py-20 text-center text-zinc-700 font-bold uppercase text-xs tracking-widest border border-dashed border-zinc-900 rounded-3xl">Sem registos de turnos</div>';
                 return;
             }
 
             grid.innerHTML = sorted.map(([nameLower, count]) => `
-                <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-900 flex justify-between items-center">
-                    <span class="text-xs font-bold text-white">${displayName[nameLower]}</span>
-                    <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/10">${count} Turnos</span>
+                <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900 flex justify-between items-center">
+                    <span class="text-base font-bold text-white uppercase">${displayName[nameLower]}</span>
+                    <span class="bg-indigo-600/20 text-indigo-400 text-sm font-black px-4 py-2 rounded-xl border border-indigo-500/10">${count} Turnos</span>
                 </div>
             `).join('');
         }
