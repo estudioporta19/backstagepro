@@ -57,7 +57,6 @@
         .delete-btn { opacity: 0; transition: all 0.2s; }
         .event-card:hover .delete-btn { opacity: 1; }
 
-        /* Forçar layout fixo sem scroll horizontal */
         .main-table {
             table-layout: fixed;
             width: 100%;
@@ -99,7 +98,6 @@
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
             </div>
             
-            <!-- Botão de Impressão Global Restaurado -->
             <button onclick="printAllEvents()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-lg text-[9px] uppercase tracking-widest transition">
                 🖨️ Imprimir Agenda
             </button>
@@ -114,13 +112,11 @@
         
         <div id="eventsView">
             <div class="flex flex-col lg:flex-row gap-4 h-full">
-                <!-- Lista de Eventos -->
                 <div class="w-full lg:w-48 no-print shrink-0">
                     <h2 class="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-3 px-1">Próximos Dias</h2>
                     <div id="eventList" class="space-y-1"></div>
                 </div>
 
-                <!-- Editor Principal -->
                 <div id="editorContainer" class="flex-1 min-w-0">
                     <div id="emptyState" class="flex flex-col items-center justify-center h-64 border border-dashed border-zinc-900 rounded-2xl text-zinc-800">
                         <p class="text-[10px] font-black uppercase tracking-widest italic">Nenhum evento selecionado</p>
@@ -147,20 +143,12 @@
                                 <thead>
                                     <tr class="bg-zinc-900 text-[8px] font-black text-zinc-500 uppercase tracking-widest">
                                         <th class="p-2 col-phase text-center">Fase/Hora</th>
-                                        <th class="p-2 border-l border-zinc-800">
-                                            <div class="flex justify-between items-center px-1">
-                                                Técnicos <button onclick="clearColumn('tecnicos')" class="opacity-30 hover:opacity-100 text-[10px]" title="Limpar Coluna">🧹</button>
-                                            </div>
-                                        </th>
-                                        <th class="p-2 border-l border-zinc-800">
-                                            <div class="flex justify-between items-center px-1">
-                                                Produção <button onclick="clearColumn('producao')" class="opacity-30 hover:opacity-100 text-[10px]" title="Limpar Coluna">🧹</button>
-                                            </div>
-                                        </th>
-                                        <th class="p-2 border-l border-zinc-800 text-[7px] leading-tight">Bilheteira <button onclick="clearColumn('bilheteira')" class="opacity-30 hover:opacity-100" title="Limpar Coluna">🧹</button></th>
-                                        <th class="p-2 border-l border-zinc-800">Portas <button onclick="clearColumn('portas')" class="opacity-30 hover:opacity-100" title="Limpar Coluna">🧹</button></th>
-                                        <th class="p-2 border-l border-zinc-800">Bar/Coz. <button onclick="clearColumn('bar')" class="opacity-30 hover:opacity-100" title="Limpar Coluna">🧹</button></th>
-                                        <th class="p-2 border-l border-zinc-800">Segur. <button onclick="clearColumn('seguranca')" class="opacity-30 hover:opacity-100" title="Limpar Coluna">🧹</button></th>
+                                        <th class="p-2 border-l border-zinc-800">Técnicos</th>
+                                        <th class="p-2 border-l border-zinc-800">Produção</th>
+                                        <th class="p-2 border-l border-zinc-800">Bilheteira</th>
+                                        <th class="p-2 border-l border-zinc-800">Portas</th>
+                                        <th class="p-2 border-l border-zinc-800">Bar/Coz.</th>
+                                        <th class="p-2 border-l border-zinc-800">Segur.</th>
                                         <th class="p-2 col-action no-print"></th>
                                     </tr>
                                 </thead>
@@ -172,7 +160,6 @@
             </div>
         </div>
 
-        <!-- Views de Gestão -->
         <div id="staffView" class="hidden">
             <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
             <div class="flex gap-2 mb-6 max-w-xl">
@@ -208,14 +195,12 @@
 
         let appData = JSON.parse(localStorage.getItem('backstage_pro_v3')) || {
             events: [],
-            staff: { "101": { name: "EXEMPLO TÉCNICO" } },
-            venues: { "TNM": "Teatro Nacional" },
+            staff: {},
+            venues: {},
             activeEventId: null
         };
 
-        function saveData() {
-            localStorage.setItem('backstage_pro_v3', JSON.stringify(appData));
-        }
+        function saveData() { localStorage.setItem('backstage_pro_v3', JSON.stringify(appData)); }
 
         function switchTab(tab) {
             ['events', 'staff', 'venues', 'counter'].forEach(t => {
@@ -224,7 +209,6 @@
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
-
             if(tab === 'staff') renderStaff();
             if(tab === 'venues') renderVenues();
             if(tab === 'counter') updateMonthlyCount();
@@ -234,7 +218,6 @@
         function renderEventList() {
             const list = document.getElementById('eventList');
             const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-            
             list.innerHTML = sorted.map(ev => `
                 <div class="event-card relative">
                     <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-2 rounded border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/30 border-zinc-900'} hover:border-zinc-700 transition">
@@ -264,17 +247,12 @@
             tbody.innerHTML = ev.shifts.map(s => `
                 <tr class="group hover:bg-zinc-900/20">
                     <td class="p-1 align-top text-center">
-                        <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" 
-                                  class="bg-transparent border-none text-[8px] font-black text-indigo-500/80 uppercase text-center w-full p-0 focus:ring-0" 
-                                  placeholder="FASE">${s.label || ''}</textarea>
-                        <input type="text" value="${s.time}" 
-                               onchange="updateShiftField('${s.id}', 'time', this.value); sortAndReRender()" 
-                               class="bg-transparent border-none text-[11px] font-black text-white text-center w-full p-0 focus:ring-0" 
-                               placeholder="00:00">
+                        <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" class="bg-transparent border-none text-[8px] font-black text-indigo-500/80 uppercase text-center w-full p-0 focus:ring-0">${s.label || ''}</textarea>
+                        <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value); sortAndReRender()" class="bg-transparent border-none text-[11px] font-black text-white text-center w-full p-0 focus:ring-0">
                     </td>
                     ${APP_COLUMNS.map(col => `
                         <td class="p-1 border-l border-zinc-900 align-top">
-                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" class="placeholder-zinc-900">${s[col] || ''}</textarea>
+                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)">${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
                     <td class="p-1 no-print align-top text-center">
@@ -285,18 +263,11 @@
             tbody.querySelectorAll('textarea').forEach(adjustHeight);
         }
 
-        function adjustHeight(el) {
-            el.style.height = '32px';
-            if (el.scrollHeight > 32) el.style.height = el.scrollHeight + 'px';
-        }
+        function adjustHeight(el) { el.style.height = '32px'; if (el.scrollHeight > 32) el.style.height = el.scrollHeight + 'px'; }
 
         function sortAndReRender() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if (ev) {
-                ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
-                saveData();
-                renderShifts(ev);
-            }
+            if (ev) { ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00")); saveData(); renderShifts(ev); }
         }
 
         function updateActiveEvent(field, val) {
@@ -309,15 +280,6 @@
             if(ev) {
                 const shift = ev.shifts.find(s => s.id === shiftId);
                 if(shift) { shift[field] = val; saveData(); }
-            }
-        }
-
-        function clearColumn(colKey) {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev && confirm(`Deseja limpar todos os dados da coluna ${colKey.toUpperCase()}?`)) {
-                ev.shifts.forEach(s => s[colKey] = '');
-                saveData();
-                renderShifts(ev);
             }
         }
 
@@ -338,10 +300,7 @@
             const regex = /(\b\w+\b)([ ,;\n\r])/g;
             let changed = false;
             const newVal = val.replace(regex, (match, code, delimiter) => {
-                if (appData.staff[code.toLowerCase()]) {
-                    changed = true;
-                    return appData.staff[code.toLowerCase()].name + delimiter;
-                }
+                if (appData.staff[code.toLowerCase()]) { changed = true; return appData.staff[code.toLowerCase()].name + delimiter; }
                 return match;
             });
             if (changed) { textarea.value = newVal; updateShiftField(shiftId, field, newVal); }
@@ -395,11 +354,7 @@
 
         function removeShift(id) {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev && confirm("Remover fase?")) {
-                ev.shifts = ev.shifts.filter(s => s.id !== id);
-                saveData();
-                renderShifts(ev);
-            }
+            if(ev && confirm("Remover fase?")) { ev.shifts = ev.shifts.filter(s => s.id !== id); saveData(); renderShifts(ev); }
         }
 
         function addStaffMember() {
@@ -423,9 +378,7 @@
             `).join('');
         }
 
-        function deleteStaff(code) {
-            if(confirm("Eliminar da lista?")) { delete appData.staff[code]; saveData(); renderStaff(); }
-        }
+        function deleteStaff(code) { if(confirm("Eliminar da lista?")) { delete appData.staff[code]; saveData(); renderStaff(); } }
 
         function addVenue() {
             let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
@@ -447,20 +400,14 @@
         }
 
         function updateMonthlyCount() {
-            const counts = {};
-            const displayName = {};
-            appData.events.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    const uniqueInShift = new Set();
-                    APP_COLUMNS.forEach(col => {
-                        if (s[col]) s[col].split(/[,\n;]/).forEach(n => {
-                            const clean = n.trim();
-                            if(clean.length > 2) { uniqueInShift.add(clean.toLowerCase()); displayName[clean.toLowerCase()] = clean; }
-                        });
-                    });
-                    uniqueInShift.forEach(n => counts[n] = (counts[n] || 0) + 1);
-                });
-            });
+            const counts = {}; const displayName = {};
+            appData.events.forEach(ev => ev.shifts.forEach(s => {
+                const uniqueInShift = new Set();
+                APP_COLUMNS.forEach(col => { if (s[col]) s[col].split(/[,\n;]/).forEach(n => {
+                    const clean = n.trim(); if(clean.length > 2) { uniqueInShift.add(clean.toLowerCase()); displayName[clean.toLowerCase()] = clean; }
+                }); });
+                uniqueInShift.forEach(n => counts[n] = (counts[n] || 0) + 1);
+            }));
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
             document.getElementById('monthlyCounterGrid').innerHTML = sorted.map(([n, c]) => `
                 <div class="bg-zinc-900/50 p-2 rounded flex justify-between items-center">
@@ -470,7 +417,7 @@
             `).join('');
         }
 
-        // Impressão Refinada (Black Header)
+        // --- SISTEMA DE IMPRESSÃO ATUALIZADO ---
         function buildEventHTML(ev) {
             const cols = ['Técnicos','Produção','Bilh.','Portas','Bar','Seg.'];
             const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
@@ -478,27 +425,27 @@
 
             const rows = ev.shifts.map(s => `
                 <tr>
-                    <td style="padding:6px; border:1px solid #000; font-size:9px; vertical-align:top; background:#f0f0f0;">
-                        <div style="font-weight:900; text-transform:uppercase; color:#333;">${s.label||''}</div>
-                        <div style="font-weight:900; font-size:12px; margin-top:2px;">${s.time||''}</div>
+                    <td style="padding:4px 6px; border:1px solid #000; font-size:9px; vertical-align:top; background:#f5f5f5;">
+                        <div style="font-weight:900; text-transform:uppercase; color:#000;">${s.label||''}</div>
+                        <div style="font-weight:900; font-size:11px; margin-top:2px;">${s.time||''}</div>
                     </td>
-                    ${keys.map(k => `<td style="padding:6px; border:1px solid #000; font-size:10px; vertical-align:top; white-space:pre-wrap;">${s[k]||''}</td>`).join('')}
+                    ${keys.map(k => `<td style="padding:4px 6px; border:1px solid #000; font-size:9px; vertical-align:top; white-space:pre-wrap;">${s[k]||''}</td>`).join('')}
                 </tr>`).join('');
 
             return `
-                <div style="margin-bottom:40px; page-break-after:always;">
-                    <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:flex-end;">
+                <div style="margin-bottom:30px; page-break-after:always;">
+                    <div style="border-bottom:3px solid #000; padding-bottom:5px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-end;">
                         <div>
-                            <h1 style="font-size:26px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-1px;">${ev.name}</h1>
-                            <p style="font-size:12px; margin:4px 0 0; font-weight:700; color:#555;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'SEM LOCAL'}</p>
+                            <h1 style="font-size:22px; font-weight:900; margin:0; text-transform:uppercase;">${ev.name}</h1>
+                            <p style="font-size:11px; margin:2px 0 0; font-weight:700; color:#333;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'SEM LOCAL'}</p>
                         </div>
-                        <div style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:1px; color:#999;">Backstage Pro</div>
+                        <div style="font-size:8px; font-weight:900; text-transform:uppercase; color:#666;">Backstage Pro</div>
                     </div>
                     <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:2px solid #000;">
                         <thead>
                             <tr style="background:#000; color:#fff;">
-                                <th style="width:80px; padding:8px; border:1px solid #000; text-align:left; font-size:9px; text-transform:uppercase;">Horário</th>
-                                ${cols.map(c=>`<th style="padding:8px; border:1px solid #000; text-align:left; font-size:9px; text-transform:uppercase; font-weight:900;">${c}</th>`).join('')}
+                                <th style="width:75px; padding:6px; border:1px solid #000; text-align:left; font-size:9px; text-transform:uppercase; font-weight:900;">Horário</th>
+                                ${cols.map(c=>`<th style="padding:6px; border:1px solid #000; text-align:left; font-size:9px; text-transform:uppercase; font-weight:900;">${c}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -508,22 +455,13 @@
 
         function executePrint(html) {
             const win = window.open('', '_blank');
-            win.document.write(`
-                <html>
-                    <head>
-                        <title>Backstage PRO - Impressão</title>
-                        <style>
-                            @page { margin: 1.5cm; }
-                            body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; color: #000; line-height: 1.2; }
-                            table { page-break-inside: auto; }
-                            tr { page-break-inside: avoid; page-break-after: auto; }
-                        </style>
-                    </head>
-                    <body>${html}</body>
-                </html>`);
+            win.document.write(`<html><head><title>Backstage PRO</title><style>
+                @page { margin: 1cm; }
+                body { font-family: 'Inter', sans-serif; margin: 0; color: #000; }
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            </style></head><body>${html}</body></html>`);
             win.document.close();
-            // Pequeno delay para garantir que os estilos/fontes carreguem se necessário
-            setTimeout(() => { win.print(); }, 250);
+            setTimeout(() => { win.print(); }, 300);
         }
 
         function printSingleEvent() { 
@@ -532,10 +470,9 @@
         }
 
         function printAllEvents() { 
-            if(appData.events.length === 0) return alert("Não existem eventos para imprimir.");
-            // Ordenar por data antes de imprimir a agenda toda
-            const sortedEvents = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-            executePrint(sortedEvents.map(ev => buildEventHTML(ev)).join('')); 
+            if(appData.events.length === 0) return;
+            const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+            executePrint(sorted.map(ev => buildEventHTML(ev)).join('')); 
         }
 
         function printTurnos() {
@@ -548,16 +485,26 @@
                 uniqueInShift.forEach(n => counts[n] = (counts[n] || 0) + 1);
             }));
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+            
+            // Otimização para 50 nomes: colunas lado a lado ou densidade alta
             const html = `
-                <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:20px;">
-                    <h1 style="text-transform:uppercase; font-weight:900; margin:0;">Contagem Acumulada de Turnos</h1>
+                <div style="border-bottom:3px solid #000; padding-bottom:5px; margin-bottom:15px;">
+                    <h1 style="text-transform:uppercase; font-weight:900; margin:0; font-size:18px;">Mapa Acumulado de Turnos</h1>
                 </div>
-                <table border="1" style="width:100%; border-collapse:collapse; font-size:12px;">
-                    <tr style="background:#000; color:#fff;">
-                        <th style="padding:10px; text-align:left;">NOME DO COLABORADOR</th>
-                        <th style="padding:10px; text-align:center; width:100px;">TURNOS</th>
-                    </tr>
-                    ${sorted.map(([n, c]) => `<tr><td style="padding:8px; font-weight:bold;">${displayName[n].toUpperCase()}</td><td style="padding:8px; text-align:center; font-weight:900;">${c}</td></tr>`).join('')}
+                <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                    <thead>
+                        <tr style="background:#000; color:#fff;">
+                            <th style="padding:6px; text-align:left; border:1px solid #000; font-weight:900; text-transform:uppercase;">Colaborador</th>
+                            <th style="padding:6px; text-align:center; width:80px; border:1px solid #000; font-weight:900; text-transform:uppercase;">Turnos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    ${sorted.map(([n, c]) => `
+                        <tr>
+                            <td style="padding:3px 8px; border:1px solid #000; font-weight:700;">${displayName[n].toUpperCase()}</td>
+                            <td style="padding:3px 8px; border:1px solid #000; text-align:center; font-weight:900;">${c}</td>
+                        </tr>`).join('')}
+                    </tbody>
                 </table>`;
             executePrint(html);
         }
