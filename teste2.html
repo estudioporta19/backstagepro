@@ -49,6 +49,8 @@
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; color: black !important; }
+            /* Garante que as cores de fundo sejam impressas */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -60,16 +62,14 @@
         .main-table {
             table-layout: fixed;
             width: 100%;
-            min-width: 0 !important; 
         }
 
         .col-phase { width: 85px; }
-        .col-action { width: 30px; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Sidebar Estreita -->
+    <!-- Sidebar -->
     <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
         <div class="p-4 border-b border-zinc-900">
             <h1 class="text-lg font-black tracking-tighter italic uppercase leading-none">Backstage<span class="text-indigo-500">PRO</span></h1>
@@ -93,8 +93,8 @@
 
         <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
             <div class="flex gap-1.5">
-                <button onclick="exportData()" title="Exportar JSON" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Export</button>
-                <button onclick="document.getElementById('importFile').click()" title="Importar JSON" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Import</button>
+                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Export</button>
+                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Import</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
             </div>
             
@@ -125,7 +125,7 @@
                     <div id="editorArea" class="hidden">
                         <header class="flex justify-between items-start mb-4 border-b border-zinc-900 pb-4">
                             <div class="flex-1 min-w-0 pr-4">
-                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-2xl font-black text-white p-0 focus:ring-0 w-full truncate placeholder-zinc-800" placeholder="Título">
+                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-2xl font-black text-white p-0 focus:ring-0 w-full truncate" placeholder="Título">
                                 <div class="flex flex-wrap gap-3 mt-1">
                                     <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-[10px] font-bold uppercase focus:ring-0 p-0 [color-scheme:dark] text-indigo-400 w-28">
                                     <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Cód + Local" class="bg-transparent border-none text-[10px] font-bold uppercase focus:ring-0 p-0 text-zinc-500 flex-1 min-w-[120px]">
@@ -149,7 +149,7 @@
                                         <th class="p-2 border-l border-zinc-800">Portas</th>
                                         <th class="p-2 border-l border-zinc-800">Bar/Coz.</th>
                                         <th class="p-2 border-l border-zinc-800">Segur.</th>
-                                        <th class="p-2 col-action no-print"></th>
+                                        <th class="p-2 w-8 no-print"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="shiftsBody" class="divide-y divide-zinc-900/50"></tbody>
@@ -160,6 +160,7 @@
             </div>
         </div>
 
+        <!-- Views Gestão -->
         <div id="staffView" class="hidden">
             <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
             <div class="flex gap-2 mb-6 max-w-xl">
@@ -182,7 +183,7 @@
 
         <div id="counterView" class="hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black uppercase italic">Contagem Acumulada</h2>
+                <h2 class="text-lg font-black uppercase italic">Contagem de Turnos</h2>
                 <button onclick="printTurnos()" class="bg-indigo-600 px-4 py-2 rounded text-[9px] font-black uppercase">Imprimir Mapa</button>
             </div>
             <div id="monthlyCounterGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2"></div>
@@ -224,7 +225,7 @@
                         <div class="text-[7px] font-black text-indigo-400 uppercase">${ev.date ? ev.date.split('-').reverse().join('/') : 'S/ DATA'}</div>
                         <div class="text-[10px] font-bold text-white truncate pr-4">${ev.name}</div>
                     </button>
-                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-1 right-1 text-zinc-800 hover:text-red-500 text-xs no-print">×</button>
+                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-1 right-1 text-zinc-800 hover:text-red-500 text-xs">×</button>
                 </div>
             `).join('');
         }
@@ -417,35 +418,37 @@
             `).join('');
         }
 
-        // --- SISTEMA DE IMPRESSÃO ATUALIZADO ---
+        // --- SISTEMA DE IMPRESSÃO ---
+
         function buildEventHTML(ev) {
-            const cols = ['Técnicos','Produção','Bilh.','Portas','Bar','Seg.'];
+            // Nomes completos para modo Horizontal
+            const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar / Cozinha','Segurança'];
             const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
             ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
 
             const rows = ev.shifts.map(s => `
                 <tr>
-                    <td style="padding:4px 6px; border:1px solid #000; font-size:9px; vertical-align:top; background:#f5f5f5;">
+                    <td style="padding:6px; border:1px solid #000; font-size:9px; vertical-align:top; background:#f5f5f5;">
                         <div style="font-weight:900; text-transform:uppercase; color:#000;">${s.label||''}</div>
                         <div style="font-weight:900; font-size:11px; margin-top:2px;">${s.time||''}</div>
                     </td>
-                    ${keys.map(k => `<td style="padding:4px 6px; border:1px solid #000; font-size:9px; vertical-align:top; white-space:pre-wrap;">${s[k]||''}</td>`).join('')}
+                    ${keys.map(k => `<td style="padding:6px; border:1px solid #000; font-size:10px; vertical-align:top; white-space:pre-wrap;">${s[k]||''}</td>`).join('')}
                 </tr>`).join('');
 
             return `
-                <div style="margin-bottom:30px; page-break-after:always;">
-                    <div style="border-bottom:3px solid #000; padding-bottom:5px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-end;">
+                <div class="landscape-page" style="margin-bottom:30px; page-break-after:always;">
+                    <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-end;">
                         <div>
-                            <h1 style="font-size:22px; font-weight:900; margin:0; text-transform:uppercase;">${ev.name}</h1>
-                            <p style="font-size:11px; margin:2px 0 0; font-weight:700; color:#333;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'SEM LOCAL'}</p>
+                            <h1 style="font-size:24px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-0.5px;">${ev.name}</h1>
+                            <p style="font-size:12px; margin:4px 0 0; font-weight:700; color:#333;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'SEM LOCAL'}</p>
                         </div>
-                        <div style="font-size:8px; font-weight:900; text-transform:uppercase; color:#666;">Backstage Pro</div>
+                        <div style="font-size:9px; font-weight:900; text-transform:uppercase; color:#000;">Ficha de Produção</div>
                     </div>
                     <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:2px solid #000;">
                         <thead>
                             <tr style="background:#000; color:#fff;">
-                                <th style="width:75px; padding:6px; border:1px solid #000; text-align:left; font-size:9px; text-transform:uppercase; font-weight:900;">Horário</th>
-                                ${cols.map(c=>`<th style="padding:6px; border:1px solid #000; text-align:left; font-size:9px; text-transform:uppercase; font-weight:900;">${c}</th>`).join('')}
+                                <th style="width:100px; padding:10px; border:1px solid #000; text-align:left; font-size:10px; text-transform:uppercase; font-weight:900;">Horário</th>
+                                ${cols.map(c=>`<th style="padding:10px; border:1px solid #000; text-align:left; font-size:10px; text-transform:uppercase; font-weight:900;">${c}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -453,26 +456,38 @@
                 </div>`;
         }
 
-        function executePrint(html) {
+        function executePrint(html, isLandscape = true) {
             const win = window.open('', '_blank');
-            win.document.write(`<html><head><title>Backstage PRO</title><style>
-                @page { margin: 1cm; }
-                body { font-family: 'Inter', sans-serif; margin: 0; color: #000; }
-                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            </style></head><body>${html}</body></html>`);
+            win.document.write(`
+                <html>
+                <head>
+                    <title>Backstage PRO</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+                        @page { 
+                            size: ${isLandscape ? 'landscape' : 'portrait'}; 
+                            margin: 1cm; 
+                        }
+                        body { font-family: 'Inter', sans-serif; margin: 0; color: #000; }
+                        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        table { width: 100%; }
+                    </style>
+                </head>
+                <body>${html}</body>
+                </html>`);
             win.document.close();
-            setTimeout(() => { win.print(); }, 300);
+            setTimeout(() => { win.print(); }, 400);
         }
 
         function printSingleEvent() { 
             const ev = appData.events.find(e => e.id === appData.activeEventId); 
-            if(ev) executePrint(buildEventHTML(ev)); 
+            if(ev) executePrint(buildEventHTML(ev), true); 
         }
 
         function printAllEvents() { 
             if(appData.events.length === 0) return;
             const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-            executePrint(sorted.map(ev => buildEventHTML(ev)).join('')); 
+            executePrint(sorted.map(ev => buildEventHTML(ev)).join(''), true); 
         }
 
         function printTurnos() {
@@ -486,32 +501,32 @@
             }));
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
             
-            // Otimização para 50 nomes: colunas lado a lado ou densidade alta
             const html = `
-                <div style="border-bottom:3px solid #000; padding-bottom:5px; margin-bottom:15px;">
-                    <h1 style="text-transform:uppercase; font-weight:900; margin:0; font-size:18px;">Mapa Acumulado de Turnos</h1>
+                <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:15px;">
+                    <h1 style="text-transform:uppercase; font-weight:900; margin:0; font-size:20px;">Mapa Acumulado de Turnos</h1>
                 </div>
                 <table style="width:100%; border-collapse:collapse; font-size:10px;">
                     <thead>
                         <tr style="background:#000; color:#fff;">
-                            <th style="padding:6px; text-align:left; border:1px solid #000; font-weight:900; text-transform:uppercase;">Colaborador</th>
-                            <th style="padding:6px; text-align:center; width:80px; border:1px solid #000; font-weight:900; text-transform:uppercase;">Turnos</th>
+                            <th style="padding:6px 10px; text-align:left; border:1px solid #000; font-weight:900; text-transform:uppercase;">Colaborador</th>
+                            <th style="padding:6px 10px; text-align:center; width:120px; border:1px solid #000; font-weight:900; text-transform:uppercase;">Total Turnos</th>
                         </tr>
                     </thead>
                     <tbody>
                     ${sorted.map(([n, c]) => `
                         <tr>
-                            <td style="padding:3px 8px; border:1px solid #000; font-weight:700;">${displayName[n].toUpperCase()}</td>
-                            <td style="padding:3px 8px; border:1px solid #000; text-align:center; font-weight:900;">${c}</td>
+                            <td style="padding:3px 10px; border:1px solid #000; font-weight:700; text-transform:uppercase;">${displayName[n]}</td>
+                            <td style="padding:3px 10px; border:1px solid #000; text-align:center; font-weight:900; font-size:12px;">${c}</td>
                         </tr>`).join('')}
                     </tbody>
                 </table>`;
-            executePrint(html);
+            // Turnos mantemos vertical (Portrait) para caberem mais nomes por página
+            executePrint(html, false);
         }
 
         function exportData() {
             const b = new Blob([JSON.stringify(appData)], {type:'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup_backstage.json'; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_pro_backup.json'; a.click();
         }
 
         function importData(e) {
