@@ -8,7 +8,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
         
-        :root { --accent: #6366f1; --bg-dark: #050505; }
+        :root {
+            --accent: #6366f1;
+            --bg-dark: #050505;
+        }
 
         body { 
             font-family: 'Inter', sans-serif; 
@@ -43,38 +46,6 @@
         
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
-        /* Estilo do Menu de Sugestões e Quick Pick */
-        #autocomplete-list, #quick-pick-panel {
-            position: absolute;
-            z-index: 1000;
-            background: #18181b;
-            border: 1px solid #27272a;
-            border-radius: 8px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
-            display: none;
-        }
-
-        #quick-pick-panel {
-            padding: 8px;
-            width: 220px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .quick-item {
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 2px;
-            font-size: 10px;
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .quick-item:hover { background: #27272a; }
-        .quick-item.active { background: #6366f1; color: white; }
-
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; color: black !important; }
@@ -84,17 +55,43 @@
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 10px; }
 
-        .main-table { table-layout: fixed; width: 100%; }
+        .delete-btn { opacity: 0; transition: all 0.2s; }
+        .event-card:hover .delete-btn { opacity: 1; }
+
+        .main-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
         .col-phase { width: 85px; }
 
-        .cell-action {
-            opacity: 0;
-            transition: opacity 0.2s;
+        /* Estilos para o Seletor de Equipa Rápido */
+        #quickStaffPicker {
+            position: fixed;
+            z-index: 50;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            width: 180px;
         }
-        td:hover .cell-action { opacity: 1; }
+        .staff-item {
+            padding: 6px 10px;
+            font-size: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #27272a;
+            transition: background 0.2s;
+        }
+        .staff-item:hover { background: #2563eb; color: white; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
+
+    <!-- Seletor Flutuante de Equipa -->
+    <div id="quickStaffPicker" class="no-print"></div>
 
     <!-- Sidebar -->
     <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
@@ -104,10 +101,18 @@
         </div>
 
         <nav class="flex flex-col gap-1 mt-4 px-2">
-            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">📅 Agenda</button>
-            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">👥 Equipa</button>
-            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📍 Locais</button>
-            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📊 Turnos</button>
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
+                📅 Agenda
+            </button>
+            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+                👥 Equipa
+            </button>
+            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+                📍 Locais
+            </button>
+            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+                📊 Turnos
+            </button>
         </nav>
 
         <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
@@ -116,8 +121,14 @@
                 <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Import</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
             </div>
-            <button onclick="printAllEvents()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-lg text-[9px] uppercase tracking-widest transition">🖨️ Imprimir Agenda</button>
-            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-lg text-[10px] uppercase tracking-widest transition shadow-lg shadow-indigo-900/20">+ Novo Evento</button>
+            
+            <button onclick="printAllEvents()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-lg text-[9px] uppercase tracking-widest transition">
+                🖨️ Imprimir Agenda
+            </button>
+
+            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-lg text-[10px] uppercase tracking-widest transition shadow-lg shadow-indigo-900/20">
+                + Novo Evento
+            </button>
         </div>
     </aside>
 
@@ -131,19 +142,21 @@
                 </div>
 
                 <div id="editorContainer" class="flex-1 min-w-0">
-                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border border-dashed border-zinc-900 rounded-2xl text-zinc-800 text-[10px] font-black uppercase tracking-widest italic">Nenhum evento selecionado</div>
+                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border border-dashed border-zinc-900 rounded-2xl text-zinc-800">
+                        <p class="text-[10px] font-black uppercase tracking-widest italic">Nenhum evento selecionado</p>
+                    </div>
 
-                    <div id="editorArea" class="hidden relative">
+                    <div id="editorArea" class="hidden">
                         <header class="flex justify-between items-start mb-4 border-b border-zinc-900 pb-4">
                             <div class="flex-1 min-w-0 pr-4">
                                 <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-2xl font-black text-white p-0 focus:ring-0 w-full truncate" placeholder="Título">
                                 <div class="flex flex-wrap gap-3 mt-1">
                                     <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-[10px] font-bold uppercase focus:ring-0 p-0 [color-scheme:dark] text-indigo-400 w-28">
-                                    <input type="text" id="curEventVenue" oninput="updateActiveEvent('venue', this.value)" placeholder="Local do Evento" class="bg-transparent border-none text-[10px] font-bold uppercase focus:ring-0 p-0 text-zinc-500 flex-1 min-w-[120px]">
+                                    <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Cód + Local" class="bg-transparent border-none text-[10px] font-bold uppercase focus:ring-0 p-0 text-zinc-500 flex-1 min-w-[120px]">
                                 </div>
                             </div>
                             <div class="flex gap-1.5 no-print shrink-0">
-                                <button onclick="duplicateActiveEvent()" class="bg-zinc-900 p-2 rounded text-zinc-400 hover:text-white transition" title="Duplicar">👯</button>
+                                <button onclick="duplicateActiveEvent()" title="Duplicar Evento" class="bg-zinc-900 p-2 rounded text-zinc-400 hover:text-white transition">👯</button>
                                 <button onclick="addShift()" class="bg-zinc-900 px-3 py-2 rounded text-[9px] font-black uppercase text-zinc-400 hover:bg-zinc-800 transition">+ Fase</button>
                                 <button onclick="printSingleEvent()" class="bg-white text-black px-3 py-2 rounded text-[9px] font-black uppercase shadow-lg hover:bg-zinc-200 transition">Imprimir</button>
                             </div>
@@ -166,48 +179,63 @@
                                 <tbody id="shiftsBody" class="divide-y divide-zinc-900/50"></tbody>
                             </table>
                         </div>
-                        <div id="autocomplete-list" class="hidden"></div>
-                        <div id="quick-pick-panel" class="hidden"></div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Views Gestão -->
         <div id="staffView" class="hidden">
             <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
             <div class="flex gap-2 mb-6 max-w-xl">
-                <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome do Colaborador" class="flex-1 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
+                <input type="text" id="newStaffCode" placeholder="Cód" class="w-16 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
+                <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome" class="flex-1 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
                 <button onclick="addStaffMember()" class="bg-indigo-600 px-4 py-2 rounded text-[9px] font-black uppercase">Adicionar</button>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2" id="staffGrid"></div>
         </div>
 
-        <!-- Outros separadores omitidos para brevidade no script central -->
-        <div id="venuesView" class="hidden"></div>
+        <div id="venuesView" class="hidden">
+            <h2 class="text-lg font-black uppercase mb-4 italic">Locais</h2>
+            <div class="flex gap-2 mb-6 max-w-xl">
+                <input type="text" id="newVenueCode" placeholder="Cód" class="w-16 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
+                <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Nome" class="flex-1 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
+                <button onclick="addVenue()" class="bg-indigo-600 px-4 py-2 rounded text-[9px] font-black uppercase">Adicionar</button>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" id="venueGrid"></div>
+        </div>
+
         <div id="counterView" class="hidden">
-            <div class="flex justify-between items-center mb-6 px-2">
-                <h2 class="text-lg font-black uppercase italic">Mapa de Turnos</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black uppercase italic">Contagem de Turnos</h2>
                 <button onclick="printTurnos()" class="bg-indigo-600 px-4 py-2 rounded text-[9px] font-black uppercase">Imprimir Mapa</button>
             </div>
-            <div id="monthlyCounterGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 px-2"></div>
+            <div id="monthlyCounterGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2"></div>
         </div>
+
     </main>
 
     <script>
         const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_v3')) || { events: [], staff: [], venues: [], activeEventId: null };
+
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v3')) || {
+            events: [],
+            staff: {},
+            venues: {},
+            activeEventId: null
+        };
 
         function saveData() { localStorage.setItem('backstage_pro_v3', JSON.stringify(appData)); }
 
         function switchTab(tab) {
             ['events', 'staff', 'venues', 'counter'].forEach(t => {
-                const el = document.getElementById(t + 'View');
-                if(el) el.classList.add('hidden');
+                document.getElementById(t + 'View').classList.add('hidden');
                 document.getElementById('btn-tab-' + t).classList.remove('active');
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
             if(tab === 'staff') renderStaff();
+            if(tab === 'venues') renderVenues();
             if(tab === 'counter') updateMonthlyCount();
             if(tab === 'events') renderEventList();
         }
@@ -216,12 +244,12 @@
             const list = document.getElementById('eventList');
             const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
             list.innerHTML = sorted.map(ev => `
-                <div class="group relative">
+                <div class="event-card relative">
                     <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-2 rounded border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/30 border-zinc-900'} hover:border-zinc-700 transition">
                         <div class="text-[7px] font-black text-indigo-400 uppercase">${ev.date ? ev.date.split('-').reverse().join('/') : 'S/ DATA'}</div>
                         <div class="text-[10px] font-bold text-white truncate pr-4">${ev.name}</div>
                     </button>
-                    <button onclick="deleteEvent('${ev.id}')" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-zinc-800 hover:text-red-500 text-xs">×</button>
+                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-1 right-1 text-zinc-800 hover:text-red-500 text-xs">×</button>
                 </div>
             `).join('');
         }
@@ -242,127 +270,37 @@
         function renderShifts(ev) {
             const tbody = document.getElementById('shiftsBody');
             tbody.innerHTML = ev.shifts.map(s => `
-                <tr class="group hover:bg-zinc-900/10">
+                <tr class="group hover:bg-zinc-900/20">
                     <td class="p-1 align-top text-center">
                         <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" class="bg-transparent border-none text-[8px] font-black text-indigo-500/80 uppercase text-center w-full p-0 focus:ring-0">${s.label || ''}</textarea>
                         <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value); sortAndReRender()" class="bg-transparent border-none text-[11px] font-black text-white text-center w-full p-0 focus:ring-0">
                     </td>
                     ${APP_COLUMNS.map(col => `
-                        <td class="p-1 border-l border-zinc-900 align-top relative">
-                            <textarea id="ta-${s.id}-${col}" oninput="handleInput(this, '${s.id}', '${col}')" onfocus="handleInput(this, '${s.id}', '${col}')">${s[col] || ''}</textarea>
-                            <button onclick="toggleQuickPick(event, '${s.id}', '${col}')" class="cell-action absolute bottom-2 right-2 bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-lg no-print">➕</button>
+                        <td class="p-1 border-l border-zinc-900 align-top">
+                            <textarea 
+                                onclick="showQuickStaff(this, '${s.id}', '${col}')"
+                                onkeyup="processShortcodes(this, '${s.id}', '${col}')" 
+                                oninput="adjustHeight(this)">${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
                     <td class="p-1 no-print align-top text-center">
-                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 text-lg">×</button>
+                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 text-lg leading-none">×</button>
                     </td>
                 </tr>
             `).join('');
             tbody.querySelectorAll('textarea').forEach(adjustHeight);
         }
 
-        // --- QUICK PICK LOGIC ---
-        let currentTarget = null;
-        function toggleQuickPick(e, shiftId, col) {
-            e.stopPropagation();
-            const panel = document.getElementById('quick-pick-panel');
-            const textarea = document.getElementById(`ta-${shiftId}-${col}`);
-            
-            if (currentTarget?.id === `ta-${shiftId}-${col}` && panel.style.display === 'block') {
-                panel.style.display = 'none';
-                return;
-            }
+        function adjustHeight(el) { el.style.height = '32px'; if (el.scrollHeight > 32) el.style.height = el.scrollHeight + 'px'; }
 
-            currentTarget = { id: `ta-${shiftId}-${col}`, shiftId, col };
-            const rect = e.target.getBoundingClientRect();
-            const container = document.getElementById('editorArea').getBoundingClientRect();
-            
-            panel.style.display = 'block';
-            panel.style.top = (rect.bottom - container.top + 5) + 'px';
-            panel.style.left = (rect.left - container.left - 200) + 'px';
-            
-            renderQuickPickItems(textarea.value);
+        function sortAndReRender() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if (ev) { ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00")); saveData(); renderShifts(ev); }
         }
 
-        function renderQuickPickItems(currentValue) {
-            const panel = document.getElementById('quick-pick-panel');
-            const selectedNames = currentValue.split('\n').map(n => n.trim()).filter(n => n);
-            
-            panel.innerHTML = `
-                <div class="text-[9px] font-black text-zinc-500 uppercase px-2 mb-2">Equipa</div>
-                ${appData.staff.map(name => {
-                    const isActive = selectedNames.includes(name);
-                    return `<div class="quick-item ${isActive ? 'active' : ''}" onclick="selectFromQuickPick('${name.replace(/'/g, "\\'")}')">
-                        ${name} <span>${isActive ? '✓' : ''}</span>
-                    </div>`;
-                }).join('')}
-            `;
-        }
-
-        function selectFromQuickPick(name) {
-            const textarea = document.getElementById(currentTarget.id);
-            let names = textarea.value.split('\n').map(n => n.trim()).filter(n => n);
-            
-            if (names.includes(name)) names = names.filter(n => n !== name);
-            else names.push(name);
-            
-            textarea.value = names.join('\n');
-            if (names.length > 0) textarea.value += '\n';
-            
-            updateShiftField(currentTarget.shiftId, currentTarget.col, textarea.value);
-            adjustHeight(textarea);
-            renderQuickPickItems(textarea.value);
-        }
-
-        // Fechar painéis ao clicar fora
-        document.addEventListener('mousedown', (e) => {
-            if (!e.target.closest('#quick-pick-panel') && !e.target.closest('.cell-action')) {
-                document.getElementById('quick-pick-panel').style.display = 'none';
-            }
-            if (!e.target.closest('#autocomplete-list')) {
-                document.getElementById('autocomplete-list').classList.add('hidden');
-            }
-        });
-
-        // --- AUTO-COMPLETE ---
-        function handleInput(el, shiftId, field) {
-            adjustHeight(el);
-            updateShiftField(shiftId, field, el.value);
-            const lines = el.value.split('\n');
-            const currentLine = lines[lines.length - 1].toLowerCase().trim();
-            if (currentLine.length < 1) { hideAutocomplete(); return; }
-            const matches = appData.staff.filter(name => name.toLowerCase().includes(currentLine));
-            if (matches.length > 0) showAutocomplete(el, matches);
-            else hideAutocomplete();
-        }
-
-        function showAutocomplete(el, matches) {
-            const list = document.getElementById('autocomplete-list');
-            const rect = el.getBoundingClientRect();
-            const container = document.getElementById('editorArea').getBoundingClientRect();
-            list.style.display = 'block';
-            list.classList.remove('hidden');
-            list.style.left = (rect.left - container.left) + 'px';
-            list.style.top = (rect.bottom - container.top + 5) + 'px';
-            list.innerHTML = matches.map(name => `
-                <div class="suggestion-item p-2 hover:bg-zinc-800 cursor-pointer text-[10px]" onmousedown="applySuggestion('${name.replace(/'/g, "\\'")}', '${el.id}')">${name}</div>
-            `).join('');
-        }
-
-        function applySuggestion(name, elId) {
-            const el = document.getElementById(elId);
-            const lines = el.value.split('\n');
-            lines[lines.length - 1] = name;
-            el.value = lines.join('\n') + '\n';
-            el.dispatchEvent(new Event('input'));
-            hideAutocomplete();
-        }
-
-        function hideAutocomplete() { document.getElementById('autocomplete-list').classList.add('hidden'); }
-
-        function adjustHeight(el) { 
-            el.style.height = '32px'; 
-            if (el.scrollHeight > 32) el.style.height = el.scrollHeight + 'px'; 
+        function updateActiveEvent(field, val) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) { ev[field] = val; saveData(); if(field === 'name' || field === 'date') renderEventList(); }
         }
 
         function updateShiftField(shiftId, field, val) {
@@ -373,126 +311,305 @@
             }
         }
 
-        function addShift() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                ev.shifts.push({ id: 's' + Date.now(), label: 'NOVA FASE', time: '00:00', ...Object.fromEntries(APP_COLUMNS.map(c => [c, ''])) });
-                saveData(); renderShifts(ev);
-            }
+        // --- SISTEMA DE SELEÇÃO RÁPIDA DE EQUIPA ---
+        let currentEditingShift = null;
+        let currentEditingField = null;
+        let currentTextarea = null;
+
+        function showQuickStaff(textarea, shiftId, field) {
+            currentEditingShift = shiftId;
+            currentEditingField = field;
+            currentTextarea = textarea;
+
+            const picker = document.getElementById('quickStaffPicker');
+            const staffList = Object.values(appData.staff);
+
+            if (staffList.length === 0) return;
+
+            picker.innerHTML = staffList.map(s => `
+                <div class="staff-item" onclick="selectStaffQuickly('${s.name}')">${s.name}</div>
+            `).join('');
+
+            const rect = textarea.getBoundingClientRect();
+            picker.style.top = (rect.bottom + window.scrollY) + 'px';
+            picker.style.left = (rect.left + window.scrollX) + 'px';
+            picker.style.width = rect.width + 'px';
+            picker.style.display = 'block';
+
+            // Fechar ao clicar fora
+            const closePicker = (e) => {
+                if (!picker.contains(e.target) && e.target !== textarea) {
+                    picker.style.display = 'none';
+                    document.removeEventListener('mousedown', closePicker);
+                }
+            };
+            document.addEventListener('mousedown', closePicker);
         }
 
-        function removeShift(id) {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) { ev.shifts = ev.shifts.filter(s => s.id !== id); saveData(); renderShifts(ev); }
+        function selectStaffQuickly(name) {
+            if (!currentTextarea) return;
+            
+            let val = currentTextarea.value.trim();
+            if (val.length > 0 && !val.endsWith('\n') && !val.endsWith(',')) {
+                val += ', ' + name;
+            } else {
+                val += (val.length > 0 ? ' ' : '') + name;
+            }
+            
+            currentTextarea.value = val;
+            updateShiftField(currentEditingShift, currentEditingField, val);
+            adjustHeight(currentTextarea);
+            document.getElementById('quickStaffPicker').style.display = 'none';
         }
 
         function duplicateActiveEvent() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                const newEv = JSON.parse(JSON.stringify(ev));
-                newEv.id = 'ev_' + Date.now();
-                newEv.name += " (Cópia)";
-                appData.events.unshift(newEv);
-                saveData(); renderEventList(); selectEvent(newEv.id);
+            if(!ev) return;
+            const newEv = JSON.parse(JSON.stringify(ev));
+            newEv.id = 'ev_' + Date.now();
+            newEv.name += " (CÓPIA)";
+            appData.events.unshift(newEv);
+            saveData();
+            renderEventList();
+            selectEvent(newEv.id);
+        }
+
+        function processShortcodes(textarea, shiftId, field) {
+            const val = textarea.value;
+            const regex = /(\b\w+\b)([ ,;\n\r])/g;
+            let changed = false;
+            const newVal = val.replace(regex, (match, code, delimiter) => {
+                if (appData.staff[code.toLowerCase()]) { changed = true; return appData.staff[code.toLowerCase()].name + delimiter; }
+                return match;
+            });
+            if (changed) { textarea.value = newVal; updateShiftField(shiftId, field, newVal); }
+            else { updateShiftField(shiftId, field, val); }
+            adjustHeight(textarea);
+        }
+
+        function processVenueCode(input) {
+            const val = input.value;
+            for(let code in appData.venues) {
+                if(val.toUpperCase() === code.toUpperCase() + " ") {
+                    input.value = appData.venues[code];
+                    updateActiveEvent('venue', appData.venues[code]);
+                    return;
+                }
             }
-        }
-
-        function addStaffMember() {
-            const name = document.getElementById('newStaffName').value.trim();
-            if(!name || appData.staff.includes(name)) return;
-            appData.staff.push(name);
-            appData.staff.sort();
-            saveData(); renderStaff();
-            document.getElementById('newStaffName').value = '';
-        }
-
-        function renderStaff() {
-            document.getElementById('staffGrid').innerHTML = appData.staff.map(name => `
-                <div class="bg-zinc-900 p-2 rounded flex justify-between items-center group">
-                    <span class="text-[10px] font-bold truncate uppercase">${name}</span>
-                    <button onclick="deleteStaff('${name.replace(/'/g, "\\'")}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100">×</button>
-                </div>
-            `).join('');
-        }
-
-        function deleteStaff(name) { if(confirm(`Remover ${name}?`)) { appData.staff = appData.staff.filter(n => n !== name); saveData(); renderStaff(); } }
-
-        function deleteEvent(id) { if(confirm("Eliminar evento?")) { appData.events = appData.events.filter(e => e.id !== id); if(appData.activeEventId === id) appData.activeEventId = null; saveData(); location.reload(); } }
-
-        function updateMonthlyCount() {
-            const counts = {};
-            appData.events.forEach(ev => ev.shifts.forEach(s => {
-                const shiftStaff = new Set();
-                APP_COLUMNS.forEach(col => { if(s[col]) s[col].split('\n').forEach(n => { if(n.trim().length > 1) shiftStaff.add(n.trim()); })});
-                shiftStaff.forEach(name => counts[name] = (counts[name] || 0) + 1);
-            }));
-            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-            document.getElementById('monthlyCounterGrid').innerHTML = sorted.map(([n, c]) => `
-                <div class="bg-zinc-900 p-2 rounded flex justify-between items-center border border-zinc-800">
-                    <span class="text-[10px] font-bold truncate uppercase pr-2">${n}</span>
-                    <span class="bg-indigo-600/20 text-indigo-400 text-[9px] font-black px-2 py-0.5 rounded">${c}</span>
-                </div>
-            `).join('');
+            updateActiveEvent('venue', val);
         }
 
         function createNewEvent() {
             const id = 'ev_' + Date.now();
             const newEv = {
                 id, name: "Novo Espectáculo", date: new Date().toISOString().split('T')[0], venue: "",
-                shifts: [{ id: 's1', label: 'MONTAGEM', time: '14:00', ...Object.fromEntries(APP_COLUMNS.map(c => [c, ''])) }]
+                shifts: [{ id: 's1', label: 'MONTAGEM', time: '14:00' }, { id: 's2', label: 'EVENTO', time: '21:30' }]
             };
-            appData.events.unshift(newEv); saveData(); selectEvent(id);
+            APP_COLUMNS.forEach(c => newEv.shifts.forEach(s => s[c] = ''));
+            appData.events.unshift(newEv);
+            saveData();
+            switchTab('events');
+            selectEvent(id);
         }
 
-        // --- IMPRESSÃO ---
-        function executePrint(html, isLandscape = true) {
-            const win = window.open('', '_blank');
-            win.document.write(`<html><head><style>
-                @page { size: ${isLandscape ? 'landscape' : 'portrait'}; margin: 1cm; }
-                body { font-family: 'Inter', sans-serif; margin: 0; color: #000; }
-                table { width: 100%; border-collapse: collapse; border: 2px solid #000; }
-                th { background: #000 !important; color: #fff !important; font-weight: 900; text-transform: uppercase; font-size: 10px; padding: 8px; border: 1px solid #000; text-align: left; }
-                td { border: 1px solid #000; padding: 8px; font-size: 10px; vertical-align: top; white-space: pre-wrap; font-weight: 500; }
-                .header { border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
-                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            </style></head><body>${html}</body></html>`);
-            win.document.close();
-            setTimeout(() => win.print(), 500);
+        function deleteEvent(id) {
+            if(confirm("Apagar evento permanentemente?")) {
+                appData.events = appData.events.filter(e => e.id !== id);
+                if(appData.activeEventId === id) appData.activeEventId = null;
+                saveData();
+                location.reload();
+            }
         }
+
+        function addShift() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) {
+                const s = { id: 's'+Date.now(), label:'FASE', time:'12:00' };
+                APP_COLUMNS.forEach(c => s[c] = '');
+                ev.shifts.push(s);
+                sortAndReRender();
+            }
+        }
+
+        function removeShift(id) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev && confirm("Remover fase?")) { ev.shifts = ev.shifts.filter(s => s.id !== id); saveData(); renderShifts(ev); }
+        }
+
+        function addStaffMember() {
+            let code = document.getElementById('newStaffCode').value.trim().toLowerCase();
+            const name = document.getElementById('newStaffName').value.trim();
+            if(!name) return;
+            if(!code) code = (Object.keys(appData.staff).length + 101).toString();
+            appData.staff[code] = { name };
+            saveData();
+            renderStaff();
+            document.getElementById('newStaffName').value = '';
+            document.getElementById('newStaffName').focus();
+        }
+
+        function renderStaff() {
+            document.getElementById('staffGrid').innerHTML = Object.entries(appData.staff).map(([code, data]) => `
+                <div class="bg-zinc-900 p-2 rounded flex justify-between items-center group">
+                    <div class="truncate pr-2"><span class="text-[8px] text-indigo-500 font-black mr-2">${code.toUpperCase()}</span><span class="text-[10px] font-bold">${data.name}</span></div>
+                    <button onclick="deleteStaff('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteStaff(code) { if(confirm("Eliminar da lista?")) { delete appData.staff[code]; saveData(); renderStaff(); } }
+
+        function addVenue() {
+            let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
+            const name = document.getElementById('newVenueName').value.trim();
+            if(!name) return;
+            if(!code) code = name.substring(0, 3).toUpperCase();
+            appData.venues[code] = name;
+            saveData();
+            renderVenues();
+        }
+
+        function renderVenues() {
+            document.getElementById('venueGrid').innerHTML = Object.entries(appData.venues).map(([code, name]) => `
+                <div class="bg-zinc-900 p-2 rounded flex justify-between items-center group">
+                    <div class="truncate pr-2"><span class="text-[8px] text-indigo-400 font-black mr-2">${code}</span><span class="text-[10px] font-bold">${name}</span></div>
+                    <button onclick="deleteVenue('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
+                </div>
+            `).join('');
+        }
+
+        function updateMonthlyCount() {
+            const counts = {}; const displayName = {};
+            appData.events.forEach(ev => ev.shifts.forEach(s => {
+                const uniqueInShift = new Set();
+                APP_COLUMNS.forEach(col => { if (s[col]) s[col].split(/[,\n;]/).forEach(n => {
+                    const clean = n.trim(); if(clean.length > 2) { uniqueInShift.add(clean.toLowerCase()); displayName[clean.toLowerCase()] = clean; }
+                }); });
+                uniqueInShift.forEach(n => counts[n] = (counts[n] || 0) + 1);
+            }));
+            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+            document.getElementById('monthlyCounterGrid').innerHTML = sorted.map(([n, c]) => `
+                <div class="bg-zinc-900/50 p-2 rounded flex justify-between items-center">
+                    <span class="text-[10px] font-bold truncate pr-2">${displayName[n]}</span>
+                    <span class="text-indigo-400 text-[9px] font-black">${c}</span>
+                </div>
+            `).join('');
+        }
+
+        // --- SISTEMA DE IMPRESSÃO ---
 
         function buildEventHTML(ev) {
             const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar / Cozinha','Segurança'];
-            const keys = APP_COLUMNS;
-            const rows = [...ev.shifts].sort((a,b) => a.time.localeCompare(b.time)).map(s => `
+            const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
+            ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
+
+            const rows = ev.shifts.map(s => `
                 <tr>
-                    <td style="width:90px; background:#f0f0f0; font-weight:900;">${s.label}<br><span style="font-size:12px;">${s.time}</span></td>
-                    ${keys.map(k => `<td>${s[k]}</td>`).join('')}
+                    <td style="padding:6px; border:1px solid #000; font-size:9px; vertical-align:top; background:#f5f5f5;">
+                        <div style="font-weight:900; text-transform:uppercase; color:#000;">${s.label||''}</div>
+                        <div style="font-weight:900; font-size:11px; margin-top:2px;">${s.time||''}</div>
+                    </td>
+                    ${keys.map(k => `<td style="padding:6px; border:1px solid #000; font-size:10px; vertical-align:top; white-space:pre-wrap;">${s[k]||''}</td>`).join('')}
                 </tr>`).join('');
-            return `<div style="page-break-after:always;">
-                <div class="header"><div><h1 style="margin:0; font-size:22px; text-transform:uppercase;">${ev.name}</h1>
-                <p style="margin:0; font-weight:700;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue}</p></div></div>
-                <table><thead><tr><th>Fase</th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
-            </div>`;
+
+            return `
+                <div class="landscape-page" style="margin-bottom:30px; page-break-after:always;">
+                    <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-end;">
+                        <div>
+                            <h1 style="font-size:24px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-0.5px;">${ev.name}</h1>
+                            <p style="font-size:12px; margin:4px 0 0; font-weight:700; color:#333;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'SEM LOCAL'}</p>
+                        </div>
+                        <div style="font-size:9px; font-weight:900; text-transform:uppercase; color:#000;">Ficha de Produção</div>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:2px solid #000;">
+                        <thead>
+                            <tr style="background:#000; color:#fff;">
+                                <th style="width:100px; padding:10px; border:1px solid #000; text-align:left; font-size:10px; text-transform:uppercase; font-weight:900;">Horário</th>
+                                ${cols.map(c=>`<th style="padding:10px; border:1px solid #000; text-align:left; font-size:10px; text-transform:uppercase; font-weight:900;">${c}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
         }
 
-        function printSingleEvent() { const ev = appData.events.find(e => e.id === appData.activeEventId); if(ev) executePrint(buildEventHTML(ev), true); }
-        function printAllEvents() { executePrint(appData.events.map(ev => buildEventHTML(ev)).join(''), true); }
+        function executePrint(html, isLandscape = true) {
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>Backstage PRO</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+                        @page { 
+                            size: ${isLandscape ? 'landscape' : 'portrait'}; 
+                            margin: 1cm; 
+                        }
+                        body { font-family: 'Inter', sans-serif; margin: 0; color: #000; }
+                        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        table { width: 100%; }
+                    </style>
+                </head>
+                <body>${html}</body>
+                </html>`);
+            win.document.close();
+            setTimeout(() => { win.print(); }, 400);
+        }
+
+        function printSingleEvent() { 
+            const ev = appData.events.find(e => e.id === appData.activeEventId); 
+            if(ev) executePrint(buildEventHTML(ev), true); 
+        }
+
+        function printAllEvents() { 
+            if(appData.events.length === 0) return;
+            const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+            executePrint(sorted.map(ev => buildEventHTML(ev)).join(''), true); 
+        }
+
         function printTurnos() {
-            const counts = {};
+            const counts = {}; const displayName = {};
             appData.events.forEach(ev => ev.shifts.forEach(s => {
-                const shiftStaff = new Set();
-                APP_COLUMNS.forEach(col => { if(s[col]) s[col].split('\n').forEach(n => { if(n.trim().length>1) shiftStaff.add(n.trim()); })});
-                shiftStaff.forEach(name => counts[name] = (counts[name] || 0) + 1);
+                const uniqueInShift = new Set();
+                APP_COLUMNS.forEach(col => { if (s[col]) s[col].split(/[,\n;]/).forEach(n => {
+                    const clean = n.trim(); if(clean.length > 2) { uniqueInShift.add(clean.toLowerCase()); displayName[clean.toLowerCase()] = clean; }
+                }); });
+                uniqueInShift.forEach(n => counts[n] = (counts[n] || 0) + 1);
             }));
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-            const html = `<h1>TURNOS ACUMULADOS</h1><table><thead><tr><th>NOME</th><th>TURNOS</th></tr></thead>
-                <tbody>${sorted.map(([n,c]) => `<tr><td style="font-weight:700;">${n}</td><td style="font-weight:900;">${c}</td></tr>`).join('')}</tbody></table>`;
+            
+            const html = `
+                <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:15px;">
+                    <h1 style="text-transform:uppercase; font-weight:900; margin:0; font-size:20px;">Mapa Acumulado de Turnos</h1>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                    <thead>
+                        <tr style="background:#000; color:#fff;">
+                            <th style="padding:6px 10px; text-align:left; border:1px solid #000; font-weight:900; text-transform:uppercase;">Colaborador</th>
+                            <th style="padding:6px 10px; text-align:center; width:120px; border:1px solid #000; font-weight:900; text-transform:uppercase;">Total Turnos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    ${sorted.map(([n, c]) => `
+                        <tr>
+                            <td style="padding:3px 10px; border:1px solid #000; font-weight:700; text-transform:uppercase;">${displayName[n]}</td>
+                            <td style="padding:3px 10px; border:1px solid #000; text-align:center; font-weight:900; font-size:12px;">${c}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>`;
             executePrint(html, false);
         }
 
-        function updateActiveEvent(f, v) { const ev = appData.events.find(e => e.id === appData.activeEventId); if(ev) { ev[f] = v; saveData(); if(f==='name'||f==='date') renderEventList(); } }
-        function exportData() { const b = new Blob([JSON.stringify(appData)],{type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_backup.json'; a.click(); }
-        function importData(e) { const reader = new FileReader(); reader.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); }; reader.readAsText(e.target.files[0]); }
+        function exportData() {
+            const b = new Blob([JSON.stringify(appData)], {type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_pro_backup.json'; a.click();
+        }
+
+        function importData(e) {
+            const r = new FileReader();
+            r.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); };
+            r.readAsText(e.target.files[0]);
+        }
 
         window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
     </script>
