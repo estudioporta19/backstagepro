@@ -65,7 +65,6 @@
 
         .col-phase { width: 85px; }
 
-        /* Estilos para o Seletor de Equipa Rápido */
         #quickStaffPicker {
             position: fixed;
             z-index: 50;
@@ -86,39 +85,12 @@
             transition: background 0.2s;
         }
         .staff-item:hover { background: #2563eb; color: white; }
-
-        /* Estilos para o Modal de Confirmação */
-        #resetModal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Seletor Flutuante de Equipa -->
     <div id="quickStaffPicker" class="no-print"></div>
 
-    <!-- Modal de Confirmação de Reset -->
-    <div id="resetModal" class="no-print">
-        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 w-80 shadow-2xl">
-            <h3 class="text-white font-black uppercase text-sm mb-2 italic">⚠️ ATENÇÃO</h3>
-            <p class="text-zinc-400 text-[10px] mb-4 leading-relaxed">Isto irá apagar permanentemente todos os eventos, equipas e locais guardados no seu browser.</p>
-            <p class="text-zinc-500 text-[9px] mb-2 uppercase font-bold tracking-widest">Escreva "APAGAR" para confirmar:</p>
-            <input type="text" id="resetConfirmInput" placeholder="..." class="w-full bg-black border border-zinc-800 rounded p-2 text-white text-center font-black uppercase tracking-widest text-xs mb-4 focus:border-red-500 outline-none">
-            <div class="flex gap-2">
-                <button onclick="closeResetModal()" class="flex-1 bg-zinc-800 py-2 rounded text-[9px] font-bold uppercase text-zinc-400">Cancelar</button>
-                <button onclick="confirmReset()" class="flex-1 bg-red-600 py-2 rounded text-[9px] font-bold uppercase text-white shadow-lg shadow-red-900/20">Limpar Tudo</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sidebar -->
     <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
         <div class="p-4 border-b border-zinc-900">
             <h1 class="text-lg font-black tracking-tighter italic uppercase leading-none">Backstage<span class="text-indigo-500">PRO</span></h1>
@@ -155,8 +127,9 @@
                 + Novo Evento
             </button>
 
-            <button onclick="openResetModal()" class="w-full mt-2 text-zinc-700 hover:text-red-800 text-[7px] font-bold uppercase tracking-[0.2em] transition">
-                Reset App
+            <!-- Botão de Reset Adicionado -->
+            <button onclick="resetSystem()" class="w-full border border-zinc-800 text-zinc-700 hover:text-red-500 hover:border-red-900 py-2 rounded-lg text-[8px] uppercase tracking-[0.2em] transition">
+                Reset Geral
             </button>
         </div>
     </aside>
@@ -213,7 +186,6 @@
             </div>
         </div>
 
-        <!-- Views Gestão -->
         <div id="staffView" class="hidden">
             <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
             <div class="flex gap-2 mb-6 max-w-xl">
@@ -247,50 +219,67 @@
     <script>
         const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
 
-        const STORAGE_KEY = 'backstage_pro_v3';
-
-        const DEFAULT_DATA = {
-            events: [],
-            staff: {},
-            venues: {},
-            activeEventId: null
+        // Definições de Origem (para Reset)
+        const defaultStaff = {
+            "rs": { name: "Rita Sousa" },
+            "mv": { name: "Madalena Victorino" },
+            "gs": { name: "Giacomo Scalisi" },
+            "ss": { name: "Sandra Sanches" },
+            "is": { name: "Inderjeet Singh" },
+            "g": { name: "Gurpreet Singh" },
+            "as": { name: "Alexandra Silva" },
+            "rf": { name: "Ricardo Falcão" },
+            "mm": { name: "Marisa Miranda" },
+            "jm": { name: "Joaquim Madaíl" },
+            "aj": { name: "Ajudante João" },
+            "am": { name: "Ajudante Manuel" }
         };
 
-        let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT_DATA;
+        const defaultVenues = {
+            "TP": "Teatro de Palha",
+            "EN": "Escola Nova",
+            "NB": "Novo Bowing",
+            "NANC": "Novo Ano Novo Circo",
+        };
 
-        function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v3'));
 
-        // Funções de Reset Seguro
-        function openResetModal() {
-            document.getElementById('resetModal').style.display = 'flex';
-            document.getElementById('resetConfirmInput').value = '';
-            document.getElementById('resetConfirmInput').focus();
+        if (!appData) {
+            initializeDefaults();
         }
 
-        function closeResetModal() {
-            document.getElementById('resetModal').style.display = 'none';
+        function initializeDefaults() {
+            appData = {
+                events: [],
+                staff: JSON.parse(JSON.stringify(defaultStaff)),
+                venues: JSON.parse(JSON.stringify(defaultVenues)),
+                activeEventId: null
+            };
+            saveData();
         }
 
-        function confirmReset() {
-            const input = document.getElementById('resetConfirmInput').value;
-            if(input.trim().toUpperCase() === "APAGAR") {
-                localStorage.removeItem(STORAGE_KEY);
+        // Função de Reset Geral solicitada
+        function resetSystem() {
+            const confirmWord = "RESET";
+            const input = prompt(`AVISO: Isto apagará todos os eventos, fichas e novos registos de equipa/locais.\nApenas os dados base (Rita Sousa, Teatro de Palha, etc.) serão mantidos.\n\nPara confirmar, escreva: ${confirmWord}`);
+            
+            if (input === confirmWord) {
+                initializeDefaults();
                 location.reload();
-            } else {
-                const btn = event.target;
-                btn.classList.add('bg-orange-600');
-                btn.innerText = "ESCREVA APAGAR";
-                setTimeout(() => {
-                    btn.classList.remove('bg-orange-600');
-                    btn.innerText = "Limpar Tudo";
-                }, 1500);
+            } else if (input !== null) {
+                // Se o utilizador escreveu algo errado
+                alert("Palavra de confirmação incorreta. Nada foi apagado.");
             }
         }
 
+        function saveData() { localStorage.setItem('backstage_pro_v3', JSON.stringify(appData)); }
+
         function switchTab(tab) {
             ['events', 'staff', 'venues', 'counter'].forEach(t => {
-                document.getElementById(t + 'View').classList.add('hidden');
-                document.getElementById('btn-tab-' + t).classList.remove('active');
+                const elView = document.getElementById(t + 'View');
+                const elBtn = document.getElementById('btn-tab-' + t);
+                if(elView) elView.classList.add('hidden');
+                if(elBtn) elBtn.classList.remove('active');
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
@@ -302,6 +291,7 @@
 
         function renderEventList() {
             const list = document.getElementById('eventList');
+            if(!list) return;
             const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
             list.innerHTML = sorted.map(ev => `
                 <div class="event-card relative">
@@ -317,7 +307,11 @@
         function selectEvent(id) {
             appData.activeEventId = id;
             const ev = appData.events.find(e => e.id === id);
-            if (!ev) return;
+            if (!ev) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('editorArea').classList.add('hidden');
+                return;
+            }
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('editorArea').classList.remove('hidden');
             document.getElementById('curEventName').value = ev.name;
@@ -371,7 +365,6 @@
             }
         }
 
-        // --- SISTEMA DE SELEÇÃO RÁPIDA DE EQUIPA ---
         let currentEditingShift = null;
         let currentEditingField = null;
         let currentTextarea = null;
@@ -476,7 +469,11 @@
                 appData.events = appData.events.filter(e => e.id !== id);
                 if(appData.activeEventId === id) appData.activeEventId = null;
                 saveData();
-                location.reload();
+                renderEventList();
+                if(appData.activeEventId === null) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    document.getElementById('editorArea').classList.add('hidden');
+                }
             }
         }
 
@@ -526,6 +523,7 @@
             appData.venues[code] = name;
             saveData();
             renderVenues();
+            document.getElementById('newVenueName').value = '';
         }
 
         function renderVenues() {
@@ -554,8 +552,6 @@
                 </div>
             `).join('');
         }
-
-        // --- SISTEMA DE IMPRESSÃO ---
 
         function buildEventHTML(ev) {
             const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar / Cozinha','Segurança'];
@@ -666,19 +662,14 @@
 
         function importData(e) {
             const r = new FileReader();
-            r.onload = (ev) => { 
-                try {
-                    appData = JSON.parse(ev.target.result); 
-                    saveData(); 
-                    location.reload(); 
-                } catch(err) {
-                    alert("Erro ao importar ficheiro.");
-                }
-            };
+            r.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); };
             r.readAsText(e.target.files[0]);
         }
 
-        window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
+        window.onload = () => { 
+            renderEventList(); 
+            if(appData.activeEventId) selectEvent(appData.activeEventId); 
+        };
     </script>
 </body>
 </html>
