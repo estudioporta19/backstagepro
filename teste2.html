@@ -47,19 +47,39 @@
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
         @media print {
+            @page { 
+                size: landscape; 
+                margin: 0.5cm;
+            }
             .no-print { display: none !important; }
-            body { background: white; color: black; }
+            body { 
+                background: white !important; 
+                color: black !important; 
+                height: auto !important;
+                overflow: visible !important;
+            }
+            main { padding: 0 !important; overflow: visible !important; }
+            #editorContainer { width: 100% !important; }
+            
             textarea { 
                 height: auto !important; 
+                min-height: 0 !important;
                 border: none !important; 
                 padding: 0 !important;
                 background: transparent !important;
                 color: black !important;
+                overflow: visible !important;
+                white-space: pre-wrap !important;
+                display: block !important;
             }
+            
             .bg-zinc-900, .bg-zinc-950, .bg-black { background: white !important; color: black !important; }
-            .border-zinc-800, .border-zinc-900 { border-color: #eee !important; }
-            .text-zinc-400, .text-zinc-500 { color: #666 !important; }
+            .border-zinc-800, .border-zinc-900, .border-zinc-900\/50 { border-color: #ddd !important; }
+            .text-zinc-400, .text-zinc-500 { color: #555 !important; }
             .text-indigo-400, .text-indigo-500 { color: #000 !important; font-weight: bold; }
+            
+            table { width: 100% !important; table-layout: fixed; }
+            th, td { border: 1px solid #ddd !important; padding: 6px !important; }
         }
 
         ::-webkit-scrollbar { width: 6px; }
@@ -310,7 +330,33 @@
             
             setTimeout(() => {
                 tbody.querySelectorAll('textarea').forEach(adjustHeight);
-            }, 50);
+            }, 100);
+        }
+
+        function adjustHeight(el) {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight) + 'px';
+        }
+
+        function processShortcodes(textarea, evId, shiftId, field) {
+            const val = textarea.value;
+            const regex = /(\b\d+\b)([ ,;\n\r])/g;
+            let changed = false;
+            const newVal = val.replace(regex, (match, code, delimiter) => {
+                if (appData.staff[code]) {
+                    changed = true;
+                    return appData.staff[code].name + delimiter;
+                }
+                return match;
+            });
+            if (changed) {
+                textarea.value = newVal;
+                updateShiftField(evId, shiftId, field, newVal);
+            } else {
+                updateShiftField(evId, shiftId, field, val);
+            }
+            adjustHeight(textarea);
+            updateMonthlyCount(); // Forçar atualização da contagem ao digitar
         }
 
         function adjustHeight(el) {
@@ -464,12 +510,19 @@
 
             appData.events.forEach(ev => {
                 const evDate = new Date(ev.date);
+                // Verifica se o evento pertence ao mês e ano atuais
                 if(evDate.getMonth() === currentMonth && evDate.getFullYear() === currentYear) {
                     ev.shifts.forEach(s => {
-                        const allNames = [s.luz, s.som, s.prod, s.foh].join(',').split(/[,\n;]/);
-                        allNames.forEach(name => {
+                        // Concatenar todos os campos e limpar separadores
+                        const rawText = [s.luz, s.som, s.prod, s.foh].join(', ');
+                        const names = rawText.split(/[,\n;]/);
+                        
+                        names.forEach(name => {
                             const n = name.trim();
-                            if(n.length > 2) counts[n] = (counts[n] || 0) + 1;
+                            // Só conta se o nome tiver mais de 1 caractere (evita espaços vazios)
+                            if(n.length > 1) {
+                                counts[n] = (counts[n] || 0) + 1;
+                            }
                         });
                     });
                 }
@@ -479,13 +532,13 @@
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
 
             if(sorted.length === 0) {
-                grid.innerHTML = '<p class="text-zinc-600 text-xs col-span-full">Sem turnos este mês.</p>';
+                grid.innerHTML = '<div class="col-span-full p-8 text-center bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-800"><p class="text-zinc-600 text-xs font-bold uppercase tracking-widest">Nenhum turno registado este mês.</p></div>';
                 return;
             }
 
             grid.innerHTML = sorted.map(([name, count]) => `
-                <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex justify-between items-center">
-                    <span class="text-xs font-bold text-white">${name}</span>
+                <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex justify-between items-center group hover:border-indigo-500/50 transition">
+                    <span class="text-xs font-bold text-white group-hover:text-indigo-400">${name}</span>
                     <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/20">
                         ${count} ${count === 1 ? 'Turno' : 'Turnos'}
                     </span>
@@ -496,6 +549,7 @@
         window.onload = () => {
             renderEventList();
             switchTab('events');
+            updateMonthlyCount(); // Inicia contagem no load
         };
     </script>
 </body>
