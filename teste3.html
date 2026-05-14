@@ -422,7 +422,7 @@
 
             if(!code) {
                 const existing = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
-                code = existing.length > 0 ? (Math.max(...existing) + 1).toString() : "101";
+                code = existing.length > 0 ? (Math.max(...existing) + 1).toString() : "1";
             }
 
             appData.staff[code] = { name };
