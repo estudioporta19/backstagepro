@@ -94,10 +94,16 @@
 
         <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
             <div class="flex gap-1.5">
-                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Export</button>
-                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Import</button>
+                <button onclick="exportData()" title="Exportar JSON" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Export</button>
+                <button onclick="document.getElementById('importFile').click()" title="Importar JSON" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Import</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
             </div>
+            
+            <!-- Botão de Impressão Global Restaurado -->
+            <button onclick="printAllEvents()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-lg text-[9px] uppercase tracking-widest transition">
+                🖨️ Imprimir Agenda
+            </button>
+
             <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-lg text-[10px] uppercase tracking-widest transition shadow-lg shadow-indigo-900/20">
                 + Novo Evento
             </button>
@@ -166,7 +172,7 @@
             </div>
         </div>
 
-        <!-- Views de Gestão (Simplificadas) -->
+        <!-- Views de Gestão -->
         <div id="staffView" class="hidden">
             <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
             <div class="flex gap-2 mb-6 max-w-xl">
@@ -464,7 +470,7 @@
             `).join('');
         }
 
-        // Impressão Refinada
+        // Impressão Refinada (Black Header)
         function buildEventHTML(ev) {
             const cols = ['Técnicos','Produção','Bilh.','Portas','Bar','Seg.'];
             const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
@@ -472,24 +478,29 @@
 
             const rows = ev.shifts.map(s => `
                 <tr>
-                    <td style="padding:6px; border:1px solid #000; font-size:9px; vertical-align:top; background:#f5f5f5;">
-                        <div style="font-weight:900; text-transform:uppercase;">${s.label||''}</div>
+                    <td style="padding:6px; border:1px solid #000; font-size:9px; vertical-align:top; background:#f0f0f0;">
+                        <div style="font-weight:900; text-transform:uppercase; color:#333;">${s.label||''}</div>
                         <div style="font-weight:900; font-size:12px; margin-top:2px;">${s.time||''}</div>
                     </td>
                     ${keys.map(k => `<td style="padding:6px; border:1px solid #000; font-size:10px; vertical-align:top; white-space:pre-wrap;">${s[k]||''}</td>`).join('')}
                 </tr>`).join('');
 
             return `
-                <div style="margin-bottom:30px; page-break-after:always;">
-                    <div style="border-bottom:3px solid #000; padding-bottom:5px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-end;">
-                        <div><h1 style="font-size:22px; font-weight:900; margin:0; text-transform:uppercase;">${ev.name}</h1><p style="font-size:11px; margin:2px 0 0; font-weight:700;">${ev.date} &bull; ${ev.venue||''}</p></div>
-                        <div style="font-size:8px; font-weight:900;">BACKSTAGE PRO</div>
+                <div style="margin-bottom:40px; page-break-after:always;">
+                    <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:flex-end;">
+                        <div>
+                            <h1 style="font-size:26px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-1px;">${ev.name}</h1>
+                            <p style="font-size:12px; margin:4px 0 0; font-weight:700; color:#555;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'SEM LOCAL'}</p>
+                        </div>
+                        <div style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:1px; color:#999;">Backstage Pro</div>
                     </div>
-                    <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
-                        <thead><tr style="background:#000; color:#fff; font-size:9px;">
-                            <th style="width:75px; padding:6px; border:1px solid #000; text-align:left;">Fase</th>
-                            ${cols.map(c=>`<th style="padding:6px; border:1px solid #000; text-align:left;">${c}</th>`).join('')}
-                        </tr></thead>
+                    <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:2px solid #000;">
+                        <thead>
+                            <tr style="background:#000; color:#fff;">
+                                <th style="width:80px; padding:8px; border:1px solid #000; text-align:left; font-size:9px; text-transform:uppercase;">Horário</th>
+                                ${cols.map(c=>`<th style="padding:8px; border:1px solid #000; text-align:left; font-size:9px; text-transform:uppercase; font-weight:900;">${c}</th>`).join('')}
+                            </tr>
+                        </thead>
                         <tbody>${rows}</tbody>
                     </table>
                 </div>`;
@@ -497,15 +508,37 @@
 
         function executePrint(html) {
             const win = window.open('', '_blank');
-            win.document.write(`<html><head><style>body{font-family:sans-serif;margin:1cm;}</style></head><body>${html}</body></html>`);
+            win.document.write(`
+                <html>
+                    <head>
+                        <title>Backstage PRO - Impressão</title>
+                        <style>
+                            @page { margin: 1.5cm; }
+                            body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; color: #000; line-height: 1.2; }
+                            table { page-break-inside: auto; }
+                            tr { page-break-inside: avoid; page-break-after: auto; }
+                        </style>
+                    </head>
+                    <body>${html}</body>
+                </html>`);
             win.document.close();
-            win.print();
+            // Pequeno delay para garantir que os estilos/fontes carreguem se necessário
+            setTimeout(() => { win.print(); }, 250);
         }
 
-        function printSingleEvent() { const ev = appData.events.find(e => e.id === appData.activeEventId); if(ev) executePrint(buildEventHTML(ev)); }
-        function printAllEvents() { executePrint(appData.events.map(ev => buildEventHTML(ev)).join('')); }
+        function printSingleEvent() { 
+            const ev = appData.events.find(e => e.id === appData.activeEventId); 
+            if(ev) executePrint(buildEventHTML(ev)); 
+        }
+
+        function printAllEvents() { 
+            if(appData.events.length === 0) return alert("Não existem eventos para imprimir.");
+            // Ordenar por data antes de imprimir a agenda toda
+            const sortedEvents = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+            executePrint(sortedEvents.map(ev => buildEventHTML(ev)).join('')); 
+        }
+
         function printTurnos() {
-            // Reaproveita lógica de contagem mas para impressão
             const counts = {}; const displayName = {};
             appData.events.forEach(ev => ev.shifts.forEach(s => {
                 const uniqueInShift = new Set();
@@ -515,9 +548,17 @@
                 uniqueInShift.forEach(n => counts[n] = (counts[n] || 0) + 1);
             }));
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-            const html = `<h2>Contagem de Turnos Acumulada</h2><table border="1" style="width:100%; border-collapse:collapse;">
-                ${sorted.map(([n, c]) => `<tr><td style="padding:5px;">${displayName[n]}</td><td style="padding:5px; text-align:center;"><b>${c}</b></td></tr>`).join('')}
-            </table>`;
+            const html = `
+                <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:20px;">
+                    <h1 style="text-transform:uppercase; font-weight:900; margin:0;">Contagem Acumulada de Turnos</h1>
+                </div>
+                <table border="1" style="width:100%; border-collapse:collapse; font-size:12px;">
+                    <tr style="background:#000; color:#fff;">
+                        <th style="padding:10px; text-align:left;">NOME DO COLABORADOR</th>
+                        <th style="padding:10px; text-align:center; width:100px;">TURNOS</th>
+                    </tr>
+                    ${sorted.map(([n, c]) => `<tr><td style="padding:8px; font-weight:bold;">${displayName[n].toUpperCase()}</td><td style="padding:8px; text-align:center; font-weight:900;">${c}</td></tr>`).join('')}
+                </table>`;
             executePrint(html);
         }
 
