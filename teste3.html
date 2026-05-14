@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backstage PRO - Produção de Eventos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
+        
+        :root {
+            --accent: #6366f1;
+            --bg-dark: #050505;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: #efefef;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .tab-btn.active { 
+            color: white; 
+            border-left: 3px solid var(--accent); 
+            padding-left: 12px; 
+            background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%); 
+        }
+        
+        textarea { 
+            background-color: #0d0d0d; 
+            border: 1px solid #1a1a1a; 
+            color: #efefef; 
+            min-height: 38px; 
+            font-size: 11px;
+            line-height: 1.4;
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            resize: none;
+            overflow: hidden;
+            transition: border-color 0.2s;
+            display: block; 
+        }
+        
+        textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
+
+        @media print {
+            @page { size: landscape; margin: 0.5cm; }
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; overflow: visible !important; }
+            main { padding: 0 !important; overflow: visible !important; display: block !important; }
+            #editorContainer { width: 100% !important; }
+            
+            textarea { 
+                border: none !important; 
+                background: transparent !important; 
+                color: black !important; 
+                overflow: hidden !important; 
+                white-space: pre-wrap !important;
+                /* Removido height:auto para manter o inline height do JS */
+                padding: 2px !important;
+                resize: none !important;
+                font-size: 10px !important;
+            }
+
+            /* Esconde o triângulo de redimensionamento em todos os browsers */
+            textarea::-webkit-resizer { display: none !important; }
+            
+            .bg-zinc-900, .bg-zinc-950, .bg-zinc-900\/10 { background: white !important; color: black !important; }
+            .border-zinc-800, .border-zinc-900, .border-zinc-900\/50 { border-color: #eee !important; }
+            table { width: 100% !important; border-collapse: collapse; table-layout: fixed; }
+            th, td { border: 1px solid #eee !important; padding: 4px !important; word-wrap: break-word; }
+            th { background-color: #f9f9f9 !important; color: #666 !important; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="w-64 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
+        <div class="p-6 border-b border-zinc-900">
+            <h1 class="text-xl font-black tracking-tighter italic uppercase">Backstage<span class="text-indigo-500">PRO</span></h1>
+            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Full Operations Suite</p>
+        </div>
+
+        <nav class="flex flex-col gap-1 mt-4 px-2">
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+                📅 Agenda e Fichas
+            </button>
+            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+                👥 Equipa Técnica
+            </button>
+            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+                📍 Espaços e Locais
+            </button>
+            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+                📊 Contagem Mês
+            </button>
+        </nav>
+
+        <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
+            <div class="flex gap-2">
+                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Exportar</button>
+                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Importar</button>
+                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+            </div>
+            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition">
+                + Novo Espetáculo
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-8">
+        
+        <div id="eventsView">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="w-full lg:w-64 no-print">
+                    <h2 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Próximos Shows</h2>
+                    <div id="eventList" class="space-y-2"></div>
+                </div>
+
+                <div id="editorContainer" class="flex-1">
+                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-700">
+                        <span class="text-3xl mb-3">📋</span>
+                        <p class="text-[10px] font-black uppercase tracking-widest">Seleciona um espetáculo</p>
+                    </div>
+
+                    <div id="editorArea" class="hidden">
+                        <header class="flex justify-between items-end mb-8 border-b border-zinc-900 pb-6">
+                            <div class="flex-1">
+                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-3xl font-black text-white p-0 focus:ring-0 w-full" placeholder="Nome do Espetáculo">
+                                <div class="flex gap-4 mt-2">
+                                    <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-zinc-500 text-xs font-bold uppercase focus:ring-0 p-0 [color-scheme:dark]">
+                                    <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Local (Cód. + Espaço)" class="bg-transparent border-none text-zinc-500 text-xs font-bold uppercase focus:ring-0 p-0">
+                                </div>
+                            </div>
+                            <div class="flex gap-2 no-print">
+                                <button onclick="addShift()" class="bg-zinc-900 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-zinc-400">+ Horário</button>
+                                <button onclick="window.print()" class="bg-white text-black px-4 py-2 rounded-lg text-[9px] font-black uppercase shadow-lg hover:bg-zinc-200 transition">Imprimir PDF</button>
+                            </div>
+                        </header>
+
+                        <div class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-900/10">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-zinc-900/50 text-[8px] font-black text-zinc-500 uppercase tracking-widest">
+                                        <th class="p-3 w-32">Fase / Hora</th>
+                                        <th class="p-3 border-l border-zinc-800">Técnicos</th>
+                                        <th class="p-3 border-l border-zinc-800">Produção</th>
+                                        <th class="p-3 border-l border-zinc-800">Bilheteira</th>
+                                        <th class="p-3 border-l border-zinc-800">Portas</th>
+                                        <th class="p-3 border-l border-zinc-800">Bar/Cozinha</th>
+                                        <th class="p-3 border-l border-zinc-800">Segurança</th>
+                                        <th class="p-3 w-8 no-print"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shiftsBody" class="divide-y divide-zinc-900/50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="staffView" class="hidden">
+            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Equipa</h2>
+            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
+                <div class="flex gap-3">
+                    <input type="text" id="newStaffCode" placeholder="Cód (Opcional)" class="w-32 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <button onclick="addStaffMember()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="staffGrid"></div>
+        </div>
+
+        <div id="venuesView" class="hidden">
+            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Espaços</h2>
+            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
+                <div class="flex gap-3">
+                    <input type="text" id="newVenueCode" placeholder="Cód (Opcional)" class="w-32 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Nome do Local (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <button onclick="addVenue()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="venueGrid"></div>
+        </div>
+
+        <div id="counterView" class="hidden">
+            <h2 class="text-xl font-black uppercase mb-6 italic">Turnos do Mês</h2>
+            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+
+    </main>
+
+    <script>
+        const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
+
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v2')) || {
+            events: [],
+            staff: { "101": { name: "EXEMPLO TÉCNICO" } },
+            venues: { "TNM": "Teatro Nacional" },
+            activeEventId: null
+        };
+
+        function saveData() {
+            localStorage.setItem('backstage_pro_v2', JSON.stringify(appData));
+        }
+
+        function switchTab(tab) {
+            ['events', 'staff', 'venues', 'counter'].forEach(t => {
+                document.getElementById(t + 'View').classList.add('hidden');
+                document.getElementById('btn-tab-' + t).classList.remove('active');
+            });
+            document.getElementById(tab + 'View').classList.remove('hidden');
+            document.getElementById('btn-tab-' + tab).classList.add('active');
+
+            if(tab === 'staff') renderStaff();
+            if(tab === 'venues') renderVenues();
+            if(tab === 'counter') updateMonthlyCount();
+            if(tab === 'events') renderEventList();
+        }
+
+        // --- GESTÃO DE EVENTOS ---
+        function createNewEvent() {
+            switchTab('events');
+            const id = 'ev_' + Date.now();
+            const newEv = {
+                id,
+                name: "Novo Espetáculo",
+                date: new Date().toISOString().split('T')[0],
+                venue: "",
+                shifts: [
+                    { id: 's1', label: 'MONTAGEM', time: '10:00', tecnicos:'', producao:'', bilheteira:'', portas:'', bar:'', seguranca:'' },
+                    { id: 's2', label: 'ESPETÁCULO', time: '21:30', tecnicos:'', producao:'', bilheteira:'', portas:'', bar:'', seguranca:'' }
+                ]
+            };
+            appData.events.unshift(newEv);
+            appData.activeEventId = id;
+            saveData();
+            renderEventList();
+            selectEvent(id);
+        }
+
+        function selectEvent(id) {
+            appData.activeEventId = id;
+            const ev = appData.events.find(e => e.id === id);
+            if (!ev) return;
+
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('editorArea').classList.remove('hidden');
+            document.getElementById('curEventName').value = ev.name;
+            document.getElementById('curEventDate').value = ev.date;
+            document.getElementById('curEventVenue').value = ev.venue;
+            
+            renderShifts(ev);
+            renderEventList();
+        }
+
+        function renderEventList() {
+            const list = document.getElementById('eventList');
+            list.innerHTML = appData.events.map(ev => `
+                <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-3 rounded-xl border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/40 border-zinc-900'} hover:border-zinc-700 transition group">
+                    <div class="text-[9px] font-black text-zinc-500 uppercase">${ev.date}</div>
+                    <div class="text-xs font-bold text-white truncate">${ev.name}</div>
+                </button>
+            `).join('');
+        }
+
+        function renderShifts(ev) {
+            const tbody = document.getElementById('shiftsBody');
+            tbody.innerHTML = ev.shifts.map(s => `
+                <tr class="group hover:bg-zinc-900/30">
+                    <td class="p-3 align-top">
+                        <input type="text" value="${s.label}" oninput="updateShiftField('${s.id}', 'label', this.value)" class="bg-transparent border-none text-[10px] font-black text-indigo-400 uppercase w-full p-0 focus:ring-0 mb-1">
+                        <input type="text" value="${s.time}" oninput="updateShiftField('${s.id}', 'time', this.value)" class="bg-transparent border-none text-[10px] font-bold text-zinc-500 w-full p-0 focus:ring-0">
+                    </td>
+                    ${APP_COLUMNS.map(col => `
+                        <td class="p-1.5 border-l border-zinc-900/50 align-top">
+                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" placeholder="..."> ${s[col] || ''}</textarea>
+                        </td>
+                    `).join('')}
+                    <td class="p-3 no-print align-top"><button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition">×</button></td>
+                </tr>
+            `).join('');
+            
+            // Garantir que a altura é calculada logo ao carregar
+            setTimeout(() => {
+                tbody.querySelectorAll('textarea').forEach(adjustHeight);
+            }, 50);
+        }
+
+        // --- LÓGICA DE INPUTS ---
+        function adjustHeight(el) {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight) + 'px';
+        }
+
+        function updateActiveEvent(field, val) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) {
+                ev[field] = val;
+                saveData();
+                if(field === 'name' || field === 'date') renderEventList();
+            }
+        }
+
+        function updateShiftField(shiftId, field, val) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) {
+                const shift = ev.shifts.find(s => s.id === shiftId);
+                if(shift) {
+                    shift[field] = val;
+                    saveData();
+                }
+            }
+        }
+
+        function processShortcodes(textarea, shiftId, field) {
+            const val = textarea.value;
+            const regex = /(\b\w+\b)([ ,;\n\r])/g;
+            let changed = false;
+            const newVal = val.replace(regex, (match, code, delimiter) => {
+                if (appData.staff[code]) {
+                    changed = true;
+                    return appData.staff[code].name + delimiter;
+                }
+                return match;
+            });
+            if (changed) {
+                textarea.value = newVal;
+                updateShiftField(shiftId, field, newVal);
+            } else {
+                updateShiftField(shiftId, field, val);
+            }
+            adjustHeight(textarea);
+        }
+
+        function processVenueCode(input) {
+            const val = input.value;
+            for(let code in appData.venues) {
+                if(val.toUpperCase() === code.toUpperCase() + " ") {
+                    input.value = appData.venues[code];
+                    updateActiveEvent('venue', appData.venues[code]);
+                    return;
+                }
+            }
+            updateActiveEvent('venue', val);
+        }
+
+        // --- GESTÃO DE EQUIPA ---
+        function addStaffMember() {
+            let code = document.getElementById('newStaffCode').value.trim();
+            const name = document.getElementById('newStaffName').value.trim();
+            if(!name) return;
+
+            if(!code) {
+                const existing = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
+                code = existing.length > 0 ? (Math.max(...existing) + 1).toString() : "101";
+            }
+
+            appData.staff[code] = { name };
+            saveData();
+            renderStaff();
+            document.getElementById('newStaffCode').value = '';
+            document.getElementById('newStaffName').value = '';
+            document.getElementById('newStaffName').focus();
+        }
+
+        function renderStaff() {
+            const grid = document.getElementById('staffGrid');
+            grid.innerHTML = Object.entries(appData.staff).map(([code, data]) => `
+                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center group">
+                    <div>
+                        <div class="text-[9px] font-black text-indigo-500 uppercase">${code}</div>
+                        <div class="text-xs font-bold text-white">${data.name}</div>
+                    </div>
+                    <button onclick="deleteStaff('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteStaff(code) {
+            if(confirm("Remover esta pessoa?")) {
+                delete appData.staff[code];
+                saveData();
+                renderStaff();
+            }
+        }
+
+        // --- GESTÃO DE ESPAÇOS ---
+        function addVenue() {
+            let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
+            const name = document.getElementById('newVenueName').value.trim();
+            if(!name) return;
+
+            if(!code) {
+                code = name.substring(0, 3).toUpperCase() + (Object.keys(appData.venues).length + 1);
+            }
+
+            appData.venues[code] = name;
+            saveData();
+            renderVenues();
+            document.getElementById('newVenueCode').value = '';
+            document.getElementById('newVenueName').value = '';
+            document.getElementById('newVenueName').focus();
+        }
+
+        function renderVenues() {
+            const grid = document.getElementById('venueGrid');
+            grid.innerHTML = Object.entries(appData.venues).map(([code, name]) => `
+                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center group">
+                    <div>
+                        <div class="text-[9px] font-black text-indigo-400 uppercase">${code}</div>
+                        <div class="text-xs font-bold text-white">${name}</div>
+                    </div>
+                    <button onclick="deleteVenue('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteVenue(code) {
+            if(confirm("Remover este local?")) {
+                delete appData.venues[code];
+                saveData();
+                renderVenues();
+            }
+        }
+
+        function updateMonthlyCount() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const counts = {};
+
+            appData.events.forEach(ev => {
+                const evDate = new Date(ev.date);
+                if(evDate.getMonth() === currentMonth && evDate.getFullYear() === currentYear) {
+                    ev.shifts.forEach(s => {
+                        const uniqueInShift = new Set();
+                        APP_COLUMNS.forEach(col => {
+                            if (s[col]) {
+                                s[col].split(/[,\n;]/).forEach(n => {
+                                    const clean = n.trim();
+                                    if(clean.length > 2) uniqueInShift.add(clean);
+                                });
+                            }
+                        });
+                        uniqueInShift.forEach(name => {
+                            counts[name] = (counts[name] || 0) + 1;
+                        });
+                    });
+                }
+            });
+
+            const grid = document.getElementById('monthlyCounterGrid');
+            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+
+            if(sorted.length === 0) {
+                grid.innerHTML = '<div class="col-span-full py-12 text-center text-zinc-700 font-bold uppercase text-[10px] tracking-widest border border-dashed border-zinc-900 rounded-3xl">Sem registos este mês</div>';
+                return;
+            }
+
+            grid.innerHTML = sorted.map(([name, count]) => `
+                <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-900 flex justify-between items-center">
+                    <span class="text-xs font-bold text-white">${name}</span>
+                    <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/10">
+                        ${count} Turnos
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function addShift() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) {
+                const newShift = { id: 's'+Date.now(), label:'NOVO TURNO', time:'00:00' };
+                APP_COLUMNS.forEach(c => newShift[c] = '');
+                ev.shifts.push(newShift);
+                renderShifts(ev);
+                saveData();
+            }
+        }
+
+        function removeShift(id) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) {
+                ev.shifts = ev.shifts.filter(s => s.id !== id);
+                renderShifts(ev);
+                saveData();
+            }
+        }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(appData, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backstage_pro_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                appData = JSON.parse(e.target.result);
+                saveData();
+                location.reload();
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        window.onload = () => {
+            renderEventList();
+            if(appData.activeEventId) selectEvent(appData.activeEventId);
+        };
+    </script>
+</body>
+</html>
