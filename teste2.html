@@ -41,7 +41,7 @@
 
         .tab-btn.active { border-bottom: 2px solid var(--accent); color: white; }
 
-        /* Estilos de Impressão */
+        /* Estilos para o seletor de sugestões se necessário, mas manteremos o padrão de substituição automática */
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; color: black !important; padding: 0 !important; }
@@ -76,6 +76,9 @@
             </button>
             <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
                 👥 Gestão de Equipa
+            </button>
+            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
+                📍 Gestão de Espaços
             </button>
             <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
                 📊 Contagem Mês
@@ -120,7 +123,10 @@
                                 📅 <input type="date" id="curEventDate" oninput="saveCurrentEvent()" class="bg-transparent border-none focus:ring-0 p-0 [color-scheme:dark]">
                             </div>
                             <div class="flex items-center gap-2 text-zinc-500 border-l border-zinc-800 pl-4">
-                                📍 <input type="text" id="curEventVenue" oninput="saveCurrentEvent()" class="bg-transparent border-none focus:ring-0 p-0 w-48" placeholder="LOCAL / SALA">
+                                📍 <input type="text" id="curEventVenue" 
+                                    onkeyup="processVenueShortcode(this)" 
+                                    oninput="saveCurrentEvent()" 
+                                    class="bg-transparent border-none focus:ring-0 p-0 w-64" placeholder="LOCAL / SALA (OU CÓDIGO)">
                             </div>
                         </div>
                     </div>
@@ -157,23 +163,39 @@
         <div id="staffView" class="hidden">
             <header class="mb-8 border-b border-zinc-800 pb-4">
                 <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Gestão de Equipa e Atalhos</h2>
-                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Define códigos numéricos (ex: 1) para preencher nomes rapidamente nas fichas.</p>
+                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Define códigos numéricos para preencher nomes rapidamente. Se deixar o código vazio, o sistema atribui o próximo disponível.</p>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
                     <h3 class="text-xs font-black text-indigo-400 uppercase mb-4 tracking-widest">Adicionar Elemento</h3>
-                    <div class="flex gap-2">
-                        <input type="text" id="newStaffCode" placeholder="Código (Ex: 1)" class="w-20 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
-                        <input type="text" id="newStaffName" placeholder="Nome Completo" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
-                        <button onclick="addStaffMember()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-[10px] font-bold uppercase">Adicionar</button>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex gap-2">
+                            <input type="text" id="newStaffCode" placeholder="Cód. (vazio = auto)" class="w-32 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
+                            <input type="text" id="newStaffName" placeholder="Nome Completo" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="newStaffPhone" placeholder="Telemóvel (Opcional)" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
+                            <button onclick="addStaffMember()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded text-[10px] font-bold uppercase transition">Adicionar à Base</button>
+                        </div>
                     </div>
                 </div>
-
                 <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
-                    <h3 class="text-xs font-black text-zinc-400 uppercase mb-4 tracking-widest">Dica de Utilização</h3>
+                    <h3 class="text-xs font-black text-zinc-400 uppercase mb-4 tracking-widest">Dicas de Atalho</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
+                    <h3 class="text-xs font-black text-indigo-400 uppercase mb-4 tracking-widest">Novo Espaço</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="newVenueCode" placeholder="Código" class="w-20 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
+                        <input type="text" id="newVenueName" placeholder="Nome da Sala / Local" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
+                        <button onclick="addVenue()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-[10px] font-bold uppercase transition">Adicionar</button>
+                    </div>
+                </div>
+                <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
+                    <h3 class="text-xs font-black text-zinc-400 uppercase mb-4 tracking-widest">Como usar</h3>
                     <p class="text-[11px] text-zinc-500 leading-relaxed">
-                        Nas fichas de turno, basta escrever o <strong class="text-white font-bold">número seguido de um espaço</strong> ou vírgula no campo de texto. O sistema substituirá automaticamente pelo nome correspondente.
+                        No cabeçalho de qualquer ficha, escreve o código do local seguido de <strong class="text-white font-bold">espaço</strong>. O sistema substitui o número pelo nome da sala instantaneamente.
                     </p>
                 </div>
             </div>
@@ -183,19 +205,17 @@
                     <thead>
                         <tr class="bg-zinc-800/50 text-[9px] uppercase tracking-widest font-black text-zinc-500">
                             <th class="p-3 w-20">Código</th>
-                            <th class="p-3">Nome do Profissional</th>
+                            <th class="p-3">Nome do Técnico</th>
+                            <th class="p-3">Telemóvel</th>
                             <th class="p-3 w-10"></th>
                         </tr>
                     </thead>
-                    <tbody id="staffListTable" class="divide-y divide-zinc-800">
-                        <!-- JS -->
-                    </tbody>
+                    <tbody id="staffListTable" class="divide-y divide-zinc-800"></tbody>
                 </table>
             </div>
         </div>
 
-        <div id="monthlyCounterView" class="hidden">
-            <!-- Mesma estrutura anterior para contagem mensal -->
+        <div id="venuesView" class="hidden">
             <header class="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
                 <div>
                     <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Resumo Mensal de Turnos</h2>
@@ -213,7 +233,8 @@
     <script>
         let appData = { 
             events: [], 
-            staff: {}, // { "1": "Nome", "2": "Outro" }
+            staff: {},
+            venues: {},
             activeEventId: null 
         };
         const STORAGE_KEY = 'backstage_pro_v5_pro';
@@ -223,6 +244,14 @@
             if (saved) {
                 appData = JSON.parse(saved);
                 if (!appData.staff) appData.staff = {};
+                
+                Object.keys(appData.staff).forEach(code => {
+                    if (typeof appData.staff[code] === 'string') {
+                        appData.staff[code] = { name: appData.staff[code], phone: '' };
+                    }
+                });
+
+                if (!appData.venues) appData.venues = {};
                 renderEventList();
                 if (appData.activeEventId) selectEvent(appData.activeEventId);
             }
@@ -236,26 +265,41 @@
         function switchTab(tab) {
             document.getElementById('eventsView').classList.toggle('hidden', tab !== 'events');
             document.getElementById('staffView').classList.toggle('hidden', tab !== 'staff');
+            document.getElementById('venuesView').classList.toggle('hidden', tab !== 'venues');
             document.getElementById('monthlyCounterView').classList.toggle('hidden', tab !== 'counter');
             
             document.getElementById('btn-tab-events').classList.toggle('active', tab === 'events');
             document.getElementById('btn-tab-staff').classList.toggle('active', tab === 'staff');
+            document.getElementById('btn-tab-venues').classList.toggle('active', tab === 'venues');
             document.getElementById('btn-tab-counter').classList.toggle('active', tab === 'counter');
             
             if(tab === 'staff') renderStaffList();
+            if(tab === 'venues') renderVenueList();
             if(tab === 'counter') updateMonthlyCount();
         }
 
         // --- GESTÃO DE STAFF ---
 
         function addStaffMember() {
-            const code = document.getElementById('newStaffCode').value.trim();
+            let code = document.getElementById('newStaffCode').value.trim();
             const name = document.getElementById('newStaffName').value.trim();
-            if(!code || !name) return;
+            const phone = document.getElementById('newStaffPhone').value.trim();
+
+            if (!name) return;
+
+            // Atribuição automática se código estiver vazio
+            if (!code) {
+                const existingCodes = Object.keys(appData.staff).map(Number).filter(n => !isNaN(n));
+                code = existingCodes.length > 0 ? (Math.max(...existingCodes) + 1).toString() : "1";
+            }
+
+            appData.staff[code] = { name, phone };
             
-            appData.staff[code] = name;
+            // Limpar inputs
             document.getElementById('newStaffCode').value = '';
             document.getElementById('newStaffName').value = '';
+            document.getElementById('newStaffPhone').value = '';
+            
             saveToStorage();
             renderStaffList();
         }
@@ -269,8 +313,49 @@
         function renderStaffList() {
             const tbody = document.getElementById('staffListTable');
             const entries = Object.entries(appData.staff);
+            
+            if (entries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-zinc-600 italic text-xs">Nenhum membro registado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = entries.map(([code, data]) => `
+                <tr class="hover:bg-zinc-800/10">
+                    <td class="p-3 font-black text-indigo-400 text-xs">${code}</td>
+                    <td class="p-3 text-zinc-300 text-xs font-bold uppercase tracking-tighter">${data.name}</td>
+                    <td class="p-3 text-zinc-500 text-[10px] font-mono">${data.phone || '---'}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="removeStaff('${code}')" class="text-zinc-700 hover:text-red-500 text-lg transition">&times;</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- GESTÃO DE ESPAÇOS (NOVO) ---
+
+        function addVenue() {
+            const code = document.getElementById('newVenueCode').value.trim();
+            const name = document.getElementById('newVenueName').value.trim();
+            if(!code || !name) return;
+            
+            appData.venues[code] = name;
+            document.getElementById('newVenueCode').value = '';
+            document.getElementById('newVenueName').value = '';
+            saveToStorage();
+            renderVenueList();
+        }
+
+        function removeVenue(code) {
+            delete appData.venues[code];
+            saveToStorage();
+            renderVenueList();
+        }
+
+        function renderVenueList() {
+            const tbody = document.getElementById('venueListTable');
+            const entries = Object.entries(appData.venues);
             if(entries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-zinc-600 italic text-xs">Nenhum membro configurado ainda.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-zinc-600 italic text-xs">Nenhum local configurado.</td></tr>`;
                 return;
             }
             tbody.innerHTML = entries.map(([code, name]) => `
@@ -278,7 +363,7 @@
                     <td class="p-3 font-black text-indigo-400 text-xs">${code}</td>
                     <td class="p-3 text-zinc-300 text-xs font-bold uppercase tracking-tighter">${name}</td>
                     <td class="p-3 text-right">
-                        <button onclick="removeStaff('${code}')" class="text-zinc-700 hover:text-red-500 text-lg">&times;</button>
+                        <button onclick="removeVenue('${code}')" class="text-zinc-700 hover:text-red-500 text-lg transition">&times;</button>
                     </td>
                 </tr>
             `).join('');
@@ -286,16 +371,28 @@
 
         // --- ENGINE DE EXPANSÃO DE CÓDIGOS ---
 
+        function processVenueShortcode(input) {
+            const val = input.value;
+            // Se o valor terminar com espaço e for apenas um número
+            if (val.endsWith(' ')) {
+                const code = val.trim();
+                if (appData.venues[code]) {
+                    input.value = appData.venues[code];
+                    saveCurrentEvent();
+                }
+            }
+        }
+
         function processShortcodes(textarea) {
             const val = textarea.value;
-            // Deteta números seguidos de espaço, vírgula, ponto-e-vírgula ou nova linha
             const regex = /(\b\d+\b)([, ;\n\r])/g;
             
             let changed = false;
             const newVal = val.replace(regex, (match, code, delimiter) => {
                 if (appData.staff[code]) {
                     changed = true;
-                    return appData.staff[code] + delimiter;
+                    // Agora appData.staff[code] é um objeto {name, phone}
+                    return appData.staff[code].name + delimiter;
                 }
                 return match;
             });
