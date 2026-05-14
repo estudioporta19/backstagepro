@@ -65,6 +65,7 @@
 
         .col-phase { width: 85px; }
 
+        /* Estilos para o Seletor de Equipa Rápido */
         #quickStaffPicker {
             position: fixed;
             z-index: 50;
@@ -89,8 +90,10 @@
 </head>
 <body class="flex h-screen overflow-hidden">
 
+    <!-- Seletor Flutuante de Equipa -->
     <div id="quickStaffPicker" class="no-print"></div>
 
+    <!-- Sidebar -->
     <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
         <div class="p-4 border-b border-zinc-900">
             <h1 class="text-lg font-black tracking-tighter italic uppercase leading-none">Backstage<span class="text-indigo-500">PRO</span></h1>
@@ -181,6 +184,7 @@
             </div>
         </div>
 
+        <!-- Views Gestão -->
         <div id="staffView" class="hidden">
             <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
             <div class="flex gap-2 mb-6 max-w-xl">
@@ -214,8 +218,8 @@
     <script>
         const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
 
-        // Lista de equipa inicial conforme pedido
-        const DEFAULT_STAFF = {
+        // Dados padrão solicitados
+        const defaultStaff = {
             "rs": { name: "Rita Sousa" },
             "mv": { name: "Madalena Victorino" },
             "gs": { name: "Giacomo Scalisi" },
@@ -224,34 +228,34 @@
             "jm": { name: "Joaquim Madaíl" },
             "aj": { name: "Ajudante João" },
             "am": { name: "Ajudante Manuel" }
-            "pq": { name: "Paulo Quaresma" }
-            "jr": { name: "Jorge Reis" }
         };
 
-        // Lista de locais inicial conforme pedido
-        const DEFAULT_VENUES = {
+        const defaultVenues = {
             "TP": "Teatro de Palha",
             "EN": "Escola Nova",
             "NB": "Novo Bowing"
         };
 
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_v3')) || {
-            events: [],
-            staff: DEFAULT_STAFF,
-            venues: DEFAULT_VENUES,
-            activeEventId: null
-        };
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v3'));
 
-        // Garantir que os dados por defeito existem se for uma nova instalação ou se foram apagados
-        if (Object.keys(appData.staff).length === 0) appData.staff = DEFAULT_STAFF;
-        if (Object.keys(appData.venues).length === 0) appData.venues = DEFAULT_VENUES;
+        // Se não houver dados, inicializa com os novos padrões
+        if (!appData) {
+            appData = {
+                events: [],
+                staff: defaultStaff,
+                venues: defaultVenues,
+                activeEventId: null
+            };
+        }
 
         function saveData() { localStorage.setItem('backstage_pro_v3', JSON.stringify(appData)); }
 
         function switchTab(tab) {
             ['events', 'staff', 'venues', 'counter'].forEach(t => {
-                document.getElementById(t + 'View').classList.add('hidden');
-                document.getElementById('btn-tab-' + t).classList.remove('active');
+                const elView = document.getElementById(t + 'View');
+                const elBtn = document.getElementById('btn-tab-' + t);
+                if(elView) elView.classList.add('hidden');
+                if(elBtn) elBtn.classList.remove('active');
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
@@ -332,6 +336,7 @@
             }
         }
 
+        // --- SISTEMA DE SELEÇÃO RÁPIDA DE EQUIPA ---
         let currentEditingShift = null;
         let currentEditingField = null;
         let currentTextarea = null;
@@ -486,6 +491,7 @@
             appData.venues[code] = name;
             saveData();
             renderVenues();
+            document.getElementById('newVenueName').value = '';
         }
 
         function renderVenues() {
@@ -514,6 +520,8 @@
                 </div>
             `).join('');
         }
+
+        // --- SISTEMA DE IMPRESSÃO ---
 
         function buildEventHTML(ev) {
             const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar / Cozinha','Segurança'];
@@ -628,7 +636,10 @@
             r.readAsText(e.target.files[0]);
         }
 
-        window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
+        window.onload = () => { 
+            renderEventList(); 
+            if(appData.activeEventId) selectEvent(appData.activeEventId); 
+        };
     </script>
 </body>
 </html>
