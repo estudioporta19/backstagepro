@@ -22,7 +22,12 @@
         }
 
         .sidebar { background-color: #000; border-right: 1px solid #1a1a1a; }
-        .tab-btn.active { color: white; border-left: 3px solid var(--accent); padding-left: 12px; background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%); }
+        .tab-btn.active { 
+            color: white; 
+            border-left: 3px solid var(--accent); 
+            padding-left: 12px; 
+            background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%); 
+        }
         
         textarea { 
             background-color: #0d0d0d !important; 
@@ -44,7 +49,6 @@
         @media print {
             .no-print { display: none !important; }
             body { background: white; color: black; }
-            .print-only { display: block !important; }
             textarea { 
                 height: auto !important; 
                 border: none !important; 
@@ -53,15 +57,14 @@
                 color: black !important;
             }
             .bg-zinc-900, .bg-zinc-950, .bg-black { background: white !important; color: black !important; }
-            .border-zinc-800 { border-color: #eee !important; }
+            .border-zinc-800, .border-zinc-900 { border-color: #eee !important; }
             .text-zinc-400, .text-zinc-500 { color: #666 !important; }
-            .text-indigo-400 { color: #000 !important; font-weight: bold; }
+            .text-indigo-400, .text-indigo-500 { color: #000 !important; font-weight: bold; }
         }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #222; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -96,16 +99,13 @@
 
     <main class="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-10">
         
-        <!-- VIEW: AGENDA -->
         <div id="eventsView">
             <div class="flex flex-col lg:flex-row gap-8">
-                <!-- Lista Lateral de Eventos -->
                 <div class="w-full lg:w-72 no-print">
                     <h2 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Eventos Ativos</h2>
                     <div id="eventList" class="space-y-2"></div>
                 </div>
 
-                <!-- Editor de Ficha -->
                 <div id="editorContainer" class="flex-1">
                     <div id="emptyState" class="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-600">
                         <span class="text-4xl mb-4">🎭</span>
@@ -149,35 +149,29 @@
             </div>
         </div>
 
-        <!-- VIEW: STAFF -->
         <div id="staffView" class="hidden">
             <header class="mb-8 border-b border-zinc-900 pb-4">
                 <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Gestão de Equipa</h2>
-                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Define códigos numéricos para preencher nomes rapidamente.</p>
             </header>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900">
                     <h3 class="text-xs font-black text-indigo-400 uppercase mb-4 tracking-widest">Adicionar Elemento</h3>
                     <div class="flex flex-col gap-3">
                         <div class="flex gap-2">
-                            <input type="text" id="newStaffCode" placeholder="Cód. (Ex: 101)" class="w-32 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
-                            <input type="text" id="newStaffName" placeholder="Nome Completo" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs focus:border-indigo-500 outline-none">
+                            <input type="text" id="newStaffCode" placeholder="Cód. (Ex: 101)" class="w-32 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
+                            <input type="text" id="newStaffName" placeholder="Nome Completo" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
                         </div>
-                        <button onclick="addStaffMember()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded text-[10px] font-bold uppercase transition">Adicionar à Base</button>
+                        <button onclick="addStaffMember()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded text-[10px] font-bold uppercase transition">Adicionar</button>
                     </div>
-                </div>
-                <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900">
-                    <h3 class="text-xs font-black text-zinc-400 uppercase mb-4 tracking-widest">Atalhos</h3>
-                    <p class="text-[11px] text-zinc-500 leading-relaxed italic">Digite o código na ficha seguido de <strong>espaço</strong> ou <strong>vírgula</strong> para expansão automática.</p>
                 </div>
             </div>
             <div class="overflow-hidden rounded-xl border border-zinc-900">
                 <table class="w-full text-left">
                     <thead>
-                        <tr class="bg-zinc-900/50 text-[9px] uppercase tracking-widest font-black text-zinc-500">
-                            <th class="p-3 w-20">Código</th>
-                            <th class="p-3">Nome do Técnico</th>
-                            <th class="p-3 w-10"></th>
+                        <tr class="bg-zinc-900/50 text-[9px] uppercase font-black text-zinc-500">
+                            <th class="p-3">Código</th>
+                            <th class="p-3">Nome</th>
+                            <th class="p-3"></th>
                         </tr>
                     </thead>
                     <tbody id="staffListTable" class="divide-y divide-zinc-900"></tbody>
@@ -185,29 +179,23 @@
             </div>
         </div>
 
-        <!-- VIEW: VENUES -->
         <div id="venuesView" class="hidden">
             <header class="mb-8 border-b border-zinc-900 pb-4">
                 <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Gestão de Espaços</h2>
             </header>
             <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-xl">
                 <div class="flex gap-2">
-                    <input type="text" id="newVenueCode" placeholder="Código" class="w-24 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
-                    <input type="text" id="newVenueName" placeholder="Nome do Local" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
-                    <button onclick="addVenue()" class="bg-indigo-600 px-4 py-2 rounded text-[10px] font-bold uppercase">Adicionar</button>
+                    <input type="text" id="newVenueCode" placeholder="Cód" class="w-24 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
+                    <input type="text" id="newVenueName" placeholder="Espaço" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
+                    <button onclick="addVenue()" class="bg-indigo-600 px-4 py-2 rounded text-[10px] font-bold uppercase">Add</button>
                 </div>
             </div>
             <div id="venueListTable" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
         </div>
 
-        <!-- VIEW: COUNTER -->
-        <div id="monthlyCounterView" class="hidden">
-            <header class="flex justify-between items-end mb-8 border-b border-zinc-900 pb-4">
-                <div>
-                    <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Contagem Mensal</h2>
-                    <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Total de turnos trabalhados por cada técnico no mês atual.</p>
-                </div>
-                <button onclick="window.print()" class="bg-zinc-900 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase no-print">Exportar Relatório</button>
+        <div id="counterView" class="hidden">
+            <header class="mb-8 border-b border-zinc-900 pb-4">
+                <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Contagem Mensal</h2>
             </header>
             <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </div>
@@ -215,16 +203,10 @@
     </main>
 
     <script>
-        // ESTADO DA APLICAÇÃO
         let appData = {
             events: JSON.parse(localStorage.getItem('bp_events')) || [],
-            staff: JSON.parse(localStorage.getItem('bp_staff')) || {
-                "1": { name: "Técnico Demo" }
-            },
-            venues: JSON.parse(localStorage.getItem('bp_venues')) || {
-                "TM": "Teatro Municipal",
-                "CC": "Centro Cultural"
-            },
+            staff: JSON.parse(localStorage.getItem('bp_staff')) || { "1": { name: "Técnico Exemplo" } },
+            venues: JSON.parse(localStorage.getItem('bp_venues')) || { "TM": "Teatro Municipal" },
             activeEventId: null
         };
 
@@ -234,70 +216,40 @@
             localStorage.setItem('bp_venues', JSON.stringify(appData.venues));
         }
 
+        // CORREÇÃO: Função switchTab agora usa os IDs corretos e evita erros
         function switchTab(tab) {
-            ['events', 'staff', 'venues', 'counter'].forEach(t => {
-                document.getElementById(t + 'View').classList.add('hidden');
-                document.getElementById('btn-tab-' + t).classList.remove('active');
+            const tabs = ['events', 'staff', 'venues', 'counter'];
+            tabs.forEach(t => {
+                const view = document.getElementById(t + 'View');
+                const btn = document.getElementById('btn-tab-' + t);
+                if(view) view.classList.add('hidden');
+                if(btn) btn.classList.remove('active');
             });
-            document.getElementById(tab + 'View').classList.remove('hidden');
-            document.getElementById('btn-tab-' + tab).classList.add('active');
+
+            const targetView = document.getElementById(tab + 'View');
+            const targetBtn = document.getElementById('btn-tab-' + tab);
+            
+            if(targetView) targetView.classList.remove('hidden');
+            if(targetBtn) targetBtn.classList.add('active');
             
             if(tab === 'staff') renderStaffList();
             if(tab === 'venues') renderVenueList();
             if(tab === 'counter') updateMonthlyCount();
-        }
-
-        // AJUSTE DE TEXTAREA
-        function adjustHeight(el) {
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight) + 'px';
-        }
-
-        function processShortcodes(textarea, evId, shiftId, field) {
-            const val = textarea.value;
-            // Regex para capturar números isolados seguidos de delimitador
-            const regex = /(\b\d+\b)([ ,;\n\r])/g;
-            
-            let changed = false;
-            const newVal = val.replace(regex, (match, code, delimiter) => {
-                if (appData.staff[code]) {
-                    changed = true;
-                    return appData.staff[code].name + delimiter;
-                }
-                return match;
-            });
-
-            if (changed) {
-                textarea.value = newVal;
-                updateShiftField(evId, shiftId, field, newVal);
-            } else {
-                updateShiftField(evId, shiftId, field, val);
-            }
-            adjustHeight(textarea);
-        }
-
-        function processVenueCode(input) {
-            const val = input.value;
-            const codes = Object.keys(appData.venues);
-            for(let code of codes) {
-                if(val.toUpperCase() === code.toUpperCase() + " ") {
-                    input.value = appData.venues[code];
-                    updateActiveEvent('venue', appData.venues[code]);
-                    return;
-                }
-            }
-            updateActiveEvent('venue', val);
+            if(tab === 'events') renderEventList();
         }
 
         function createNewEvent() {
+            // Se estivermos em outra aba, volta para a aba de eventos
+            switchTab('events');
+            
             const id = 'ev_' + Date.now();
             const newEv = {
                 id,
-                name: "Novo Evento",
+                name: "Novo Espetáculo",
                 date: new Date().toISOString().split('T')[0],
                 venue: "",
                 shifts: [
-                    { id: 's1', label: 'MONTAGEM', time: '09:00', luz: '', som: '', prod: '', foh: '' },
+                    { id: 's1', label: 'MONTAGEM', time: '10:00', luz: '', som: '', prod: '', foh: '' },
                     { id: 's2', label: 'ESPETÁCULO', time: '21:30', luz: '', som: '', prod: '', foh: '' }
                 ]
             };
@@ -347,7 +299,7 @@
                             <textarea 
                                 onkeyup="processShortcodes(this, '${ev.id}', '${s.id}', '${field}')"
                                 oninput="adjustHeight(this)"
-                                placeholder="Técnicos...">${s[field] || ''}</textarea>
+                                placeholder="..."> ${s[field] || ''}</textarea>
                         </td>
                     `).join('')}
                     <td class="p-4 text-center no-print">
@@ -356,10 +308,14 @@
                 </tr>
             `).join('');
             
-            // Auto-ajuste após render
             setTimeout(() => {
                 tbody.querySelectorAll('textarea').forEach(adjustHeight);
-            }, 10);
+            }, 50);
+        }
+
+        function adjustHeight(el) {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight) + 'px';
         }
 
         function updateActiveEvent(field, val) {
@@ -382,6 +338,39 @@
             }
         }
 
+        function processShortcodes(textarea, evId, shiftId, field) {
+            const val = textarea.value;
+            const regex = /(\b\d+\b)([ ,;\n\r])/g;
+            let changed = false;
+            const newVal = val.replace(regex, (match, code, delimiter) => {
+                if (appData.staff[code]) {
+                    changed = true;
+                    return appData.staff[code].name + delimiter;
+                }
+                return match;
+            });
+            if (changed) {
+                textarea.value = newVal;
+                updateShiftField(evId, shiftId, field, newVal);
+            } else {
+                updateShiftField(evId, shiftId, field, val);
+            }
+            adjustHeight(textarea);
+        }
+
+        function processVenueCode(input) {
+            const val = input.value;
+            const codes = Object.keys(appData.venues);
+            for(let code of codes) {
+                if(val.toUpperCase() === code.toUpperCase() + " ") {
+                    input.value = appData.venues[code];
+                    updateActiveEvent('venue', appData.venues[code]);
+                    return;
+                }
+            }
+            updateActiveEvent('venue', val);
+        }
+
         function addShift() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(ev) {
@@ -401,7 +390,7 @@
         }
 
         function deleteActiveEvent() {
-            if(!confirm("Apagar este espetáculo permanentemente?")) return;
+            if(!confirm("Apagar espetáculo?")) return;
             appData.events = appData.events.filter(e => e.id !== appData.activeEventId);
             appData.activeEventId = null;
             document.getElementById('editorArea').classList.add('hidden');
@@ -411,9 +400,9 @@
         }
 
         function addStaffMember() {
-            const code = document.getElementById('newStaffCode').value || Date.now();
+            const code = document.getElementById('newStaffCode').value;
             const name = document.getElementById('newStaffName').value;
-            if(!name) return;
+            if(!name || !code) return;
             appData.staff[code] = { name };
             saveData();
             renderStaffList();
@@ -427,7 +416,7 @@
                 <tr class="hover:bg-zinc-900/50">
                     <td class="p-3 font-mono text-indigo-400 text-xs">${code}</td>
                     <td class="p-3 text-xs text-zinc-300 font-bold">${data.name}</td>
-                    <td class="p-3"><button onclick="deleteStaff('${code}')" class="text-zinc-700 hover:text-red-500">×</button></td>
+                    <td class="p-3 text-right"><button onclick="deleteStaff('${code}')" class="text-zinc-700 hover:text-red-500">×</button></td>
                 </tr>
             `).join('');
         }
@@ -480,9 +469,7 @@
                         const allNames = [s.luz, s.som, s.prod, s.foh].join(',').split(/[,\n;]/);
                         allNames.forEach(name => {
                             const n = name.trim();
-                            if(n.length > 2) {
-                                counts[n] = (counts[n] || 0) + 1;
-                            }
+                            if(n.length > 2) counts[n] = (counts[n] || 0) + 1;
                         });
                     });
                 }
@@ -492,7 +479,7 @@
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
 
             if(sorted.length === 0) {
-                grid.innerHTML = '<p class="text-zinc-600 text-xs col-span-full">Nenhum turno registado este mês.</p>';
+                grid.innerHTML = '<p class="text-zinc-600 text-xs col-span-full">Sem turnos este mês.</p>';
                 return;
             }
 
@@ -506,7 +493,6 @@
             `).join('');
         }
 
-        // INIT
         window.onload = () => {
             renderEventList();
             switchTab('events');
