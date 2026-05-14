@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backstage PRO - Mensal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #f4f4f5; }
+        .sidebar { background: #0a0a0a; border-right: 1px solid #1a1a1a; }
+        .event-card { transition: all 0.2s ease; cursor: pointer; border: 1px solid #1a1a1a; }
+        .event-card.active { border-color: #6366f1; background: #111111; box-shadow: 0 0 15px rgba(99, 102, 241, 0.1); }
+        textarea { background-color: #0a0a0a !important; border: 1px solid #1a1a1a !important; color: #fafafa !important; min-height: 80px; }
+        textarea:focus { border-color: #6366f1 !important; outline: none; background: #111 !important; }
+        @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row min-h-screen">
+
+    <aside class="sidebar w-full md:w-72 p-6 flex flex-col gap-6 no-print">
+        <div class="mb-4">
+            <h1 class="text-2xl font-black tracking-tighter text-white">
+                BACKSTAGE<span class="text-indigo-500">PRO</span>
+            </h1>
+            <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-1">Mensal / Multi-Evento</p>
+        </div>
+
+        <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition">
+            <span>+ Novo Evento</span>
+        </button>
+
+        <div id="eventList" class="flex flex-col gap-2 overflow-y-auto max-h-[60vh] pr-2">
+            <!-- Gerado via JS -->
+        </div>
+
+        <div class="mt-auto pt-6 border-t border-zinc-800 flex flex-col gap-2">
+            <button onclick="exportFullData()" class="text-xs text-zinc-400 hover:text-white transition text-left">💾 Exportar Tudo (JSON)</button>
+            <button onclick="importFullData()" class="text-xs text-zinc-400 hover:text-white transition text-left">📂 Importar Backup</button>
+            <button onclick="clearAllSystemData()" class="text-xs text-red-900 hover:text-red-500 transition text-left mt-2">⚠️ Apagar Todo o Mês</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-4 md:p-10">
+        <div id="emptyState" class="h-full flex items-center justify-center text-zinc-600 italic">
+            Cria ou seleciona um evento na barra lateral para começar.
+        </div>
+
+        <div id="editorArea" class="hidden">
+            <header class="flex justify-between items-end mb-8 border-b border-zinc-800 pb-6">
+                <div>
+                    <input type="text" id="curEventName" oninput="saveCurrentEvent()" class="bg-transparent border-none text-4xl font-extrabold text-white focus:ring-0 p-0 w-full mb-2" placeholder="Nome do Show">
+                    <div class="flex gap-4">
+                        <input type="date" id="curEventDate" oninput="saveCurrentEvent()" class="bg-transparent border-none text-zinc-500 font-bold focus:ring-0 p-0 [color-scheme:dark]">
+                        <input type="text" id="curEventVenue" oninput="saveCurrentEvent()" class="bg-transparent border-none text-zinc-500 font-bold focus:ring-0 p-0" placeholder="Local">
+                    </div>
+                </div>
+                <div class="no-print flex gap-2">
+                    <button onclick="deleteCurrentEvent()" class="p-3 text-zinc-600 hover:text-red-500 transition">Apagar Dia</button>
+                    <button onclick="window.print()" class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-zinc-200 transition">PDF</button>
+                </div>
+            </header>
+
+            <div class="bg-zinc-900/30 rounded-3xl border border-zinc-800 overflow-hidden mb-6">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-zinc-800/50 text-[10px] uppercase tracking-[0.2em] font-black text-zinc-400">
+                            <th class="p-4 w-40">Turno / Fase</th>
+                            <th class="p-4 border-l border-zinc-800">Luz</th>
+                            <th class="p-4 border-l border-zinc-800">Som</th>
+                            <th class="p-4 border-l border-zinc-800">Bilheteira / Outros</th>
+                            <th class="p-4 w-10 no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="shiftsBody" class="divide-y divide-zinc-800">
+                        <!-- Gerado via JS -->
+                    </tbody>
+                </table>
+                <button onclick="addNewShift()" class="w-full py-4 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-indigo-400 hover:bg-indigo-500/5 transition no-print">
+                    + Adicionar Linha de Turno
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 pb-20">
+                <div class="bg-zinc-900/50 p-8 rounded-3xl border border-zinc-800">
+                    <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-3">
+                        <span class="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">📊</span>
+                        Resumo do Mês
+                    </h2>
+                    <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-black mb-6">Contagem acumulada de todos os eventos</p>
+                    <div id="monthlyCounter" class="space-y-2">
+                        <!-- Gerado via JS -->
+                    </div>
+                </div>
+                
+                <div class="bg-indigo-950/10 p-8 rounded-3xl border border-indigo-500/20 no-print">
+                    <h2 class="text-xs font-black uppercase tracking-widest text-indigo-400 mb-4">Dica de Produção</h2>
+                    <p class="text-sm text-zinc-400 leading-relaxed">
+                        Podes criar quantos dias quiseres. A contagem à esquerda soma automaticamente todos os nomes que aparecem em todos os dias da tua agenda. Ideal para fechar os pagamentos no final do mês.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let appData = {
+            events: [],
+            activeEventId: null
+        };
+
+        // Carregar do LocalStorage
+        function init() {
+            const saved = localStorage.getItem('backstage_pro_v2');
+            if (saved) {
+                appData = JSON.parse(saved);
+                renderEventList();
+                if (appData.activeEventId) selectEvent(appData.activeEventId);
+            }
+            updateMonthlyCount();
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('backstage_pro_v2', JSON.stringify(appData));
+            updateMonthlyCount();
+        }
+
+        function createNewEvent() {
+            const newEvent = {
+                id: 'ev_' + Date.now(),
+                name: 'Novo Espetáculo',
+                date: new Date().toISOString().split('T')[0],
+                venue: '',
+                shifts: [
+                    { id: 's1', label: 'Montagem', luz: '', som: '', foh: '' },
+                    { id: 's2', label: 'Espetáculo', luz: '', som: '', foh: '' }
+                ]
+            };
+            appData.events.push(newEvent);
+            appData.activeEventId = newEvent.id;
+            saveToStorage();
+            renderEventList();
+            selectEvent(newEvent.id);
+        }
+
+        function renderEventList() {
+            const list = document.getElementById('eventList');
+            list.innerHTML = appData.events.sort((a,b) => new Date(b.date) - new Date(a.date)).map(ev => `
+                <div onclick="selectEvent('${ev.id}')" class="event-card p-4 rounded-xl ${appData.activeEventId === ev.id ? 'active' : 'bg-zinc-900/50 hover:bg-zinc-800'}">
+                    <div class="text-[10px] font-black uppercase text-zinc-500">${ev.date || 'Sem data'}</div>
+                    <div class="font-bold text-sm text-zinc-200 truncate">${ev.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectEvent(id) {
+            appData.activeEventId = id;
+            const ev = appData.events.find(e => e.id === id);
+            if (!ev) return;
+
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('editorArea').classList.remove('hidden');
+            
+            document.getElementById('curEventName').value = ev.name;
+            document.getElementById('curEventDate').value = ev.date;
+            document.getElementById('curEventVenue').value = ev.venue;
+
+            renderShifts(ev);
+            renderEventList();
+        }
+
+        function renderShifts(ev) {
+            const tbody = document.getElementById('shiftsBody');
+            tbody.innerHTML = ev.shifts.map((s, idx) => `
+                <tr>
+                    <td class="p-2">
+                        <input type="text" value="${s.label}" oninput="updateShiftLabel('${ev.id}', '${s.id}', this.value)" class="bg-zinc-800/50 border border-zinc-800 rounded-lg p-2 text-xs font-bold text-white w-full" placeholder="Ex: Montagem">
+                    </td>
+                    <td class="p-2 border-l border-zinc-800/50"><textarea oninput="updateShiftData('${ev.id}', '${s.id}', 'luz', this.value)" class="w-full p-3 rounded-xl text-xs" placeholder="Nomes...">${s.luz}</textarea></td>
+                    <td class="p-2 border-l border-zinc-800/50"><textarea oninput="updateShiftData('${ev.id}', '${s.id}', 'som', this.value)" class="w-full p-3 rounded-xl text-xs" placeholder="Nomes...">${s.som}</textarea></td>
+                    <td class="p-2 border-l border-zinc-800/50"><textarea oninput="updateShiftData('${ev.id}', '${s.id}', 'foh', this.value)" class="w-full p-3 rounded-xl text-xs" placeholder="Nomes...">${s.foh}</textarea></td>
+                    <td class="p-2 no-print">
+                        <button onclick="removeShift('${ev.id}', '${s.id}')" class="text-zinc-700 hover:text-red-500 transition px-2">×</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function addNewShift() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            ev.shifts.push({ id: 's_' + Date.now(), label: 'Novo Turno', luz: '', som: '', foh: '' });
+            saveToStorage();
+            renderShifts(ev);
+        }
+
+        function removeShift(evId, shiftId) {
+            const ev = appData.events.find(e => e.id === evId);
+            ev.shifts = ev.shifts.filter(s => s.id !== shiftId);
+            saveToStorage();
+            renderShifts(ev);
+        }
+
+        function updateShiftData(evId, sId, field, value) {
+            const ev = appData.events.find(e => e.id === evId);
+            const shift = ev.shifts.find(s => s.id === sId);
+            shift[field] = value;
+            saveToStorage();
+        }
+
+        function updateShiftLabel(evId, sId, value) {
+            const ev = appData.events.find(e => e.id === evId);
+            const shift = ev.shifts.find(s => s.id === sId);
+            shift.label = value;
+            saveToStorage();
+        }
+
+        function saveCurrentEvent() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            ev.name = document.getElementById('curEventName').value;
+            ev.date = document.getElementById('curEventDate').value;
+            ev.venue = document.getElementById('curEventVenue').value;
+            saveToStorage();
+            renderEventList();
+        }
+
+        function deleteCurrentEvent() {
+            if (confirm("Tens a certeza que queres apagar este dia?")) {
+                appData.events = appData.events.filter(e => e.id !== appData.activeEventId);
+                appData.activeEventId = null;
+                saveToStorage();
+                renderEventList();
+                document.getElementById('editorArea').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
+            }
+        }
+
+        function updateMonthlyCount() {
+            const counts = {};
+            appData.events.forEach(ev => {
+                ev.shifts.forEach(s => {
+                    [s.luz, s.som, s.foh].forEach(txt => {
+                        const names = txt.split(/[,\n;]/);
+                        names.forEach(n => {
+                            const clean = n.trim();
+                            if (clean.length > 1) counts[clean] = (counts[clean] || 0) + 1;
+                        });
+                    });
+                });
+            });
+
+            const container = document.getElementById('monthlyCounter');
+            const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-zinc-700 italic text-sm py-4">Sem dados registados no mês.</p>';
+                return;
+            }
+
+            container.innerHTML = sorted.map(name => `
+                <div class="flex justify-between items-center bg-zinc-800/30 p-3 rounded-xl border border-zinc-800">
+                    <span class="font-bold text-zinc-300 text-sm">${name}</span>
+                    <span class="bg-indigo-600 text-white text-[9px] px-3 py-1 rounded-full font-black uppercase">
+                        ${counts[name]} ${counts[name] === 1 ? 'Turno' : 'Turnos'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function exportFullData() {
+            const dataStr = JSON.stringify(appData);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_mensal_backstage_${new Date().getMonth()+1}_${new Date().getFullYear()}.json`;
+            a.click();
+        }
+
+        function importFullData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    appData = JSON.parse(event.target.result);
+                    saveToStorage();
+                    location.reload();
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function clearAllSystemData() {
+            if (confirm("AVISO: Isto vai apagar todos os espetáculos do mês. Continuar?")) {
+                localStorage.removeItem('backstage_pro_v2');
+                location.reload();
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
