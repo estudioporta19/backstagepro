@@ -42,7 +42,7 @@
             resize: none;
             overflow: hidden;
             transition: border-color 0.2s;
-            display: block; /* Garante comportamento de bloco para expansão */
+            display: block; 
         }
         
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
@@ -74,6 +74,9 @@
                 display: block !important;
                 width: 100% !important;
                 line-height: 1.2 !important;
+                resize: none !important;
+                appearance: none !important;
+                -webkit-appearance: none !important;
             }
             
             .bg-zinc-900, .bg-zinc-950, .bg-black { background: white !important; color: black !important; }
@@ -113,7 +116,16 @@
             </button>
         </nav>
 
-        <div class="mt-auto p-4 border-t border-zinc-900">
+        <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
+            <div class="flex gap-2 mb-2">
+                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-2 rounded-lg text-[9px] font-black uppercase tracking-tighter transition">
+                    Backup JSON
+                </button>
+                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-2 rounded-lg text-[9px] font-black uppercase tracking-tighter transition">
+                    Importar
+                </button>
+                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+            </div>
             <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition shadow-lg shadow-indigo-500/10">
                 + Novo Espetáculo
             </button>
@@ -181,8 +193,8 @@
                     <h3 class="text-xs font-black text-indigo-400 uppercase mb-4 tracking-widest">Adicionar Elemento</h3>
                     <div class="flex flex-col gap-3">
                         <div class="flex gap-2">
-                            <input type="text" id="newStaffCode" placeholder="Cód. (Ex: 101)" class="w-32 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
-                            <input type="text" id="newStaffName" placeholder="Nome Completo" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
+                            <input type="text" id="newStaffCode" placeholder="Cód. (Opcional)" class="w-32 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
+                            <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome Completo (Enter para add)" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
                         </div>
                         <button onclick="addStaffMember()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded text-[10px] font-bold uppercase transition">Adicionar</button>
                     </div>
@@ -208,8 +220,8 @@
             </header>
             <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-xl">
                 <div class="flex gap-2">
-                    <input type="text" id="newVenueCode" placeholder="Cód" class="w-24 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
-                    <input type="text" id="newVenueName" placeholder="Espaço" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
+                    <input type="text" id="newVenueCode" placeholder="Cód (Opc)" class="w-24 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
+                    <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Espaço (Enter para add)" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
                     <button onclick="addVenue()" class="bg-indigo-600 px-4 py-2 rounded text-[10px] font-bold uppercase">Add</button>
                 </div>
             </div>
@@ -226,17 +238,77 @@
     </main>
 
     <script>
-        let appData = {
-            events: JSON.parse(localStorage.getItem('bp_events')) || [],
-            staff: JSON.parse(localStorage.getItem('bp_staff')) || { "1": { name: "Técnico Exemplo" } },
-            venues: JSON.parse(localStorage.getItem('bp_venues')) || { "TM": "Teatro Municipal" },
-            activeEventId: null
-        };
+        /* ... existing logic ... */
 
-        function saveData() {
-            localStorage.setItem('bp_events', JSON.stringify(appData.events));
-            localStorage.setItem('bp_staff', JSON.stringify(appData.staff));
-            localStorage.setItem('bp_venues', JSON.stringify(appData.venues));
+        function addStaffMember() {
+            let code = document.getElementById('newStaffCode').value.trim();
+            const name = document.getElementById('newStaffName').value.trim();
+            if(!name) return;
+
+            // Se o código estiver vazio, gera o próximo número
+            if(!code) {
+                const existingCodes = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
+                code = existingCodes.length > 0 ? (Math.max(...existingCodes) + 1).toString() : "101";
+            }
+
+            appData.staff[code] = { name };
+            saveData();
+            renderStaffList();
+            document.getElementById('newStaffCode').value = '';
+            document.getElementById('newStaffName').value = '';
+            document.getElementById('newStaffName').focus();
+        }
+
+        function addVenue() {
+            let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
+            const name = document.getElementById('newVenueName').value.trim();
+            if(!name) return;
+
+            // Se o código estiver vazio, gera um prefixo automático
+            if(!code) {
+                const existingCodes = Object.keys(appData.venues).filter(c => c.startsWith('LOC'));
+                code = 'LOC' + (existingCodes.length + 1);
+            }
+
+            appData.venues[code] = name;
+            saveData();
+            renderVenueList();
+            document.getElementById('newVenueCode').value = '';
+            document.getElementById('newVenueName').value = '';
+            document.getElementById('newVenueName').focus();
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(appData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = 'backstage_pro_backup_' + new Date().toISOString().split('T')[0] + '.json';
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.events && importedData.staff && importedData.venues) {
+                        appData = importedData;
+                        saveData();
+                        location.reload(); // Recarrega para aplicar tudo
+                    } else {
+                        alert("Ficheiro JSON inválido ou incompleto.");
+                    }
+                } catch (err) {
+                    alert("Erro ao ler o ficheiro JSON.");
+                }
+            };
+            reader.readAsText(file);
         }
 
         // CORREÇÃO: Função switchTab agora usa os IDs corretos e evita erros
