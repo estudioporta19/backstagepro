@@ -49,7 +49,6 @@
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; color: black !important; }
-            /* Garante que as cores de fundo sejam impressas */
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
 
@@ -65,9 +64,59 @@
         }
 
         .col-phase { width: 85px; }
+
+        /* Estilos para o Seletor de Equipa Rápido */
+        #quickStaffPicker {
+            position: fixed;
+            z-index: 50;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            width: 180px;
+        }
+        .staff-item {
+            padding: 6px 10px;
+            font-size: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #27272a;
+            transition: background 0.2s;
+        }
+        .staff-item:hover { background: #2563eb; color: white; }
+
+        /* Estilos para o Modal de Confirmação */
+        #resetModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
+
+    <!-- Seletor Flutuante de Equipa -->
+    <div id="quickStaffPicker" class="no-print"></div>
+
+    <!-- Modal de Confirmação de Reset -->
+    <div id="resetModal" class="no-print">
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 w-80 shadow-2xl">
+            <h3 class="text-white font-black uppercase text-sm mb-2 italic">⚠️ ATENÇÃO</h3>
+            <p class="text-zinc-400 text-[10px] mb-4 leading-relaxed">Isto irá apagar permanentemente todos os eventos, equipas e locais guardados no seu browser.</p>
+            <p class="text-zinc-500 text-[9px] mb-2 uppercase font-bold tracking-widest">Escreva "APAGAR" para confirmar:</p>
+            <input type="text" id="resetConfirmInput" placeholder="..." class="w-full bg-black border border-zinc-800 rounded p-2 text-white text-center font-black uppercase tracking-widest text-xs mb-4 focus:border-red-500 outline-none">
+            <div class="flex gap-2">
+                <button onclick="closeResetModal()" class="flex-1 bg-zinc-800 py-2 rounded text-[9px] font-bold uppercase text-zinc-400">Cancelar</button>
+                <button onclick="confirmReset()" class="flex-1 bg-red-600 py-2 rounded text-[9px] font-bold uppercase text-white shadow-lg shadow-red-900/20">Limpar Tudo</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Sidebar -->
     <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
@@ -104,6 +153,10 @@
 
             <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-lg text-[10px] uppercase tracking-widest transition shadow-lg shadow-indigo-900/20">
                 + Novo Evento
+            </button>
+
+            <button onclick="openResetModal()" class="w-full mt-2 text-zinc-700 hover:text-red-800 text-[7px] font-bold uppercase tracking-[0.2em] transition">
+                Reset App
             </button>
         </div>
     </aside>
@@ -194,14 +247,45 @@
     <script>
         const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
 
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_v3')) || {
+        const STORAGE_KEY = 'backstage_pro_v3';
+
+        const DEFAULT_DATA = {
             events: [],
             staff: {},
             venues: {},
             activeEventId: null
         };
 
-        function saveData() { localStorage.setItem('backstage_pro_v3', JSON.stringify(appData)); }
+        let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT_DATA;
+
+        function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
+
+        // Funções de Reset Seguro
+        function openResetModal() {
+            document.getElementById('resetModal').style.display = 'flex';
+            document.getElementById('resetConfirmInput').value = '';
+            document.getElementById('resetConfirmInput').focus();
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').style.display = 'none';
+        }
+
+        function confirmReset() {
+            const input = document.getElementById('resetConfirmInput').value;
+            if(input.trim().toUpperCase() === "APAGAR") {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            } else {
+                const btn = event.target;
+                btn.classList.add('bg-orange-600');
+                btn.innerText = "ESCREVA APAGAR";
+                setTimeout(() => {
+                    btn.classList.remove('bg-orange-600');
+                    btn.innerText = "Limpar Tudo";
+                }, 1500);
+            }
+        }
 
         function switchTab(tab) {
             ['events', 'staff', 'venues', 'counter'].forEach(t => {
@@ -253,7 +337,10 @@
                     </td>
                     ${APP_COLUMNS.map(col => `
                         <td class="p-1 border-l border-zinc-900 align-top">
-                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)">${s[col] || ''}</textarea>
+                            <textarea 
+                                onclick="showQuickStaff(this, '${s.id}', '${col}')"
+                                onkeyup="processShortcodes(this, '${s.id}', '${col}')" 
+                                oninput="adjustHeight(this)">${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
                     <td class="p-1 no-print align-top text-center">
@@ -282,6 +369,56 @@
                 const shift = ev.shifts.find(s => s.id === shiftId);
                 if(shift) { shift[field] = val; saveData(); }
             }
+        }
+
+        // --- SISTEMA DE SELEÇÃO RÁPIDA DE EQUIPA ---
+        let currentEditingShift = null;
+        let currentEditingField = null;
+        let currentTextarea = null;
+
+        function showQuickStaff(textarea, shiftId, field) {
+            currentEditingShift = shiftId;
+            currentEditingField = field;
+            currentTextarea = textarea;
+
+            const picker = document.getElementById('quickStaffPicker');
+            const staffList = Object.values(appData.staff);
+
+            if (staffList.length === 0) return;
+
+            picker.innerHTML = staffList.map(s => `
+                <div class="staff-item" onclick="selectStaffQuickly('${s.name}')">${s.name}</div>
+            `).join('');
+
+            const rect = textarea.getBoundingClientRect();
+            picker.style.top = (rect.bottom + window.scrollY) + 'px';
+            picker.style.left = (rect.left + window.scrollX) + 'px';
+            picker.style.width = rect.width + 'px';
+            picker.style.display = 'block';
+
+            const closePicker = (e) => {
+                if (!picker.contains(e.target) && e.target !== textarea) {
+                    picker.style.display = 'none';
+                    document.removeEventListener('mousedown', closePicker);
+                }
+            };
+            document.addEventListener('mousedown', closePicker);
+        }
+
+        function selectStaffQuickly(name) {
+            if (!currentTextarea) return;
+            
+            let val = currentTextarea.value.trim();
+            if (val.length > 0 && !val.endsWith('\n') && !val.endsWith(',')) {
+                val += ', ' + name;
+            } else {
+                val += (val.length > 0 ? ' ' : '') + name;
+            }
+            
+            currentTextarea.value = val;
+            updateShiftField(currentEditingShift, currentEditingField, val);
+            adjustHeight(currentTextarea);
+            document.getElementById('quickStaffPicker').style.display = 'none';
         }
 
         function duplicateActiveEvent() {
@@ -421,7 +558,6 @@
         // --- SISTEMA DE IMPRESSÃO ---
 
         function buildEventHTML(ev) {
-            // Nomes completos para modo Horizontal
             const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar / Cozinha','Segurança'];
             const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
             ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
@@ -520,7 +656,6 @@
                         </tr>`).join('')}
                     </tbody>
                 </table>`;
-            // Turnos mantemos vertical (Portrait) para caberem mais nomes por página
             executePrint(html, false);
         }
 
@@ -531,7 +666,15 @@
 
         function importData(e) {
             const r = new FileReader();
-            r.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); };
+            r.onload = (ev) => { 
+                try {
+                    appData = JSON.parse(ev.target.result); 
+                    saveData(); 
+                    location.reload(); 
+                } catch(err) {
+                    alert("Erro ao importar ficheiro.");
+                }
+            };
             r.readAsText(e.target.files[0]);
         }
 
