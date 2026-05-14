@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backstage PRO - Gestão Total</title>
+    <title>Backstage PRO - Produção de Eventos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
@@ -11,7 +11,6 @@
         :root {
             --accent: #6366f1;
             --bg-dark: #050505;
-            --card-bg: #0d0d0d;
         }
 
         body { 
@@ -21,7 +20,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        .sidebar { background-color: #000; border-right: 1px solid #1a1a1a; }
         .tab-btn.active { 
             color: white; 
             border-left: 3px solid var(--accent); 
@@ -33,7 +31,7 @@
             background-color: #0d0d0d !important; 
             border: 1px solid #1a1a1a !important; 
             color: #efefef !important; 
-            min-height: 40px; 
+            min-height: 45px; 
             font-size: 11px !important;
             line-height: 1.4;
             width: 100%;
@@ -48,57 +46,35 @@
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
         @media print {
-            @page { 
-                size: landscape; 
-                margin: 0.8cm;
-            }
+            @page { size: landscape; margin: 0.8cm; }
             .no-print { display: none !important; }
-            body { 
-                background: white !important; 
-                color: black !important; 
-                height: auto !important;
-                overflow: visible !important;
-            }
+            body { background: white !important; color: black !important; overflow: visible !important; }
             main { padding: 0 !important; overflow: visible !important; display: block !important; }
             #editorContainer { width: 100% !important; }
-            
             textarea { 
-                height: auto !important; 
-                min-height: 20px !important;
                 border: none !important; 
-                padding: 4px 0 !important;
-                background: transparent !important;
-                color: black !important;
-                overflow: visible !important;
+                background: transparent !important; 
+                color: black !important; 
+                overflow: visible !important; 
                 white-space: pre-wrap !important;
-                display: block !important;
-                width: 100% !important;
-                line-height: 1.2 !important;
-                resize: none !important;
-                appearance: none !important;
-                -webkit-appearance: none !important;
+                height: auto !important;
             }
-            
-            .bg-zinc-900, .bg-zinc-950, .bg-black { background: white !important; color: black !important; }
-            .border-zinc-800, .border-zinc-900, .border-zinc-900\/50 { border-color: #ddd !important; }
-            .text-zinc-400, .text-zinc-500 { color: #555 !important; }
-            .text-indigo-400, .text-indigo-500 { color: #000 !important; font-weight: bold; }
-            
-            table { width: 100% !important; table-layout: fixed; }
-            th, td { border: 1px solid #ddd !important; padding: 6px !important; }
+            .bg-zinc-900, .bg-zinc-950 { background: white !important; color: black !important; }
+            .border-zinc-800, .border-zinc-900 { border-color: #ddd !important; }
+            table { width: 100% !important; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd !important; padding: 4px !important; }
         }
 
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <aside class="sidebar w-64 flex-shrink-0 flex flex-col no-print">
+    <aside class="w-64 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
         <div class="p-6 border-b border-zinc-900">
             <h1 class="text-xl font-black tracking-tighter italic uppercase">Backstage<span class="text-indigo-500">PRO</span></h1>
-            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Production Suite</p>
+            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Full Operations Suite</p>
         </div>
 
         <nav class="flex flex-col gap-1 mt-4 px-2">
@@ -106,10 +82,10 @@
                 📅 Agenda e Fichas
             </button>
             <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                👥 Gestão de Equipa
+                👥 Equipa Técnica
             </button>
             <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                📍 Gestão de Espaços
+                📍 Espaços e Locais
             </button>
             <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
                 📊 Contagem Mês
@@ -117,63 +93,61 @@
         </nav>
 
         <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
-            <div class="flex gap-2 mb-2">
-                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-2 rounded-lg text-[9px] font-black uppercase tracking-tighter transition">
-                    Backup JSON
-                </button>
-                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-2 rounded-lg text-[9px] font-black uppercase tracking-tighter transition">
-                    Importar
-                </button>
+            <div class="flex gap-2">
+                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Exportar</button>
+                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Importar</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
             </div>
-            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition shadow-lg shadow-indigo-500/10">
+            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition">
                 + Novo Espetáculo
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-10">
+    <main class="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-8">
         
+        <!-- View: Eventos -->
         <div id="eventsView">
             <div class="flex flex-col lg:flex-row gap-8">
-                <div class="w-full lg:w-72 no-print">
-                    <h2 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Eventos Ativos</h2>
+                <div class="w-full lg:w-64 no-print">
+                    <h2 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Próximos Shows</h2>
                     <div id="eventList" class="space-y-2"></div>
                 </div>
 
                 <div id="editorContainer" class="flex-1">
-                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-600">
-                        <span class="text-4xl mb-4">🎭</span>
-                        <p class="text-xs font-bold uppercase tracking-widest">Seleciona um evento ou cria um novo</p>
+                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-700">
+                        <span class="text-3xl mb-3">📋</span>
+                        <p class="text-[10px] font-black uppercase tracking-widest">Seleciona um espetáculo</p>
                     </div>
 
                     <div id="editorArea" class="hidden">
-                        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-zinc-900 pb-8">
+                        <header class="flex justify-between items-end mb-8 border-b border-zinc-900 pb-6">
                             <div class="flex-1">
-                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-3xl font-black text-white p-0 focus:ring-0 w-full" placeholder="Nome do Show">
+                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-3xl font-black text-white p-0 focus:ring-0 w-full" placeholder="Nome do Espetáculo">
                                 <div class="flex gap-4 mt-2">
                                     <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-zinc-500 text-xs font-bold uppercase focus:ring-0 p-0 [color-scheme:dark]">
                                     <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Local (Cód. + Espaço)" class="bg-transparent border-none text-zinc-500 text-xs font-bold uppercase focus:ring-0 p-0">
                                 </div>
                             </div>
                             <div class="flex gap-2 no-print">
-                                <button onclick="addShift()" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 px-4 py-2 rounded-lg text-[10px] font-black uppercase transition">Add Horário</button>
-                                <button onclick="window.print()" class="bg-white text-black px-6 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-zinc-200 transition">Imprimir</button>
-                                <button onclick="deleteActiveEvent()" class="text-zinc-800 hover:text-red-500 p-2 transition">🗑️</button>
+                                <button onclick="addShift()" class="bg-zinc-900 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-zinc-400">+ Horário</button>
+                                <button onclick="window.print()" class="bg-white text-black px-4 py-2 rounded-lg text-[9px] font-black uppercase">Imprimir</button>
                             </div>
                         </header>
 
-                        <div class="overflow-x-auto rounded-2xl border border-zinc-900 bg-zinc-900/20">
+                        <div class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-900/10">
                             <table class="w-full text-left">
                                 <thead>
-                                    <tr class="bg-zinc-900/50 text-[9px] font-black text-zinc-500 uppercase tracking-widest">
-                                        <th class="p-4 w-32">Fase / Label</th>
-                                        <th class="p-4 w-24">Hora</th>
-                                        <th class="p-4 border-l border-zinc-800">Luz</th>
-                                        <th class="p-4 border-l border-zinc-800">Som</th>
-                                        <th class="p-4 border-l border-zinc-800">Produção</th>
-                                        <th class="p-4 border-l border-zinc-800">FOH</th>
-                                        <th class="p-4 w-10 no-print"></th>
+                                    <tr class="bg-zinc-900/50 text-[8px] font-black text-zinc-500 uppercase tracking-widest">
+                                        <th class="p-3 w-28">Fase</th>
+                                        <th class="p-3 w-20">Hora</th>
+                                        <th class="p-3 border-l border-zinc-800">Técnicos</th>
+                                        <th class="p-3 border-l border-zinc-800">Produção</th>
+                                        <th class="p-3 border-l border-zinc-800">Bilheteira</th>
+                                        <th class="p-3 border-l border-zinc-800">Portas</th>
+                                        <th class="p-3 border-l border-zinc-800">Bar/Cozinha</th>
+                                        <th class="p-3 border-l border-zinc-800">Segurança</th>
+                                        <th class="p-3 w-8 no-print"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="shiftsBody" class="divide-y divide-zinc-900/50"></tbody>
@@ -184,101 +158,73 @@
             </div>
         </div>
 
+        <!-- View: Staff -->
         <div id="staffView" class="hidden">
-            <header class="mb-8 border-b border-zinc-900 pb-4">
-                <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Gestão de Equipa</h2>
-            </header>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900">
-                    <h3 class="text-xs font-black text-indigo-400 uppercase mb-4 tracking-widest">Adicionar Elemento</h3>
-                    <div class="flex flex-col gap-3">
-                        <div class="flex gap-2">
-                            <input type="text" id="newStaffCode" placeholder="Cód. (Opcional)" class="w-32 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
-                            <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome Completo (Enter para add)" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
-                        </div>
-                        <button onclick="addStaffMember()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded text-[10px] font-bold uppercase transition">Adicionar</button>
-                    </div>
+            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Equipa</h2>
+            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
+                <div class="flex gap-3">
+                    <input type="text" id="newStaffCode" placeholder="Cód (Opcional)" class="w-32 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <button onclick="addStaffMember()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
                 </div>
             </div>
-            <div class="overflow-hidden rounded-xl border border-zinc-900">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-zinc-900/50 text-[9px] uppercase font-black text-zinc-500">
-                            <th class="p-3">Código</th>
-                            <th class="p-3">Nome</th>
-                            <th class="p-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="staffListTable" class="divide-y divide-zinc-900"></tbody>
-                </table>
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="staffGrid"></div>
         </div>
 
+        <!-- View: Venues -->
         <div id="venuesView" class="hidden">
-            <header class="mb-8 border-b border-zinc-900 pb-4">
-                <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Gestão de Espaços</h2>
-            </header>
-            <div class="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-xl">
-                <div class="flex gap-2">
-                    <input type="text" id="newVenueCode" placeholder="Cód (Opc)" class="w-24 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
-                    <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Espaço (Enter para add)" class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs outline-none">
-                    <button onclick="addVenue()" class="bg-indigo-600 px-4 py-2 rounded text-[10px] font-bold uppercase">Add</button>
+            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Espaços</h2>
+            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
+                <div class="flex gap-3">
+                    <input type="text" id="newVenueCode" placeholder="Cód (Opcional)" class="w-32 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Nome do Local (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
+                    <button onclick="addVenue()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
                 </div>
             </div>
-            <div id="venueListTable" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="venueGrid"></div>
         </div>
 
+        <!-- View: Counter -->
         <div id="counterView" class="hidden">
-            <header class="mb-8 border-b border-zinc-900 pb-4">
-                <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Contagem Mensal</h2>
-            </header>
+            <h2 class="text-xl font-black uppercase mb-6 italic">Turnos do Mês</h2>
             <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </div>
 
     </main>
 
     <script>
-        // Inicialização do estado da aplicação
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_data')) || {
+        // Configuração das colunas dinâmicas para fácil manutenção
+        const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
+
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v2')) || {
             events: [],
-            staff: {
-                "101": { name: "TÉCNICO EXEMPLO" }
-            },
-            venues: {
-                "TNM": "Teatro Nacional"
-            },
+            staff: { "101": { name: "EXEMPLO TÉCNICO" } },
+            venues: { "TNM": "Teatro Nacional" },
             activeEventId: null
         };
 
-        // Função para guardar permanentemente no browser
         function saveData() {
-            localStorage.setItem('backstage_pro_data', JSON.stringify(appData));
+            localStorage.setItem('backstage_pro_v2', JSON.stringify(appData));
         }
 
+        // --- NAVEGAÇÃO ---
         function switchTab(tab) {
-            const tabs = ['events', 'staff', 'venues', 'counter'];
-            tabs.forEach(t => {
-                const view = document.getElementById(t + 'View');
-                const btn = document.getElementById('btn-tab-' + t);
-                if(view) view.classList.add('hidden');
-                if(btn) btn.classList.remove('active');
+            ['events', 'staff', 'venues', 'counter'].forEach(t => {
+                document.getElementById(t + 'View').classList.add('hidden');
+                document.getElementById('btn-tab-' + t).classList.remove('active');
             });
+            document.getElementById(tab + 'View').classList.remove('hidden');
+            document.getElementById('btn-tab-' + tab).classList.add('active');
 
-            const targetView = document.getElementById(tab + 'View');
-            const targetBtn = document.getElementById('btn-tab-' + tab);
-            
-            if(targetView) targetView.classList.remove('hidden');
-            if(targetBtn) targetBtn.classList.add('active');
-            
-            if(tab === 'staff') renderStaffList();
-            if(tab === 'venues') renderVenueList();
+            if(tab === 'staff') renderStaff();
+            if(tab === 'venues') renderVenues();
             if(tab === 'counter') updateMonthlyCount();
             if(tab === 'events') renderEventList();
         }
 
+        // --- GESTÃO DE EVENTOS ---
         function createNewEvent() {
             switchTab('events');
-            
             const id = 'ev_' + Date.now();
             const newEv = {
                 id,
@@ -286,133 +232,22 @@
                 date: new Date().toISOString().split('T')[0],
                 venue: "",
                 shifts: [
-                    { id: 's1', label: 'MONTAGEM', time: '10:00', luz: '', som: '', prod: '', foh: '' },
-                    { id: 's2', label: 'ESPETÁCULO', time: '21:30', luz: '', som: '', prod: '', foh: '' }
+                    { id: 's1', label: 'MONTAGEM', time: '10:00', tecnicos:'', producao:'', bilheteira:'', portas:'', bar:'', seguranca:'' },
+                    { id: 's2', label: 'ESPETÁCULO', time: '21:30', tecnicos:'', producao:'', bilheteira:'', portas:'', bar:'', seguranca:'' }
                 ]
             };
             appData.events.unshift(newEv);
+            appData.activeEventId = id;
             saveData();
-            selectEvent(id);
             renderEventList();
-        }
-
-        function addStaffMember() {
-            let code = document.getElementById('newStaffCode').value.trim();
-            const name = document.getElementById('newStaffName').value.trim();
-            if(!name) return;
-
-            if(!code) {
-                const existingCodes = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
-                code = existingCodes.length > 0 ? (Math.max(...existingCodes) + 1).toString() : "101";
-            }
-
-            appData.staff[code] = { name };
-            saveData();
-            renderStaffList();
-            document.getElementById('newStaffCode').value = '';
-            document.getElementById('newStaffName').value = '';
-            document.getElementById('newStaffName').focus();
-        }
-
-        function addVenue() {
-            let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
-            const name = document.getElementById('newVenueName').value.trim();
-            if(!name) return;
-
-            if(!code) {
-                const existingCodes = Object.keys(appData.venues).filter(c => c.startsWith('LOC'));
-                code = 'LOC' + (existingCodes.length + 1);
-            }
-
-            appData.venues[code] = name;
-            saveData();
-            renderVenueList();
-            document.getElementById('newVenueCode').value = '';
-            document.getElementById('newVenueName').value = '';
-            document.getElementById('newVenueName').focus();
-        }
-
-        function exportData() {
-            const dataStr = JSON.stringify(appData, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            const exportFileDefaultName = 'backstage_pro_backup_' + new Date().toISOString().split('T')[0] + '.json';
-
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (importedData.events && importedData.staff && importedData.venues) {
-                        appData = importedData;
-                        saveData();
-                        location.reload(); // Recarrega para aplicar tudo
-                    } else {
-                        alert("Ficheiro JSON inválido ou incompleto.");
-                    }
-                } catch (err) {
-                    alert("Erro ao ler o ficheiro JSON.");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        // CORREÇÃO: Função switchTab agora usa os IDs corretos e evita erros
-        function switchTab(tab) {
-            const tabs = ['events', 'staff', 'venues', 'counter'];
-            tabs.forEach(t => {
-                const view = document.getElementById(t + 'View');
-                const btn = document.getElementById('btn-tab-' + t);
-                if(view) view.classList.add('hidden');
-                if(btn) btn.classList.remove('active');
-            });
-
-            const targetView = document.getElementById(tab + 'View');
-            const targetBtn = document.getElementById('btn-tab-' + tab);
-            
-            if(targetView) targetView.classList.remove('hidden');
-            if(targetBtn) targetBtn.classList.add('active');
-            
-            if(tab === 'staff') renderStaffList();
-            if(tab === 'venues') renderVenueList();
-            if(tab === 'counter') updateMonthlyCount();
-            if(tab === 'events') renderEventList();
-        }
-
-        function createNewEvent() {
-            // Se estivermos em outra aba, volta para a aba de eventos
-            switchTab('events');
-            
-            const id = 'ev_' + Date.now();
-            const newEv = {
-                id,
-                name: "Novo Espetáculo",
-                date: new Date().toISOString().split('T')[0],
-                venue: "",
-                shifts: [
-                    { id: 's1', label: 'MONTAGEM', time: '10:00', luz: '', som: '', prod: '', foh: '' },
-                    { id: 's2', label: 'ESPETÁCULO', time: '21:30', luz: '', som: '', prod: '', foh: '' }
-                ]
-            };
-            appData.events.unshift(newEv);
-            saveData();
             selectEvent(id);
-            renderEventList();
         }
 
         function selectEvent(id) {
             appData.activeEventId = id;
             const ev = appData.events.find(e => e.id === id);
             if (!ev) return;
-            
+
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('editorArea').classList.remove('hidden');
             document.getElementById('curEventName').value = ev.name;
@@ -427,7 +262,7 @@
             const list = document.getElementById('eventList');
             list.innerHTML = appData.events.map(ev => `
                 <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-3 rounded-xl border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/40 border-zinc-900'} hover:border-zinc-700 transition group">
-                    <div class="text-[10px] font-black text-zinc-500 group-hover:text-indigo-400 uppercase tracking-tighter">${ev.date}</div>
+                    <div class="text-[9px] font-black text-zinc-500 uppercase">${ev.date}</div>
                     <div class="text-xs font-bold text-white truncate">${ev.name}</div>
                 </button>
             `).join('');
@@ -435,59 +270,22 @@
 
         function renderShifts(ev) {
             const tbody = document.getElementById('shiftsBody');
-            tbody.innerHTML = ev.shifts.map((s, idx) => `
-                <tr class="group hover:bg-zinc-900/30 transition-colors">
-                    <td class="p-4">
-                        <input type="text" value="${s.label}" oninput="updateShiftField('${ev.id}', '${s.id}', 'label', this.value)" class="bg-transparent border-none text-[10px] font-black text-indigo-400 uppercase w-full p-0 focus:ring-0">
-                    </td>
-                    <td class="p-4">
-                        <input type="text" value="${s.time}" oninput="updateShiftField('${ev.id}', '${s.id}', 'time', this.value)" class="bg-transparent border-none text-[10px] font-bold text-zinc-400 w-full p-0 focus:ring-0">
-                    </td>
-                    ${['luz', 'som', 'prod', 'foh'].map(field => `
-                        <td class="p-2 border-l border-zinc-900/50">
-                            <textarea 
-                                onkeyup="processShortcodes(this, '${ev.id}', '${s.id}', '${field}')"
-                                oninput="adjustHeight(this)"
-                                placeholder="..."> ${s[field] || ''}</textarea>
+            tbody.innerHTML = ev.shifts.map(s => `
+                <tr class="group hover:bg-zinc-900/30">
+                    <td class="p-3"><input type="text" value="${s.label}" oninput="updateShiftField('${s.id}', 'label', this.value)" class="bg-transparent border-none text-[10px] font-black text-indigo-400 uppercase w-full p-0 focus:ring-0"></td>
+                    <td class="p-3"><input type="text" value="${s.time}" oninput="updateShiftField('${s.id}', 'time', this.value)" class="bg-transparent border-none text-[10px] font-bold text-zinc-500 w-full p-0 focus:ring-0"></td>
+                    ${APP_COLUMNS.map(col => `
+                        <td class="p-1.5 border-l border-zinc-900/50">
+                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" placeholder="..."> ${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
-                    <td class="p-4 text-center no-print">
-                        <button onclick="removeShift('${ev.id}', '${s.id}')" class="text-zinc-800 hover:text-red-500 transition">×</button>
-                    </td>
+                    <td class="p-3 no-print"><button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition">×</button></td>
                 </tr>
             `).join('');
-            
-            setTimeout(() => {
-                tbody.querySelectorAll('textarea').forEach(adjustHeight);
-            }, 100);
+            tbody.querySelectorAll('textarea').forEach(adjustHeight);
         }
 
-        function adjustHeight(el) {
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight) + 'px';
-        }
-
-        function processShortcodes(textarea, evId, shiftId, field) {
-            const val = textarea.value;
-            const regex = /(\b\d+\b)([ ,;\n\r])/g;
-            let changed = false;
-            const newVal = val.replace(regex, (match, code, delimiter) => {
-                if (appData.staff[code]) {
-                    changed = true;
-                    return appData.staff[code].name + delimiter;
-                }
-                return match;
-            });
-            if (changed) {
-                textarea.value = newVal;
-                updateShiftField(evId, shiftId, field, newVal);
-            } else {
-                updateShiftField(evId, shiftId, field, val);
-            }
-            adjustHeight(textarea);
-            updateMonthlyCount(); // Forçar atualização da contagem ao digitar
-        }
-
+        // --- LÓGICA DE INPUTS ---
         function adjustHeight(el) {
             el.style.height = 'auto';
             el.style.height = (el.scrollHeight) + 'px';
@@ -502,8 +300,8 @@
             }
         }
 
-        function updateShiftField(evId, shiftId, field, val) {
-            const ev = appData.events.find(e => e.id === evId);
+        function updateShiftField(shiftId, field, val) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(ev) {
                 const shift = ev.shifts.find(s => s.id === shiftId);
                 if(shift) {
@@ -513,9 +311,9 @@
             }
         }
 
-        function processShortcodes(textarea, evId, shiftId, field) {
+        function processShortcodes(textarea, shiftId, field) {
             const val = textarea.value;
-            const regex = /(\b\d+\b)([ ,;\n\r])/g;
+            const regex = /(\b\w+\b)([ ,;\n\r])/g;
             let changed = false;
             const newVal = val.replace(regex, (match, code, delimiter) => {
                 if (appData.staff[code]) {
@@ -526,17 +324,16 @@
             });
             if (changed) {
                 textarea.value = newVal;
-                updateShiftField(evId, shiftId, field, newVal);
+                updateShiftField(shiftId, field, newVal);
             } else {
-                updateShiftField(evId, shiftId, field, val);
+                updateShiftField(shiftId, field, val);
             }
             adjustHeight(textarea);
         }
 
         function processVenueCode(input) {
             const val = input.value;
-            const codes = Object.keys(appData.venues);
-            for(let code of codes) {
+            for(let code in appData.venues) {
                 if(val.toUpperCase() === code.toUpperCase() + " ") {
                     input.value = appData.venues[code];
                     updateActiveEvent('venue', appData.venues[code]);
@@ -546,92 +343,88 @@
             updateActiveEvent('venue', val);
         }
 
-        function addShift() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                ev.shifts.push({ id: 's' + Date.now(), label: 'NOVO TURNO', time: '00:00', luz: '', som: '', prod: '', foh: '' });
-                renderShifts(ev);
-                saveData();
-            }
-        }
-
-        function removeShift(evId, shiftId) {
-            const ev = appData.events.find(e => e.id === evId);
-            if(ev) {
-                ev.shifts = ev.shifts.filter(s => s.id !== shiftId);
-                renderShifts(ev);
-                saveData();
-            }
-        }
-
-        function deleteActiveEvent() {
-            if(!confirm("Apagar espetáculo?")) return;
-            appData.events = appData.events.filter(e => e.id !== appData.activeEventId);
-            appData.activeEventId = null;
-            document.getElementById('editorArea').classList.add('hidden');
-            document.getElementById('emptyState').classList.remove('hidden');
-            renderEventList();
-            saveData();
-        }
-
+        // --- GESTÃO DE EQUIPA ---
         function addStaffMember() {
-            const code = document.getElementById('newStaffCode').value;
-            const name = document.getElementById('newStaffName').value;
-            if(!name || !code) return;
+            let code = document.getElementById('newStaffCode').value.trim();
+            const name = document.getElementById('newStaffName').value.trim();
+            if(!name) return;
+
+            if(!code) {
+                // Gerador automático de código (próximo número livre)
+                const existing = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
+                code = existing.length > 0 ? (Math.max(...existing) + 1).toString() : "101";
+            }
+
             appData.staff[code] = { name };
             saveData();
-            renderStaffList();
+            renderStaff();
             document.getElementById('newStaffCode').value = '';
             document.getElementById('newStaffName').value = '';
+            document.getElementById('newStaffName').focus();
         }
 
-        function renderStaffList() {
-            const table = document.getElementById('staffListTable');
-            table.innerHTML = Object.entries(appData.staff).map(([code, data]) => `
-                <tr class="hover:bg-zinc-900/50">
-                    <td class="p-3 font-mono text-indigo-400 text-xs">${code}</td>
-                    <td class="p-3 text-xs text-zinc-300 font-bold">${data.name}</td>
-                    <td class="p-3 text-right"><button onclick="deleteStaff('${code}')" class="text-zinc-700 hover:text-red-500">×</button></td>
-                </tr>
+        function renderStaff() {
+            const grid = document.getElementById('staffGrid');
+            grid.innerHTML = Object.entries(appData.staff).map(([code, data]) => `
+                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center group">
+                    <div>
+                        <div class="text-[9px] font-black text-indigo-500 uppercase">${code}</div>
+                        <div class="text-xs font-bold text-white">${data.name}</div>
+                    </div>
+                    <button onclick="deleteStaff('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
+                </div>
             `).join('');
         }
 
         function deleteStaff(code) {
-            delete appData.staff[code];
-            saveData();
-            renderStaffList();
+            if(confirm("Remover esta pessoa?")) {
+                delete appData.staff[code];
+                saveData();
+                renderStaff();
+            }
         }
 
+        // --- GESTÃO DE ESPAÇOS ---
         function addVenue() {
-            const code = document.getElementById('newVenueCode').value;
-            const name = document.getElementById('newVenueName').value;
-            if(!code || !name) return;
-            appData.venues[code.toUpperCase()] = name;
+            let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
+            const name = document.getElementById('newVenueName').value.trim();
+            if(!name) return;
+
+            if(!code) {
+                // Gerador de código simplificado se não introduzir
+                code = name.substring(0, 3).toUpperCase() + (Object.keys(appData.venues).length + 1);
+            }
+
+            appData.venues[code] = name;
             saveData();
-            renderVenueList();
+            renderVenues();
             document.getElementById('newVenueCode').value = '';
             document.getElementById('newVenueName').value = '';
+            document.getElementById('newVenueName').focus();
         }
 
-        function renderVenueList() {
-            const grid = document.getElementById('venueListTable');
+        function renderVenues() {
+            const grid = document.getElementById('venueGrid');
             grid.innerHTML = Object.entries(appData.venues).map(([code, name]) => `
-                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center">
+                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center group">
                     <div>
-                        <span class="text-[9px] font-black text-indigo-500 uppercase block">${code}</span>
-                        <span class="text-xs font-bold">${name}</span>
+                        <div class="text-[9px] font-black text-indigo-400 uppercase">${code}</div>
+                        <div class="text-xs font-bold text-white">${name}</div>
                     </div>
-                    <button onclick="deleteVenue('${code}')" class="text-zinc-700 hover:text-red-500">×</button>
+                    <button onclick="deleteVenue('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
                 </div>
             `).join('');
         }
 
         function deleteVenue(code) {
-            delete appData.venues[code];
-            saveData();
-            renderVenueList();
+            if(confirm("Remover este local?")) {
+                delete appData.venues[code];
+                saveData();
+                renderVenues();
+            }
         }
 
+        // --- CONTAGEM MENSAL ---
         function updateMonthlyCount() {
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
@@ -641,23 +434,17 @@
                 const evDate = new Date(ev.date);
                 if(evDate.getMonth() === currentMonth && evDate.getFullYear() === currentYear) {
                     ev.shifts.forEach(s => {
-                        // Usamos um Set para garantir que cada pessoa é contada apenas UMA vez neste turno específico
-                        const uniquePeopleInShift = new Set();
-                        
-                        [s.luz, s.som, s.prod, s.foh].forEach(field => {
-                            if (field) {
-                                const names = field.split(/[,\n;]/);
-                                names.forEach(name => {
-                                    const n = name.trim();
-                                    if(n.length > 1) {
-                                        uniquePeopleInShift.add(n);
-                                    }
+                        const uniqueInShift = new Set();
+                        // Varre todas as novas colunas
+                        APP_COLUMNS.forEach(col => {
+                            if (s[col]) {
+                                s[col].split(/[,\n;]/).forEach(n => {
+                                    const clean = n.trim();
+                                    if(clean.length > 2) uniqueInShift.add(clean);
                                 });
                             }
                         });
-
-                        // Agora adicionamos as pessoas únicas deste turno à contagem global
-                        uniquePeopleInShift.forEach(name => {
+                        uniqueInShift.forEach(name => {
                             counts[name] = (counts[name] || 0) + 1;
                         });
                     });
@@ -668,24 +455,63 @@
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
 
             if(sorted.length === 0) {
-                grid.innerHTML = '<div class="col-span-full p-8 text-center bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-800"><p class="text-zinc-600 text-xs font-bold uppercase tracking-widest">Nenhum turno registado este mês.</p></div>';
+                grid.innerHTML = '<div class="col-span-full py-12 text-center text-zinc-700 font-bold uppercase text-[10px] tracking-widest border border-dashed border-zinc-900 rounded-3xl">Sem registos este mês</div>';
                 return;
             }
 
             grid.innerHTML = sorted.map(([name, count]) => `
-                <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex justify-between items-center group hover:border-indigo-500/50 transition">
-                    <span class="text-xs font-bold text-white group-hover:text-indigo-400">${name}</span>
-                    <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/20">
-                        ${count} ${count === 1 ? 'Turno' : 'Turnos'}
+                <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-900 flex justify-between items-center">
+                    <span class="text-xs font-bold text-white">${name}</span>
+                    <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/10">
+                        ${count} Turnos
                     </span>
                 </div>
             `).join('');
         }
 
+        // --- AUXILIARES ---
+        function addShift() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) {
+                const newShift = { id: 's'+Date.now(), label:'NOVO TURNO', time:'00:00' };
+                APP_COLUMNS.forEach(c => newShift[c] = '');
+                ev.shifts.push(newShift);
+                renderShifts(ev);
+                saveData();
+            }
+        }
+
+        function removeShift(id) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) {
+                ev.shifts = ev.shifts.filter(s => s.id !== id);
+                renderShifts(ev);
+                saveData();
+            }
+        }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(appData, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backstage_pro_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                appData = JSON.parse(e.target.result);
+                saveData();
+                location.reload();
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+
         window.onload = () => {
             renderEventList();
-            switchTab('events');
-            updateMonthlyCount(); // Inicia contagem no load
+            if(appData.activeEventId) selectEvent(appData.activeEventId);
         };
     </script>
 </body>
