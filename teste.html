@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backstage PRO - Gestão de Sala</title>
+    <title>Backstage PRO - Gestão Total</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
@@ -20,10 +20,10 @@
             background-color: var(--bg-main); 
             color: #f4f4f5; 
             margin: 0;
+            overflow-x: hidden;
         }
 
         .sidebar { background: var(--bg-card); border-right: 1px solid var(--border); }
-        
         .event-card { transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border); }
         .event-card.active { border-color: var(--accent); background: #111111; }
 
@@ -31,135 +31,151 @@
             background-color: #0d0d0d !important; 
             border: 1px solid #1a1a1a !important; 
             color: #efefef !important; 
-            min-height: 60px; 
+            min-height: 50px; 
             font-size: 11px !important;
             line-height: 1.2;
+            width: 100%;
         }
         
         textarea:focus { border-color: var(--accent) !important; outline: none; }
 
-        /* Estilos de Impressão Otimizados */
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; color: black !important; }
-            .print-container { display: block !important; width: 100% !important; padding: 0 !important; }
-            .event-page { page-break-after: always; padding: 20px; border-bottom: 1px solid #eee; }
-            .event-page:last-child { page-break-after: auto; }
-            table { width: 100% !important; border-collapse: collapse !important; margin-top: 10px; }
-            th, td { border: 1px solid #ddd !important; padding: 4px !important; color: black !important; font-size: 10px !important; }
-            th { background: #f0f0f0 !important; font-weight: bold !important; text-transform: uppercase; }
-            h1, h2, h3 { color: black !important; margin: 5px 0; }
-            .monthly-summary-print { display: block !important; margin-top: 30px; }
-            textarea { border: none !important; background: transparent !important; color: black !important; width: 100%; height: auto !important; overflow: visible !important; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            main { padding: 0 !important; width: 100% !important; max-width: 100% !important; }
+            .print-container { display: block !important; width: 100% !important; }
+            
+            /* Ajuste para ficha do dia */
+            #editorArea { display: block !important; }
+            #monthlyCounterView { display: none !important; }
+            .table-container { border: 1px solid #000 !important; margin: 0 !important; width: 100% !important; }
+            table { width: 100% !important; border-collapse: collapse !important; font-size: 9px !important; }
+            th, td { border: 1px solid #000 !important; padding: 4px !important; color: black !important; vertical-align: top; }
+            th { background: #eee !important; font-weight: bold !important; text-transform: uppercase; }
+            h1, h2, h3 { color: black !important; margin-bottom: 5px; }
+            input { color: black !important; border: none !important; background: transparent !important; }
+            
+            /* Ajuste para aba de contagem */
+            body.printing-counter #editorArea { display: none !important; }
+            body.printing-counter #monthlyCounterView { display: block !important; }
+            body.printing-counter .counter-grid { grid-template-columns: 1fr 1fr !important; }
         }
 
-        .print-only { display: none; }
+        .tab-btn.active { border-bottom: 2px solid var(--accent); color: white; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row min-h-screen">
 
-    <!-- Sidebar -->
-    <aside class="sidebar w-full md:w-64 p-5 flex flex-col gap-4 no-print">
+    <aside class="sidebar w-full md:w-64 p-5 flex flex-col gap-4 no-print shrink-0">
         <div class="mb-2">
-            <h1 class="text-xl font-black tracking-tighter text-white">
+            <h1 class="text-xl font-black tracking-tighter text-white uppercase italic">
                 BACKSTAGE<span class="text-indigo-500">PRO</span>
             </h1>
-            <p class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mt-1">Gestão de Sala e Equipas</p>
+            <p class="text-[8px] text-zinc-500 uppercase font-bold tracking-[0.2em] mt-1">SALA • PRODUÇÃO • EQUIPAS</p>
         </div>
 
-        <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition">
+        <nav class="flex flex-col gap-1 mb-4 border-b border-zinc-800 pb-4">
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
+                📅 Agenda e Fichas
+            </button>
+            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
+                📊 Contagem Mês
+            </button>
+        </nav>
+
+        <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg text-xs transition uppercase tracking-tighter">
             + Novo Dia / Evento
         </button>
 
-        <div id="eventList" class="flex flex-col gap-2 overflow-y-auto max-h-[50vh] pr-1">
-            <!-- JS -->
+        <div id="eventList" class="flex flex-col gap-2 overflow-y-auto max-h-[40vh] pr-1">
+            <!-- JS Event List -->
         </div>
 
         <div class="mt-auto pt-4 border-t border-zinc-800 flex flex-col gap-2">
-            <button onclick="printAllEvents()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 rounded-lg text-xs font-bold transition">
-                🖨️ PDF Mensal (Todos)
-            </button>
-            <div class="grid grid-cols-2 gap-2 mt-2">
-                <button onclick="exportFullData()" class="text-[10px] text-zinc-500 hover:text-white">💾 Backup</button>
-                <button onclick="importFullData()" class="text-[10px] text-zinc-500 hover:text-white">📂 Importar</button>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="exportFullData()" class="text-[10px] text-zinc-500 hover:text-white bg-zinc-900 py-1 rounded">💾 Backup</button>
+                <button onclick="importFullData()" class="text-[10px] text-zinc-500 hover:text-white bg-zinc-900 py-1 rounded">📂 Importar</button>
             </div>
-            <button onclick="clearAllSystemData()" class="text-[10px] text-red-900 hover:text-red-500 transition mt-2">Apagar Todo o Mês</button>
+            <button onclick="clearAllSystemData()" class="text-[9px] text-red-900 hover:text-red-500 transition mt-2 text-center uppercase font-bold">Apagar Base de Dados</button>
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-4 md:p-8">
-        <div id="emptyState" class="h-full flex items-center justify-center text-zinc-600 italic text-sm">
-            Selecione ou crie um evento na barra lateral.
-        </div>
-
-        <div id="editorArea" class="hidden">
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b border-zinc-800 pb-4 gap-4">
-                <div class="w-full">
-                    <input type="text" id="curEventName" oninput="saveCurrentEvent()" class="bg-transparent border-none text-3xl font-black text-white focus:ring-0 p-0 w-full mb-1" placeholder="Nome do Show">
-                    <div class="flex flex-wrap gap-4 text-xs">
-                        <input type="date" id="curEventDate" oninput="saveCurrentEvent()" class="bg-transparent border-none text-indigo-400 font-bold focus:ring-0 p-0 [color-scheme:dark]">
-                        <input type="text" id="curEventVenue" oninput="saveCurrentEvent()" class="bg-transparent border-none text-zinc-500 font-medium focus:ring-0 p-0" placeholder="Local/Sala">
-                    </div>
-                </div>
-                <div class="no-print flex gap-2 w-full md:w-auto">
-                    <button onclick="deleteCurrentEvent()" class="text-xs text-zinc-600 hover:text-red-500 px-3">Apagar</button>
-                    <button onclick="window.print()" class="bg-white text-black px-5 py-2 rounded-full text-xs font-black hover:bg-zinc-200 transition">IMPRIMIR ESTE DIA</button>
-                </div>
-            </header>
-
-            <!-- Tabela de Turnos -->
-            <div class="bg-zinc-900/40 rounded-xl border border-zinc-800 overflow-x-auto mb-6">
-                <table class="w-full text-left min-w-[800px]">
-                    <thead>
-                        <tr class="bg-zinc-800/50 text-[9px] uppercase tracking-widest font-black text-zinc-400">
-                            <th class="p-3 w-32">Fase/Turno</th>
-                            <th class="p-3 border-l border-zinc-800">Técnica</th>
-                            <th class="p-3 border-l border-zinc-800">Produção</th>
-                            <th class="p-3 border-l border-zinc-800">Bilheteira</th>
-                            <th class="p-3 border-l border-zinc-800">Portas</th>
-                            <th class="p-3 border-l border-zinc-800">Bar/Cozinha</th>
-                            <th class="p-3 border-l border-zinc-800">Segurança</th>
-                            <th class="p-3 w-8 no-print"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="shiftsBody" class="divide-y divide-zinc-800">
-                        <!-- JS -->
-                    </tbody>
-                </table>
-                <button onclick="addNewShift()" class="w-full py-3 text-[10px] font-bold uppercase text-zinc-500 hover:text-indigo-400 hover:bg-indigo-500/5 transition no-print">
-                    + Adicionar Linha de Horário
-                </button>
+    <main class="flex-1 p-4 md:p-8 max-w-full overflow-hidden">
+        
+        <!-- Vista de Agenda/Fichas -->
+        <div id="eventsView">
+            <div id="emptyState" class="h-full flex flex-col items-center justify-center text-zinc-600 italic text-sm mt-20">
+                <span class="text-4xl mb-4">🗓️</span>
+                Selecione ou crie um evento na agenda lateral.
             </div>
 
-            <!-- Resumo Financeiro/Turnos -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-                <div class="md:col-span-2 bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
-                    <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <span class="text-indigo-500">●</span> Contagem de Turnos do Mês
-                    </h2>
-                    <div id="monthlyCounter" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <!-- JS -->
+            <div id="editorArea" class="hidden">
+                <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b border-zinc-800 pb-4 gap-4">
+                    <div class="w-full">
+                        <input type="text" id="curEventName" oninput="saveCurrentEvent()" class="bg-transparent border-none text-2xl font-black text-white focus:ring-0 p-0 w-full mb-1 uppercase" placeholder="NOME DO ESPETÁCULO">
+                        <div class="flex flex-wrap gap-4 text-[10px] uppercase font-bold">
+                            <div class="flex items-center gap-2 text-indigo-400">
+                                📅 <input type="date" id="curEventDate" oninput="saveCurrentEvent()" class="bg-transparent border-none focus:ring-0 p-0 [color-scheme:dark]">
+                            </div>
+                            <div class="flex items-center gap-2 text-zinc-500 border-l border-zinc-800 pl-4">
+                                📍 <input type="text" id="curEventVenue" oninput="saveCurrentEvent()" class="bg-transparent border-none focus:ring-0 p-0 w-48" placeholder="LOCAL / SALA">
+                            </div>
+                        </div>
                     </div>
+                    <div class="no-print flex gap-2">
+                        <button onclick="deleteCurrentEvent()" class="text-[10px] uppercase font-black text-zinc-600 hover:text-red-500 px-3">Remover</button>
+                        <button onclick="printCurrentDay()" class="bg-white text-black px-6 py-2 rounded-full text-[10px] font-black uppercase hover:bg-zinc-200 transition shadow-lg shadow-white/5">Imprimir Ficha</button>
+                    </div>
+                </header>
+
+                <!-- Tabela de Turnos -->
+                <div class="bg-zinc-900/40 rounded-xl border border-zinc-800 overflow-x-auto table-container">
+                    <table class="w-full text-left min-w-[900px]">
+                        <thead>
+                            <tr class="bg-zinc-800/50 text-[9px] uppercase tracking-widest font-black text-zinc-400">
+                                <th class="p-3 w-32">Fase/Turno</th>
+                                <th class="p-3 border-l border-zinc-800">Técnica</th>
+                                <th class="p-3 border-l border-zinc-800">Produção</th>
+                                <th class="p-3 border-l border-zinc-800">Bilheteira</th>
+                                <th class="p-3 border-l border-zinc-800">Portas</th>
+                                <th class="p-3 border-l border-zinc-800">Bar/Cozinha</th>
+                                <th class="p-3 border-l border-zinc-800">Segurança</th>
+                                <th class="p-3 w-8 no-print"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="shiftsBody" class="divide-y divide-zinc-800">
+                            <!-- JS -->
+                        </tbody>
+                    </table>
                 </div>
-                <div class="bg-zinc-900/20 p-6 rounded-2xl border border-dashed border-zinc-800 no-print text-zinc-500 text-xs leading-relaxed">
-                    <strong>Dica de Impressão:</strong><br>
-                    Para um PDF perfeito, certifique-se de que as "Gráficos de Fundo" estão ativos nas definições de impressão do browser.
+                <button onclick="addNewShift()" class="w-full py-3 text-[9px] font-black uppercase tracking-widest text-zinc-600 hover:text-indigo-400 hover:bg-indigo-500/5 transition no-print border-b border-zinc-800">
+                    + Adicionar Linha de Turno
+                </button>
+            </div>
+        </div>
+
+        <div id="monthlyCounterView" class="hidden">
+            <header class="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Resumo Mensal de Turnos</h2>
+                    <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Contagem automática • 1 Linha = 1 Turno</p>
                 </div>
+                <button onclick="printCounter()" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase hover:bg-indigo-500 transition no-print">Imprimir Contagem</button>
+            </header>
+
+            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 counter-grid">
+                <!-- JS -->
+            </div>
+            
+            <div class="mt-8 p-4 bg-zinc-900/30 border border-dashed border-zinc-800 rounded-xl text-[10px] text-zinc-500 uppercase leading-relaxed no-print">
+                <strong>Regra de Cálculo:</strong> Se um nome aparece várias vezes na mesma linha (ex: Técnica e Produção), é contabilizado apenas <strong>1 turno</strong>. O sistema assume que a pessoa está a desempenhar funções acumuladas no mesmo período horário.
             </div>
         </div>
     </main>
 
-    <!-- Container Escondido para Impressão de Todos os Eventos -->
-    <div id="fullPrintContainer" class="print-only"></div>
-
     <script>
-        let appData = {
-            events: [],
-            activeEventId: null
-        };
-
-        const STORAGE_KEY = 'backstage_pro_v3_sala';
+        let appData = { events: [], activeEventId: null };
+        const STORAGE_KEY = 'backstage_pro_v4_master';
 
         function init() {
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -168,7 +184,6 @@
                 renderEventList();
                 if (appData.activeEventId) selectEvent(appData.activeEventId);
             }
-            updateMonthlyCount();
         }
 
         function saveToStorage() {
@@ -176,22 +191,30 @@
             updateMonthlyCount();
         }
 
+        function switchTab(tab) {
+            document.getElementById('eventsView').classList.toggle('hidden', tab !== 'events');
+            document.getElementById('monthlyCounterView').classList.toggle('hidden', tab !== 'counter');
+            document.getElementById('btn-tab-events').classList.toggle('active', tab === 'events');
+            document.getElementById('btn-tab-counter').classList.toggle('active', tab === 'counter');
+            if(tab === 'counter') updateMonthlyCount();
+        }
+
         function createNewEvent() {
             const newEvent = {
                 id: 'ev_' + Date.now(),
-                name: 'Novo Espetáculo',
+                name: 'Novo Show',
                 date: new Date().toISOString().split('T')[0],
                 venue: '',
                 shifts: [
                     { id: 's1', label: 'Montagem', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' },
-                    { id: 's2', label: 'Portas/Show', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' },
-                    { id: 's3', label: 'Desmontagem', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' }
+                    { id: 's2', label: 'Show / Portas', tech: '', prod: '', bilh: '', port: '', bar: '', seg: '' }
                 ]
             };
             appData.events.push(newEvent);
             appData.activeEventId = newEvent.id;
             saveToStorage();
             renderEventList();
+            switchTab('events');
             selectEvent(newEvent.id);
         }
 
@@ -199,8 +222,8 @@
             const list = document.getElementById('eventList');
             list.innerHTML = appData.events.sort((a,b) => new Date(b.date) - new Date(a.date)).map(ev => `
                 <div onclick="selectEvent('${ev.id}')" class="event-card p-3 rounded-lg ${appData.activeEventId === ev.id ? 'active' : 'bg-zinc-900/50 hover:bg-zinc-800'}">
-                    <div class="text-[9px] font-bold text-indigo-400 uppercase">${ev.date || 'S/ Data'}</div>
-                    <div class="font-bold text-xs text-zinc-200 truncate">${ev.name}</div>
+                    <div class="text-[8px] font-black text-indigo-400 uppercase tracking-tighter">${ev.date || 'S/ DATA'}</div>
+                    <div class="font-bold text-[11px] text-zinc-200 truncate uppercase">${ev.name}</div>
                 </div>
             `).join('');
         }
@@ -209,14 +232,11 @@
             appData.activeEventId = id;
             const ev = appData.events.find(e => e.id === id);
             if (!ev) return;
-
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('editorArea').classList.remove('hidden');
-            
             document.getElementById('curEventName').value = ev.name;
             document.getElementById('curEventDate').value = ev.date;
             document.getElementById('curEventVenue').value = ev.venue;
-
             renderShifts(ev);
             renderEventList();
         }
@@ -226,14 +246,13 @@
             tbody.innerHTML = ev.shifts.map((s, idx) => `
                 <tr>
                     <td class="p-2">
-                        <input type="text" value="${s.label}" oninput="updateShiftField('${ev.id}', '${s.id}', 'label', this.value)" class="bg-transparent border-none text-[10px] font-black text-indigo-300 uppercase w-full p-0">
+                        <input type="text" value="${s.label}" oninput="updateShiftField('${ev.id}', '${s.id}', 'label', this.value)" class="bg-transparent border-none text-[9px] font-black text-indigo-400 uppercase w-full p-0">
                     </td>
-                    <td class="p-1 border-l border-zinc-800/50"><textarea oninput="updateShiftField('${ev.id}', '${s.id}', 'tech', this.value)" class="w-full p-2 rounded text-[11px]" placeholder="...">${s.tech || ''}</textarea></td>
-                    <td class="p-1 border-l border-zinc-800/50"><textarea oninput="updateShiftField('${ev.id}', '${s.id}', 'prod', this.value)" class="w-full p-2 rounded text-[11px]" placeholder="...">${s.prod || ''}</textarea></td>
-                    <td class="p-1 border-l border-zinc-800/50"><textarea oninput="updateShiftField('${ev.id}', '${s.id}', 'bilh', this.value)" class="w-full p-2 rounded text-[11px]" placeholder="...">${s.bilh || ''}</textarea></td>
-                    <td class="p-1 border-l border-zinc-800/50"><textarea oninput="updateShiftField('${ev.id}', '${s.id}', 'port', this.value)" class="w-full p-2 rounded text-[11px]" placeholder="...">${s.port || ''}</textarea></td>
-                    <td class="p-1 border-l border-zinc-800/50"><textarea oninput="updateShiftField('${ev.id}', '${s.id}', 'bar', this.value)" class="w-full p-2 rounded text-[11px]" placeholder="...">${s.bar || ''}</textarea></td>
-                    <td class="p-1 border-l border-zinc-800/50"><textarea oninput="updateShiftField('${ev.id}', '${s.id}', 'seg', this.value)" class="w-full p-2 rounded text-[11px]" placeholder="...">${s.seg || ''}</textarea></td>
+                    ${['tech', 'prod', 'bilh', 'port', 'bar', 'seg'].map(field => `
+                        <td class="p-1 border-l border-zinc-800/50">
+                            <textarea oninput="updateShiftField('${ev.id}', '${s.id}', '${field}', this.value)" placeholder="..."> ${s[field] || ''}</textarea>
+                        </td>
+                    `).join('')}
                     <td class="p-1 no-print">
                         <button onclick="removeShift('${ev.id}', '${s.id}')" class="text-zinc-800 hover:text-red-500 text-lg">×</button>
                     </td>
@@ -274,84 +293,59 @@
         function updateMonthlyCount() {
             const counts = {};
             appData.events.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    ['tech', 'prod', 'bilh', 'port', 'bar', 'seg'].forEach(f => {
-                        const names = (s[f] || '').split(/[,\n;]/);
+                ev.shifts.forEach(shift => {
+                    // Usar um Set para garantir que cada nome só conta 1 vez por linha (turno)
+                    const namesInThisShift = new Set();
+                    ['tech', 'prod', 'bilh', 'port', 'bar', 'seg'].forEach(field => {
+                        const cellContent = shift[field] || '';
+                        const names = cellContent.split(/[,\n;]/);
                         names.forEach(n => {
                             const clean = n.trim();
-                            if (clean.length > 1) counts[clean] = (counts[clean] || 0) + 1;
+                            if (clean.length > 1) namesInThisShift.add(clean);
                         });
+                    });
+                    
+                    // Adicionar cada nome único desta linha ao contador global
+                    namesInThisShift.forEach(name => {
+                        counts[name] = (counts[name] || 0) + 1;
                     });
                 });
             });
 
-            const container = document.getElementById('monthlyCounter');
+            const container = document.getElementById('monthlyCounterGrid');
             const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
 
             if (sorted.length === 0) {
-                container.innerHTML = '<p class="text-zinc-700 italic text-xs py-2">Sem turnos registados.</p>';
+                container.innerHTML = '<p class="text-zinc-700 italic text-xs py-4 col-span-full">Aguardando preenchimento de escalas...</p>';
                 return;
             }
 
             container.innerHTML = sorted.map(name => `
-                <div class="flex justify-between items-center bg-zinc-800/20 p-2 rounded-lg border border-zinc-800/50">
-                    <span class="font-semibold text-zinc-300 text-[11px]">${name}</span>
-                    <span class="text-indigo-400 text-[10px] font-black">${counts[name]} T</span>
+                <div class="flex justify-between items-center bg-zinc-900 border border-zinc-800 p-3 rounded-xl">
+                    <span class="font-bold text-zinc-100 text-[11px] uppercase tracking-tighter">${name}</span>
+                    <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/20">
+                        ${counts[name]} ${counts[name] === 1 ? 'TURNO' : 'TURNOS'}
+                    </span>
                 </div>
             `).join('');
         }
 
-        function printAllEvents() {
-            const container = document.getElementById('fullPrintContainer');
-            let html = '<h1 style="text-align:center; margin-bottom: 40px;">RELATÓRIO MENSAL DE TURNOS</h1>';
-            
-            appData.events.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(ev => {
-                html += `
-                    <div class="event-page">
-                        <h2 style="margin:0">${ev.name}</h2>
-                        <p style="margin:0; font-size: 12px; color: #666;">Data: ${ev.date} | Local: ${ev.venue}</p>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Turno</th>
-                                    <th>Técnica</th>
-                                    <th>Prod.</th>
-                                    <th>Bilh.</th>
-                                    <th>Portas</th>
-                                    <th>Bar</th>
-                                    <th>Seg.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${ev.shifts.map(s => `
-                                    <tr>
-                                        <td><strong>${s.label}</strong></td>
-                                        <td>${s.tech.replace(/\n/g, '<br>')}</td>
-                                        <td>${s.prod.replace(/\n/g, '<br>')}</td>
-                                        <td>${s.bilh.replace(/\n/g, '<br>')}</td>
-                                        <td>${s.port.replace(/\n/g, '<br>')}</td>
-                                        <td>${s.bar.replace(/\n/g, '<br>')}</td>
-                                        <td>${s.seg.replace(/\n/g, '<br>')}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            });
+        function printCurrentDay() {
+            document.body.classList.remove('printing-counter');
+            window.print();
+        }
 
-            container.innerHTML = html;
+        function printCounter() {
+            document.body.classList.add('printing-counter');
             window.print();
         }
 
         function deleteCurrentEvent() {
-            if (confirm("Apagar este dia?")) {
+            if (confirm("Apagar definitivamente este dia da agenda?")) {
                 appData.events = appData.events.filter(e => e.id !== appData.activeEventId);
                 appData.activeEventId = null;
                 saveToStorage();
-                renderEventList();
-                document.getElementById('editorArea').classList.add('hidden');
-                document.getElementById('emptyState').classList.remove('hidden');
+                location.reload();
             }
         }
 
@@ -361,7 +355,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `backstage_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `backstage_pro_v4_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
         }
 
@@ -382,7 +376,7 @@
         }
 
         function clearAllSystemData() {
-            if (confirm("Apagar TUDO? Esta ação não pode ser revertida.")) {
+            if (confirm("ATENÇÃO: Isto apagará TODOS os eventos e contagens do mês. Continuar?")) {
                 localStorage.removeItem(STORAGE_KEY);
                 location.reload();
             }
