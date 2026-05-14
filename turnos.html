@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backstage Manager - Dark Mode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #09090b; /* Zinc 950 - Quase preto */
+            color: #f4f4f5; 
+        }
+        /* Estilos para áreas de texto que parecem integradas no design dark */
+        textarea {
+            background-color: #18181b !important; /* Zinc 900 */
+            border: 1px solid #27272a !important; /* Zinc 800 */
+            color: #fafafa !important;
+        }
+        textarea:focus {
+            border-color: #6366f1 !important; /* Indigo 500 */
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+        /* Esconder botões na impressão para poupar tinta */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; }
+            .card { border: 1px solid #ddd; background: white !important; color: black !important; }
+            textarea { background: white !important; color: black !important; border: 1px solid #ccc !important; }
+        }
+        .status-pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-zinc-800 pb-8">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tighter text-white">
+                    BACKSTAGE<span class="text-indigo-500">PRO</span>
+                </h1>
+                <div class="flex items-center gap-3 mt-2">
+                    <span id="saveStatusIcon" class="status-pulse bg-zinc-600"></span>
+                    <span id="saveStatusText" class="text-xs font-bold uppercase tracking-widest text-zinc-500">A iniciar ligação...</span>
+                </div>
+            </div>
+            <div class="flex gap-3 no-print">
+                <button onclick="clearAllData()" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-red-400 hover:text-red-300 transition">
+                    Limpar Tudo
+                </button>
+                <button onclick="window.print()" class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-zinc-200 transition shadow-lg shadow-white/5">
+                    Gerar PDF / Imprimir
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+            <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Evento</label>
+                <input type="text" id="eventName" oninput="window.autoSave()" placeholder="Nome do Show" class="w-full bg-transparent border-none text-xl font-bold text-white placeholder-zinc-700 focus:ring-0 p-0">
+            </div>
+            <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Data</label>
+                <input type="date" id="eventDate" oninput="window.autoSave()" class="w-full bg-transparent border-none text-xl font-bold text-white focus:ring-0 p-0 [color-scheme:dark]">
+            </div>
+            <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Local</label>
+                <input type="text" id="eventVenue" oninput="window.autoSave()" placeholder="Teatro / Clube" class="w-full bg-transparent border-none text-xl font-bold text-white placeholder-zinc-700 focus:ring-0 p-0">
+            </div>
+        </div>
+
+        <div class="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden mb-10">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-zinc-800/50 text-[10px] uppercase tracking-[0.2em] font-black text-zinc-400">
+                            <th class="p-5 w-48">Fase / Horário</th>
+                            <th class="p-5 border-l border-zinc-800">Luz <span class="text-amber-400 ml-1">●</span></th>
+                            <th class="p-5 border-l border-zinc-800">Som <span class="text-cyan-400 ml-1">●</span></th>
+                            <th class="p-5 border-l border-zinc-800">FOH / Bilheteira <span class="text-rose-400 ml-1">●</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-800" id="shiftsTable">
+                        <!-- Gerado via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
+            <div class="bg-zinc-900 p-8 rounded-3xl border border-zinc-800">
+                <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                    <span class="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">📊</span>
+                    Contagem de Turnos
+                </h2>
+                <div id="counterResults" class="grid grid-cols-1 gap-2">
+                    <p class="text-zinc-600 italic text-sm text-center py-4">À espera de nomes...</p>
+                </div>
+            </div>
+
+            <div class="bg-indigo-950/20 p-8 rounded-3xl border border-indigo-500/20 no-print">
+                <h2 class="text-sm font-black uppercase tracking-widest text-indigo-400 mb-4 text-center">Instruções de Régie</h2>
+                <div class="space-y-4 text-sm text-zinc-400">
+                    <p class="flex gap-3"><span class="text-indigo-500 font-bold">01.</span> Os dados são guardados automaticamente na "Cloud" enquanto escreves.</p>
+                    <p class="flex gap-3"><span class="text-indigo-500 font-bold">02.</span> Separa nomes com vírgulas ou Enter para a contagem funcionar.</p>
+                    <p class="flex gap-3"><span class="text-indigo-500 font-bold">03.</span> No escuro, este contraste ajuda a reduzir a fadiga ocular.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuração do ambiente
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'backstage-manager-dark';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const SHIFTS = [
+            { id: 'm1', name: 'Montagem / Carga', time: 'Manhã', color: 'border-l-indigo-500' },
+            { id: 'm2', name: 'Ensaios / Foco', time: 'Tarde', color: 'border-l-amber-500' },
+            { id: 'm3', name: 'ESPETÁCULO', time: 'Noite', color: 'border-l-rose-500' },
+            { id: 'm4', name: 'Desmontagem', time: 'Pós-Show', color: 'border-l-zinc-500' }
+        ];
+
+        let saveTimeout;
+        let isInitialLoad = true;
+
+        // Renderizar Tabela
+        const tbody = document.getElementById('shiftsTable');
+        tbody.innerHTML = SHIFTS.map(s => `
+            <tr class="hover:bg-zinc-800/30 transition-colors">
+                <td class="p-5 border-l-4 ${s.color}">
+                    <div class="font-bold text-white">${s.name}</div>
+                    <div class="text-[10px] text-zinc-500 font-medium uppercase tracking-tighter">${s.time}</div>
+                </td>
+                <td class="p-2 border-l border-zinc-800"><textarea id="${s.id}_luz" oninput="window.autoSave()" class="w-full p-3 rounded-xl h-24 text-sm focus:outline-none"></textarea></td>
+                <td class="p-2 border-l border-zinc-800"><textarea id="${s.id}_som" oninput="window.autoSave()" class="w-full p-3 rounded-xl h-24 text-sm focus:outline-none"></textarea></td>
+                <td class="p-2 border-l border-zinc-800"><textarea id="${s.id}_foh" oninput="window.autoSave()" class="w-full p-3 rounded-xl h-24 text-sm focus:outline-none"></textarea></td>
+            </tr>
+        `).join('');
+
+        // Autenticação e Sync
+        async function init() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) { console.error("Auth error", e); }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'show_schedule');
+                onSnapshot(docRef, (snap) => {
+                    if (snap.exists() && isInitialLoad) {
+                        const data = snap.data();
+                        document.getElementById('eventName').value = data.eventName || '';
+                        document.getElementById('eventDate').value = data.eventDate || '';
+                        document.getElementById('eventVenue').value = data.eventVenue || '';
+                        
+                        SHIFTS.forEach(s => {
+                            document.getElementById(`${s.id}_luz`).value = data[`${s.id}_luz`] || '';
+                            document.getElementById(`${s.id}_som`).value = data[`${s.id}_som`] || '';
+                            document.getElementById(`${s.id}_foh`).value = data[`${s.id}_foh`] || '';
+                        });
+                        isInitialLoad = false;
+                        updateStatus('Sincronizado', 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]');
+                        calculateCounts();
+                    }
+                });
+            }
+        });
+
+        // Global AutoSave
+        window.autoSave = function() {
+            updateStatus('A gravar...', 'bg-amber-500 animate-pulse');
+            calculateCounts();
+
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                if (!auth.currentUser) return;
+                
+                const data = {
+                    eventName: document.getElementById('eventName').value,
+                    eventDate: document.getElementById('eventDate').value,
+                    eventVenue: document.getElementById('eventVenue').value,
+                };
+
+                SHIFTS.forEach(s => {
+                    data[`${s.id}_luz`] = document.getElementById(`${s.id}_luz`).value;
+                    data[`${s.id}_som`] = document.getElementById(`${s.id}_som`).value;
+                    data[`${s.id}_foh`] = document.getElementById(`${s.id}_foh`).value;
+                });
+
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'show_schedule'), data);
+                    updateStatus('Guardado', 'bg-emerald-500');
+                } catch (e) {
+                    updateStatus('Erro!', 'bg-red-500');
+                }
+            }, 1000);
+        };
+
+        window.clearAllData = async function() {
+            const confirmed = window.confirm("Limpar todos os dados deste espetáculo?");
+            if (!confirmed) return;
+
+            const empty = { eventName: '', eventDate: '', eventVenue: '' };
+            SHIFTS.forEach(s => {
+                empty[`${s.id}_luz`] = ''; empty[`${s.id}_som`] = ''; empty[`${s.id}_foh`] = '';
+            });
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'show_schedule'), empty);
+            location.reload();
+        };
+
+        function calculateCounts() {
+            const counts = {};
+            document.querySelectorAll('textarea').forEach(ta => {
+                const names = ta.value.split(/[,\n;]/);
+                names.forEach(n => {
+                    const clean = n.trim();
+                    if (clean.length > 1) counts[clean] = (counts[clean] || 0) + 1;
+                });
+            });
+
+            const container = document.getElementById('counterResults');
+            const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-zinc-600 italic text-sm text-center py-4">À espera de nomes...</p>';
+                return;
+            }
+
+            container.innerHTML = sorted.map(name => `
+                <div class="flex justify-between items-center bg-zinc-800/40 p-3 rounded-xl border border-zinc-800">
+                    <span class="font-bold text-zinc-200">${name}</span>
+                    <span class="bg-indigo-500 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20">
+                        ${counts[name]} ${counts[name] === 1 ? 'Turno' : 'Turnos'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function updateStatus(text, dotClass) {
+            document.getElementById('saveStatusText').innerText = text;
+            document.getElementById('saveStatusIcon').className = `status-pulse ${dotClass}`;
+        }
+
+        init();
+    </script>
+</body>
+</html>
