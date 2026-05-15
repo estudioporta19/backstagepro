@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -7,211 +6,60 @@
     <title>Backstage PRO - Gestão de Produção</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @media (max-width: 1024px) {
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
+        
+        :root { --accent: #6366f1; --bg-dark: #050505; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: #efefef; font-size: 12px; }
 
-    body {
-        font-size: 13px;
-        overflow: auto;
-    }
+        .tab-btn.active { 
+            color: white; border-left: 4px solid var(--accent); padding-left: 12px; 
+            background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%); 
+        }
+        
+        textarea { 
+            background-color: #0d0d0d; border: 1px solid #1a1a1a; color: #efefef; 
+            min-height: 32px; font-size: 11px; padding: 6px; border-radius: 4px; resize: none; overflow: hidden;
+        }
+        
+        textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
-    /* SIDEBAR */
-    aside {
-        width: 72px !important;
-        min-width: 72px;
-    }
+        /* Mapa de Turnos Dinâmico */
+        .map-container { overflow-x: auto; border: 1px solid #1a1a1a; border-radius: 12px; background: #0a0a0a; margin-bottom: 20px; }
+        .map-table { border-collapse: collapse; font-size: 8px; width: 100%; min-width: 800px; }
+        .map-table th, .map-table td { border: 1px solid #1a1a1a; text-align: center; height: 26px; vertical-align: middle; padding: 0; }
+        .map-table td:last-child { font-size: 11px;font-weight: 900;  background: #1a1a1a;}
+        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 130px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 8px !important; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .shift-cell { width: 18px; transition: all 0.2s; position: relative; font-size: 0px; } 
+        .shift-cell.active { cursor: help; border: 1px solid rgba(255,255,255,0.05); }
+        .shift-cell.active:hover { filter: brightness(1.3); transform: scale(1.1); z-index: 10; }
 
-    aside h1,
-    aside p,
-    aside button:not(.icon-only),
-    aside nav button {
-        font-size: 0 !important;
-    }
+        .day-header { border-bottom: 2px solid #1a1a1a !important; font-size: 9px; padding: 6px 0; background: #0f0f0f; }
+        .sub-header { font-size: 7px; color: #555; background: #080808; height: 18px !important; font-weight: 900; }
 
-    aside nav button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 14px 0 !important;
-    }
+        /* Calendário Mensal */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #1a1a1a; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .calendar-day { background: #0a0a0a; min-height: 100px; padding: 6px; border: 1px solid #111; }
+        .calendar-day.other-month { opacity: 0.3; background: #050505; }
+        .calendar-day-header { font-weight: 900; font-size: 10px; color: #555; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .calendar-event { font-size: 8px; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: white; text-transform: uppercase; }
 
-    aside nav button::first-letter {
-        font-size: 18px !important;
-    }
+        /* Ficha de Acolhimento */
+        .hospitality-card { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 24px; }
+        .h-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; color: #6366f1; letter-spacing: 1px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 16px; margin-top: 24px; }
+        .h-input-group { display: flex; flex-direction: column; gap: 4px; }
+        .h-label { font-size: 8px; font-weight: 800; color: #555; text-transform: uppercase; }
+        .h-input { background: #0d0d0d; border: 1px solid #1a1a1a; color: white; padding: 8px; border-radius: 6px; font-size: 11px; }
+        .h-input:focus { outline: none; border-color: #6366f1; }
 
-    .tab-btn.active {
-        border-left-width: 3px;
-        padding-left: 0 !important;
-    }
-
-    /* MAIN */
-    main {
-        padding: 16px !important;
-    }
-
-    /* EVENTS LAYOUT */
-    #eventsView .flex.gap-6 {
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    #eventsView .w-48 {
-        width: 100% !important;
-    }
-
-    #eventList {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding-bottom: 4px;
-    }
-
-    #eventList button {
-        min-width: 180px;
-        flex-shrink: 0;
-    }
-
-    /* TOOLBAR */
-    #editorArea .flex.justify-between.items-end {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 16px;
-    }
-
-    #editorArea .flex.justify-between.items-end > div:last-child {
-        flex-wrap: wrap;
-    }
-
-    #editorArea .flex.justify-between.items-end button {
-        flex: 1;
-        min-width: 140px;
-    }
-
-    /* INPUTS */
-    #curEventName {
-        font-size: 22px !important;
-        line-height: 1.1;
-    }
-
-    textarea,
-    .h-input {
-        font-size: 14px !important;
-        min-height: 42px;
-    }
-
-    /* SHIFTS TABLE */
-    #shiftsContainer {
-        overflow-x: auto;
-    }
-
-    #shiftsContainer table {
-        min-width: 900px;
-    }
-
-    #shiftsContainer th,
-    #shiftsContainer td {
-        font-size: 10px !important;
-    }
-
-    /* MAPA TURNOS */
-    .map-container {
-        overflow-x: auto;
-    }
-
-    .map-table {
-        min-width: 1000px;
-    }
-
-    .col-staff {
-        width: 110px;
-        font-size: 10px;
-    }
-
-    .shift-cell {
-        width: 22px;
-        height: 30px;
-    }
-
-    /* CALENDAR */
-    .calendar-day {
-        min-height: 120px;
-        padding: 8px;
-    }
-
-    .calendar-event {
-        font-size: 9px;
-        padding: 4px;
-    }
-
-    /* HOSPITALITY */
-    .hospitality-card {
-        padding: 18px;
-    }
-
-    .grid.md\:grid-cols-2,
-    .grid.md\:grid-cols-3,
-    .grid.md\:grid-cols-4 {
-        grid-template-columns: 1fr !important;
-    }
-
-    .md\:col-span-2 {
-        grid-column: span 1 !important;
-    }
-
-    /* STAFF / VENUES */
-    #staffView .grid,
-    #venuesView .grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-
-    /* BUTTONS */
-    button {
-        min-height: 42px;
-    }
-
-    /* QUICK PICKER */
-    #quickStaffPicker {
-        width: 260px;
-        max-height: 320px;
-    }
-
-}
-
-/* =========================================================
-   SMALL TABLET / LARGE PHONE
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    aside {
-        width: 58px !important;
-        min-width: 58px;
-    }
-
-    main {
-        padding: 10px !important;
-    }
-
-    #staffView .grid,
-    #venuesView .grid {
-        grid-template-columns: 1fr !important;
-    }
-
-    #curEventName {
-        font-size: 18px !important;
-    }
-
-    .calendar-day {
-        min-height: 90px;
-    }
-
-    .calendar-event {
-        font-size: 8px;
-    }
-
-    #editorArea .flex.justify-between.items-end button {
-        min-width: 100%;
-    }
-}
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white !important; color: black !important; }
+            .hospitality-card { border: none; padding: 0; background: white; color: black; }
+            .h-input { background: transparent; border: none; border-bottom: 1px solid #ddd; color: black; padding: 2px; font-size: 10px; }
+            .h-label { color: #333; }
+            .h-section-title { color: black; border-bottom: 2px solid black; }
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -711,79 +559,107 @@
         }
 
         function renderWeeklyMap(resetToToday = false) {
-            if(resetToToday) currentDate = new Date();
-            const container = document.getElementById('weeklyMap');
-            const d = new Date(currentDate);
-            const day = d.getDay() || 7;
-            d.setDate(d.getDate() - day + 1);
-            const weekStart = new Date(d);
-            const monthName = weekStart.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
-            document.getElementById('weeklyMapTitle').innerText = monthName;
+    if(resetToToday) currentDate = new Date();
+    const container = document.getElementById('weeklyMap');
+    const d = new Date(currentDate);
+    const day = d.getDay() || 7;
+    d.setDate(d.getDate() - day + 1);
+    const weekStart = new Date(d);
+    const monthName = weekStart.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
+    document.getElementById('weeklyMapTitle').innerText = monthName;
 
-            const days = [];
-            for(let i=0; i<7; i++) {
-                const cur = new Date(weekStart); cur.setDate(cur.getDate() + i);
-                days.push(cur.toISOString().split('T')[0]);
-            }
+    const days = [];
+    for(let i=0; i<7; i++) {
+        const cur = new Date(weekStart); 
+        cur.setDate(cur.getDate() + i);
+        days.push(cur.toISOString().split('T')[0]);
+    }
 
-            const dayShiftStructure = days.map(dateStr => {
-                const eventsOnDay = appData.events.filter(e => e.date === dateStr);
-                const shiftLabels = new Set(['MANHÃ', 'TARDE', 'NOITE']);
-                eventsOnDay.forEach(ev => ev.shifts.forEach(s => shiftLabels.add(s.label.toUpperCase().trim())));
-                const sortedLabels = Array.from(shiftLabels).sort((a, b) => {
-                    const order = { 'MANHÃ': 1, 'MANHA': 1, 'TARDE': 2, 'NOITE': 3 };
-                    if (order[a] && order[b]) return order[a] - order[b];
-                    if (order[a]) return -1;
-                    if (order[b]) return 1;
-                    return a.localeCompare(b);
-                });
-                return { dateStr, labels: sortedLabels };
-            });
+    const dayShiftStructure = days.map(dateStr => {
+        const eventsOnDay = appData.events.filter(e => e.date === dateStr);
+        const shiftLabels = new Set(['MANHÃ', 'TARDE', 'NOITE']);
+        eventsOnDay.forEach(ev => ev.shifts.forEach(s => shiftLabels.add(s.label.toUpperCase().trim())));
+        const sortedLabels = Array.from(shiftLabels).sort((a, b) => {
+            const order = { 'MANHÃ': 1, 'MANHA': 1, 'TARDE': 2, 'NOITE': 3 };
+            if (order[a] && order[b]) return order[a] - order[b];
+            if (order[a]) return -1;
+            if (order[b]) return 1;
+            return a.localeCompare(b);
+        });
+        return { dateStr, labels: sortedLabels };
+    });
 
-            const staffSorted = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
-            let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th>`;
-            dayShiftStructure.forEach(day => {
-                const dObj = new Date(day.dateStr);
-                html += `<th colspan="${day.labels.length}" class="day-header uppercase font-black text-[7px] border-l-2 border-zinc-800">${dObj.toLocaleDateString('pt-PT', {weekday: 'short'})} ${dObj.getDate()}/${dObj.getMonth()+1}</th>`;
-            });
-            html += `</tr><tr>`;
-            dayShiftStructure.forEach(day => {
-                day.labels.forEach(label => {
-                    let short = label.charAt(0);
-                    if (label.startsWith('EXTRA')) short = 'EX';
-                    html += `<th class="sub-header border-l border-zinc-900/30" title="${label}">${short}</th>`;
-                });
-            });
-            html += `</tr></thead><tbody>`;
+    const staffSorted = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
+    
+    let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th>`;
 
-            staffSorted.forEach(([code, data]) => {
-                const staffName = data.name.toLowerCase().trim();
-                html += `<tr><td class="col-staff uppercase" title="${data.name}">${data.name}</td>`;
-                dayShiftStructure.forEach(day => {
-                    const dayEvents = appData.events.filter(e => e.date === day.dateStr);
-                    day.labels.forEach(label => {
-                        let activeCode = "", activeColor = "";
-                        dayEvents.forEach(ev => {
-                            const matchingShift = ev.shifts.find(s => s.label.toUpperCase().trim() === label);
-                            if(matchingShift) {
-                                let isWorking = false;
-                                SHIFT_COLS.forEach(c => { if(matchingShift[c] && matchingShift[c].toLowerCase().includes(staffName)) isWorking = true; });
-                                if(isWorking) { const info = getVenueInfo(ev.venue); activeCode = info.code; activeColor = info.color; }
+    // Cabeçalhos dos dias
+    dayShiftStructure.forEach(day => {
+        const dObj = new Date(day.dateStr);
+        html += `<th colspan="${day.labels.length}" class="day-header uppercase font-black text-[7px] border-l-2 border-zinc-800">${dObj.toLocaleDateString('pt-PT', {weekday: 'short'})} ${dObj.getDate()}/${dObj.getMonth()+1}</th>`;
+    });
+
+    // Coluna Total
+    html += `<th rowspan="2" class="col-staff day-header bg-indigo-600/20 border-l-4 border-indigo-500 text-indigo-400">TOTAL</th></tr><tr>`;
+
+    // Sub-cabeçalhos dos turnos
+    dayShiftStructure.forEach(day => {
+        day.labels.forEach(label => {
+            let short = label.charAt(0);
+            if (label.startsWith('EXTRA')) short = 'EX';
+            html += `<th class="sub-header border-l border-zinc-900/30" title="${label}">${short}</th>`;
+        });
+    });
+    html += `</tr></thead><tbody>`;
+
+    // Corpo da tabela
+    staffSorted.forEach(([code, data]) => {
+        const staffName = data.name.toLowerCase().trim();
+        let totalShifts = 0;
+
+        html += `<tr><td class="col-staff uppercase" title="${data.name}">${data.name}</td>`;
+
+        dayShiftStructure.forEach(day => {
+            const dayEvents = appData.events.filter(e => e.date === day.dateStr);
+            day.labels.forEach(label => {
+                let activeCode = "", activeColor = "";
+                let isWorking = false;
+
+                dayEvents.forEach(ev => {
+                    const matchingShift = ev.shifts.find(s => s.label.toUpperCase().trim() === label);
+                    if(matchingShift) {
+                        SHIFT_COLS.forEach(c => { 
+                            if(matchingShift[c] && matchingShift[c].toLowerCase().includes(staffName)) {
+                                isWorking = true;
                             }
                         });
-                        html += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/30" style="background-color: ${activeCode ? activeColor : 'transparent'}">${activeCode}</td>`;
-                    });
+                        if(isWorking) { 
+                            const info = getVenueInfo(ev.venue); 
+                            activeCode = info.code; 
+                            activeColor = info.color; 
+                        }
+                    }
                 });
-                html += `</tr>`;
+
+                if(isWorking) totalShifts++;
+
+                html += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/30" style="background-color: ${activeCode ? activeColor : 'transparent'}">${activeCode}</td>`;
             });
-            container.innerHTML = html + `</tbody></table>`;
-            
-            const legend = document.getElementById('venueLegend');
-            legend.innerHTML = Object.entries(appData.venues).map(([code, name], i) => {
-                const color = VENUE_PALETTE[i % VENUE_PALETTE.length];
-                return `<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full" style="background:${color}"></div><span class="text-[9px] font-bold uppercase text-zinc-400"><b>${code}:</b> ${name}</span></div>`;
-            }).join('');
-        }
+        });
+
+        // Célula do Total
+        html += `<td class="col-staff text-center font-black text-lg border-l-4 border-indigo-500 ${totalShifts > 0 ? 'text-indigo-400' : 'text-zinc-600'}">${totalShifts}</td></tr>`;
+    });
+
+    container.innerHTML = html + `</tbody></table>`;
+
+    // Legenda (mantida igual)
+    const legend = document.getElementById('venueLegend');
+    legend.innerHTML = Object.entries(appData.venues).map(([code, name], i) => {
+        const color = VENUE_PALETTE[i % VENUE_PALETTE.length];
+        return `<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full" style="background:${color}"></div><span class="text-[9px] font-bold uppercase text-zinc-400"><b>${code}:</b> ${name}</span></div>`;
+    }).join('');
+}
 
         function changeWeek(v) { currentDate.setDate(currentDate.getDate() + (v*7)); renderWeeklyMap(); }
 
