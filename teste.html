@@ -86,7 +86,6 @@
         }
         .staff-item:hover { background: #2563eb; color: white; }
 
-        /* Estilos específicos para o Mapa de Turnos */
         .map-container {
             overflow-x: auto;
             border: 1px solid #1a1a1a;
@@ -118,6 +117,36 @@
             color: #818cf8;
             font-weight: 900;
         }
+
+        /* Calendário Styles */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #1a1a1a;
+            border: 1px solid #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .calendar-day {
+            background-color: #050505;
+            min-height: 120px;
+            padding: 8px;
+        }
+        .calendar-day.today {
+            background-color: #0c0c0e;
+        }
+        .calendar-event {
+            background: #1e1b4b;
+            border-left: 3px solid #6366f1;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .calendar-event:hover { transform: scale(1.02); background: #2d2a77; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -133,6 +162,9 @@
         <nav class="flex flex-col gap-1 mt-4 px-2">
             <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
                 📅 Agenda
+            </button>
+            <button onclick="switchTab('calendar')" id="btn-tab-calendar" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
+                🗓️ Calendário
             </button>
             <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
                 👥 Equipa
@@ -168,6 +200,7 @@
 
     <main class="flex-1 overflow-y-auto bg-zinc-950 p-4">
         
+        <!-- Vista de Agenda -->
         <div id="eventsView">
             <div class="flex flex-col lg:flex-row gap-4 h-full">
                 <div class="w-full lg:w-48 no-print shrink-0">
@@ -218,6 +251,34 @@
             </div>
         </div>
 
+        <!-- Vista de Calendário Semanal -->
+        <div id="calendarView" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-lg font-black uppercase italic">Calendário Semanal</h2>
+                    <p id="weekRangeLabel" class="text-[10px] text-indigo-400 uppercase font-bold tracking-widest mt-1">S12 - S18 Outubro</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="changeWeek(-1)" class="bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded text-xs font-bold transition">◀ Ant.</button>
+                    <button onclick="goToToday()" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-1.5 rounded text-xs font-bold transition">Hoje</button>
+                    <button onclick="changeWeek(1)" class="bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded text-xs font-bold transition">Próx. ▶</button>
+                </div>
+            </div>
+
+            <div class="calendar-grid">
+                <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-500">Segunda</div>
+                <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-500">Terça</div>
+                <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-500">Quarta</div>
+                <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-500">Quinta</div>
+                <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-500">Sexta</div>
+                <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-600">Sábado</div>
+                <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-600">Domingo</div>
+                
+                <!-- Os dias serão gerados aqui -->
+                <div id="calendarDays" class="contents"></div>
+            </div>
+        </div>
+
         <div id="staffView" class="hidden">
             <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
             <div class="flex gap-2 mb-6 max-w-xl">
@@ -246,10 +307,7 @@
                 </div>
                 <button onclick="printTurnos()" class="bg-indigo-600 px-4 py-2 rounded text-[9px] font-black uppercase">Imprimir Mapa</button>
             </div>
-            
-            <!-- Novo Mapa Automático -->
             <div class="map-container mb-8" id="autoTurnosMap"></div>
-
             <h3 class="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-3">Total por Colaborador</h3>
             <div id="monthlyCounterGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2"></div>
         </div>
@@ -258,6 +316,7 @@
 
     <script>
         const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
+        let currentWeekDate = new Date();
 
         const defaultStaff = {
             "rs": { name: "Rita Sousa" },
@@ -299,14 +358,14 @@
 
         function resetSystem() {
             const confirmWord = "RESET";
-            const input = prompt(`AVISO: Isto apagará todos os eventos, fichas e novos registos de equipa/locais.\nApenas os dados base serão mantidos.\n\nPara confirmar, escreva: ${confirmWord}`);
+            const input = prompt(`AVISO: Isto apagará todos os eventos, fichas e novos registos de equipa/locais.\n\nPara confirmar, escreva: ${confirmWord}`);
             if (input === confirmWord) { initializeDefaults(); location.reload(); }
         }
 
         function saveData() { localStorage.setItem('backstage_pro_v3', JSON.stringify(appData)); }
 
         function switchTab(tab) {
-            ['events', 'staff', 'venues', 'counter'].forEach(t => {
+            ['events', 'calendar', 'staff', 'venues', 'counter'].forEach(t => {
                 const elView = document.getElementById(t + 'View');
                 const elBtn = document.getElementById('btn-tab-' + t);
                 if(elView) elView.classList.add('hidden');
@@ -314,12 +373,76 @@
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
+            
             if(tab === 'staff') renderStaff();
             if(tab === 'venues') renderVenues();
             if(tab === 'counter') updateMonthlyCount();
+            if(tab === 'calendar') renderCalendar();
             if(tab === 'events') renderEventList();
         }
 
+        /* Funções de Calendário */
+        function changeWeek(diff) {
+            currentWeekDate.setDate(currentWeekDate.getDate() + (diff * 7));
+            renderCalendar();
+        }
+
+        function goToToday() {
+            currentWeekDate = new Date();
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const daysContainer = document.getElementById('calendarDays');
+            const rangeLabel = document.getElementById('weekRangeLabel');
+            
+            // Obter segunda-feira da semana atual
+            const d = new Date(currentWeekDate);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(d.setDate(diff));
+            
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            rangeLabel.innerText = `${monday.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long' })} - ${sunday.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+
+            let html = '';
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            for (let i = 0; i < 7; i++) {
+                const current = new Date(monday);
+                current.setDate(monday.getDate() + i);
+                const curStr = current.toISOString().split('T')[0];
+                const isToday = curStr === todayStr;
+
+                const dayEvents = appData.events.filter(e => e.date === curStr);
+
+                html += `
+                    <div class="calendar-day ${isToday ? 'today' : ''}">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[10px] font-black ${isToday ? 'text-indigo-400' : 'text-zinc-700'}">${current.getDate()}</span>
+                        </div>
+                        <div class="space-y-1">
+                            ${dayEvents.map(e => `
+                                <div onclick="selectEventFromCalendar('${e.id}')" class="calendar-event">
+                                    <div class="font-bold truncate">${e.name}</div>
+                                    <div class="text-[8px] text-zinc-400 truncate opacity-70">${e.venue || 'Local n/d'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            daysContainer.innerHTML = html;
+        }
+
+        function selectEventFromCalendar(id) {
+            switchTab('events');
+            selectEvent(id);
+        }
+
+        /* Funções Base do Sistema */
         function renderEventList() {
             const list = document.getElementById('eventList');
             if(!list) return;
@@ -423,14 +546,6 @@
             document.getElementById('quickStaffPicker').style.display = 'none';
         }
 
-        function duplicateActiveEvent() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(!ev) return;
-            const newEv = JSON.parse(JSON.stringify(ev));
-            newEv.id = 'ev_' + Date.now(); newEv.name += " (CÓPIA)";
-            appData.events.unshift(newEv); saveData(); renderEventList(); selectEvent(newEv.id);
-        }
-
         function processShortcodes(textarea, shiftId, field) {
             const val = textarea.value; const regex = /(\b\w+\b)([ ,;\n\r])/g; let changed = false;
             const newVal = val.replace(regex, (match, code, delimiter) => {
@@ -452,6 +567,14 @@
             updateActiveEvent('venue', val);
         }
 
+        function duplicateActiveEvent() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(!ev) return;
+            const newEv = JSON.parse(JSON.stringify(ev));
+            newEv.id = 'ev_' + Date.now(); newEv.name += " (CÓPIA)";
+            appData.events.unshift(newEv); saveData(); renderEventList(); selectEvent(newEv.id);
+        }
+
         function createNewEvent() {
             const id = 'ev_' + Date.now();
             const newEv = {
@@ -463,7 +586,7 @@
         }
 
         function deleteEvent(id) {
-            if(confirm("Apagar evento permanentemente?")) {
+            if(confirm("Apagar evento?")) {
                 appData.events = appData.events.filter(e => e.id !== id);
                 if(appData.activeEventId === id) appData.activeEventId = null;
                 saveData(); renderEventList();
@@ -527,8 +650,7 @@
 
         function updateMonthlyCount() {
             const counts = {}; const displayName = {};
-            const staffEventMatrix = {}; // Para o mapa automático {staffName: {eventId: count}}
-            
+            const staffEventMatrix = {};
             const sortedEvents = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
 
             sortedEvents.forEach(ev => {
@@ -544,7 +666,6 @@
                             }
                         }); 
                     });
-                    
                     uniqueInShift.forEach(n => {
                         counts[n] = (counts[n] || 0) + 1;
                         if(!staffEventMatrix[n]) staffEventMatrix[n] = {};
@@ -553,7 +674,6 @@
                 });
             });
 
-            // Renderizar Mapa de Turnos Automático
             const mapContainer = document.getElementById('autoTurnosMap');
             const sortedStaffNames = Object.entries(counts).sort((a,b) => a[0].localeCompare(b[0]));
             
@@ -565,7 +685,6 @@
                     mapHtml += `<th><div class="text-[7px] text-indigo-400">${ev.date ? ev.date.split('-').reverse().slice(0,2).join('/') : 'S/D'}</div><div class="truncate w-20 mx-auto">${ev.name}</div></th>`;
                 });
                 mapHtml += `</tr></thead><tbody>`;
-                
                 sortedStaffNames.forEach(([staffId, total]) => {
                     mapHtml += `<tr><td>${displayName[staffId]}</td>`;
                     sortedEvents.forEach(ev => {
@@ -587,6 +706,7 @@
             `).join('');
         }
 
+        /* Impressão */
         function buildEventHTML(ev) {
             const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar / Cozinha','Segurança'];
             const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
@@ -602,19 +722,18 @@
                 </tr>`).join('');
 
             return `
-                <div class="landscape-page" style="margin-bottom:30px; page-break-after:always;">
+                <div style="margin-bottom:30px; page-break-after:always;">
                     <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-end;">
                         <div>
-                            <h1 style="font-size:24px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-0.5px;">${ev.name}</h1>
-                            <p style="font-size:12px; margin:4px 0 0; font-weight:700; color:#333;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'SEM LOCAL'}</p>
+                            <h1 style="font-size:24px; font-weight:900; margin:0; text-transform:uppercase;">${ev.name}</h1>
+                            <p style="font-size:12px; margin:4px 0 0; font-weight:700;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'SEM LOCAL'}</p>
                         </div>
-                        <div style="font-size:9px; font-weight:900; text-transform:uppercase; color:#000;">Ficha de Produção</div>
                     </div>
-                    <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:2px solid #000;">
+                    <table style="width:100%; border-collapse:collapse; border:2px solid #000;">
                         <thead>
                             <tr style="background:#000; color:#fff;">
-                                <th style="width:100px; padding:10px; border:1px solid #000; text-align:left; font-size:10px; text-transform:uppercase; font-weight:900;">Horário</th>
-                                ${cols.map(c=>`<th style="padding:10px; border:1px solid #000; text-align:left; font-size:10px; text-transform:uppercase; font-weight:900;">${c}</th>`).join('')}
+                                <th style="width:100px; padding:10px; font-size:10px; text-transform:uppercase; font-weight:900;">Horário</th>
+                                ${cols.map(c=>`<th style="padding:10px; font-size:10px; text-transform:uppercase; font-weight:900;">${c}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -624,81 +743,28 @@
 
         function executePrint(html, isLandscape = true) {
             const win = window.open('', '_blank');
-            win.document.write(`
-                <html>
-                <head>
-                    <title>Backstage PRO</title>
-                    <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-                        @page { size: ${isLandscape ? 'landscape' : 'portrait'}; margin: 1cm; }
-                        body { font-family: 'Inter', sans-serif; margin: 0; color: #000; }
-                        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #000; padding: 4px; font-size: 10px; }
-                        .active-cell { background: #eee !important; font-weight: bold; }
-                    </style>
-                </head>
-                <body>${html}</body>
-                </html>`);
+            win.document.write(`<html><head><style>
+                @page { size: ${isLandscape ? 'landscape' : 'portrait'}; margin: 1cm; }
+                body { font-family: sans-serif; margin: 0; color: #000; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #000; padding: 4px; font-size: 10px; }
+            </style></head><body>${html}</body></html>`);
             win.document.close();
             setTimeout(() => { win.print(); }, 400);
         }
 
-        function printSingleEvent() { 
-            const ev = appData.events.find(e => e.id === appData.activeEventId); 
-            if(ev) executePrint(buildEventHTML(ev), true); 
-        }
-
-        function printAllEvents() { 
-            if(appData.events.length === 0) return;
-            const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-            executePrint(sorted.map(ev => buildEventHTML(ev)).join(''), true); 
-        }
-
+        function printSingleEvent() { const ev = appData.events.find(e => e.id === appData.activeEventId); if(ev) executePrint(buildEventHTML(ev), true); }
+        function printAllEvents() { if(appData.events.length === 0) return; const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || "")); executePrint(sorted.map(ev => buildEventHTML(ev)).join(''), true); }
         function printTurnos() {
-            const counts = {}; const displayName = {}; const matrix = {};
-            const sortedEvents = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-
-            sortedEvents.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    const uniqueInShift = new Set();
-                    APP_COLUMNS.forEach(col => { if (s[col]) s[col].split(/[,\n;]/).forEach(n => {
-                        const clean = n.trim(); if(clean.length > 2) { 
-                            const k = clean.toLowerCase(); uniqueInShift.add(k); displayName[k] = clean; 
-                        }
-                    }); });
-                    uniqueInShift.forEach(n => {
-                        counts[n] = (counts[n] || 0) + 1;
-                        if(!matrix[n]) matrix[n] = {}; matrix[n][ev.id] = (matrix[n][ev.id] || 0) + 1;
-                    });
-                });
-            });
-
-            const sortedStaff = Object.entries(counts).sort((a,b) => a[0].localeCompare(b[0]));
-            
-            let html = `<div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:15px;">
-                        <h1 style="text-transform:uppercase; font-weight:900; margin:0; font-size:20px;">Mapa Geral de Turnos</h1></div>`;
-            
-            html += `<table><thead><tr style="background:#000; color:#fff;"><th>Colaborador</th>`;
-            sortedEvents.forEach(ev => html += `<th style="font-size:8px;">${ev.date}<br>${ev.name}</th>`);
-            html += `<th>Total</th></tr></thead><tbody>`;
-            
-            sortedStaff.forEach(([sid, total]) => {
-                html += `<tr><td style="font-weight:700;">${displayName[sid]}</td>`;
-                sortedEvents.forEach(ev => {
-                    const val = matrix[sid][ev.id] || '';
-                    html += `<td style="text-align:center; ${val ? 'background:#f0f0f0;' : ''}">${val}</td>`;
-                });
-                html += `<td style="text-align:center; font-weight:900; background:#eee;">${total}</td></tr>`;
-            });
-            html += `</tbody></table>`;
-            
-            executePrint(html, true);
+            // Re-aproveita lógica do updateMonthlyCount para gerar HTML de tabela
+            updateMonthlyCount();
+            const html = document.getElementById('autoTurnosMap').innerHTML;
+            executePrint(`<h1>Mapa de Turnos</h1>${html}`, true);
         }
 
         function exportData() {
             const b = new Blob([JSON.stringify(appData)], {type:'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_pro_backup.json'; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_pro.json'; a.click();
         }
 
         function importData(e) {
