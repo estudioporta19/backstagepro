@@ -23,25 +23,25 @@
         
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
-        /* Mapa de Turnos Compacto */
+        /* Mapa de Turnos Dinâmico */
         .map-container { overflow-x: auto; border: 1px solid #1a1a1a; border-radius: 12px; background: #0a0a0a; margin-bottom: 20px; }
-        .map-table { border-collapse: collapse; font-size: 8px; width: 100%; table-layout: fixed; }
-        .map-table th, .map-table td { border: 1px solid #1a1a1a; text-align: center; height: 24px; vertical-align: middle; }
+        .map-table { border-collapse: collapse; font-size: 8px; width: 100%; min-width: 800px; }
+        .map-table th, .map-table td { border: 1px solid #1a1a1a; text-align: center; height: 24px; vertical-align: middle; padding: 0 2px; }
         
-        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 100px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 6px !important; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 120px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 8px !important; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .shift-cell { width: 14px; transition: all 0.2s; position: relative; font-size: 0px; /* Esconde o texto no software */ }
-        .shift-cell.active { color: transparent; cursor: help; }
+        .shift-cell { width: 16px; transition: all 0.2s; position: relative; font-size: 7px; font-weight: bold; color: rgba(255,255,255,0.3); }
+        .shift-cell.active { color: white; cursor: help; }
         .shift-cell.active:hover { filter: brightness(1.2); }
 
-        .day-header { border-bottom: 2px solid #1a1a1a !important; font-size: 8px; padding: 4px 0; }
-        .sub-header { font-size: 7px; color: #444; background: #080808; height: 16px !important; }
+        .day-header { border-bottom: 2px solid #1a1a1a !important; font-size: 9px; padding: 6px 0; background: #0f0f0f; }
+        .sub-header { font-size: 7px; color: #555; background: #080808; height: 18px !important; font-weight: 900; }
 
         /* Calendário Mensal */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #1a1a1a; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
         .calendar-day { background: #0a0a0a; min-height: 100px; padding: 6px; border: 1px solid #111; }
         .calendar-day.other-month { opacity: 0.3; background: #050505; }
-        .calendar-day-header { font-weight: 900; font-size: 10px; text-zinc-500 mb-2 flex justify-between; }
+        .calendar-day-header { font-weight: 900; font-size: 10px; color: #555; mb-2 flex justify-between; }
         .calendar-event { font-size: 8px; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: white; text-transform: uppercase; }
 
         @media print { 
@@ -50,12 +50,10 @@
             .print-page { padding: 5px; color: black; width: 100%; }
             table { width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid black !important; padding: 1px; text-align: center; vertical-align: middle; font-size: 7px; color: black !important; }
-            .map-table { min-width: 100%; table-layout: fixed; }
-            .col-staff { position: static; background: transparent; width: 70px; border-right: 1px solid black !important; font-size: 7px; }
-            .shift-cell { font-size: 7px !important; color: black !important; width: auto; } /* Mostra sigla na impressão */
-            .shift-cell.active { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #f0f0f0 !important; }
-            .legend-item { color: black !important; font-size: 7px; }
-            .bg-zinc-900\/50 { background: transparent !important; }
+            .map-table { min-width: 100%; table-layout: auto; }
+            .col-staff { position: static; background: transparent; width: 80px; border-right: 1px solid black !important; font-size: 7px; }
+            .shift-cell { font-size: 6px !important; color: black !important; width: auto; }
+            .shift-cell.active { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #eee !important; border: 1px solid #ccc !important; }
         }
     </style>
 </head>
@@ -149,12 +147,12 @@
             <div id="calendarGrid" class="calendar-grid"></div>
         </div>
 
-        <!-- Mapa de Turnos Compacto -->
+        <!-- Mapa de Turnos Dinâmico -->
         <div id="counterView" class="hidden">
             <div class="flex justify-between items-center mb-4">
                 <div>
                     <h2 class="text-xl font-black uppercase italic">Mapa de Turnos</h2>
-                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Vista Compacta por Cores (Passe o rato para ver o local)</p>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Vista Dinâmica com Turnos Extras</p>
                 </div>
                 <div class="flex gap-2 no-print">
                     <button onclick="changeWeek(-1)" class="bg-zinc-900 p-2 rounded">◀</button>
@@ -200,7 +198,7 @@
             "TP": "Teatro de Palha", "EN": "Escola Nova", "NB": "Novo Bowing", "NANC": "Novo Ano Novo Circo"
         };
 
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_v8')) || {
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v9')) || {
             events: [],
             staff: defaultStaff,
             venues: defaultVenues,
@@ -210,8 +208,8 @@
         let currentDate = new Date();
         let currentMonthDate = new Date();
 
-        function saveData() { localStorage.setItem('backstage_pro_v8', JSON.stringify(appData)); }
-        function resetSystem() { if(confirm("Cuidado: Isto apaga todos os dados. Continuar?")) { localStorage.removeItem('backstage_pro_v8'); location.reload(); } }
+        function saveData() { localStorage.setItem('backstage_pro_v9', JSON.stringify(appData)); }
+        function resetSystem() { if(confirm("Cuidado: Isto apaga todos os dados. Continuar?")) { localStorage.removeItem('backstage_pro_v9'); location.reload(); } }
 
         function switchTab(tab) {
             ['events', 'staff', 'venues', 'counter', 'monthly'].forEach(t => {
@@ -327,8 +325,15 @@
         function addShift() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(!ev) return;
-            ev.shifts.push({ id: 's' + Date.now(), label: 'EXTRA', time: '00:00', tecnicos: '', producao: '', bilheteira: '', portas: '', bar: '', seguranca: '' });
-            saveData(); renderShifts(ev);
+            const newShift = { 
+                id: 'extra_' + Date.now(), 
+                label: 'EXTRA', 
+                time: '00:00', 
+                tecnicos: '', producao: '', bilheteira: '', portas: '', bar: '', seguranca: '' 
+            };
+            ev.shifts.push(newShift);
+            saveData(); 
+            renderShifts(ev); 
         }
 
         function deleteShift(sid) {
@@ -349,7 +354,7 @@
             return { code: "?", color: "#525252", name: venueName || "N/A" };
         }
 
-        /* --- MAPA DE TURNOS (VERSÃO COMPACTA) --- */
+        // --- LÓGICA DO MAPA DINÂMICO ---
         function renderWeeklyMap(resetToToday = false) {
             if(resetToToday) currentDate = new Date();
             const container = document.getElementById('weeklyMap');
@@ -363,53 +368,84 @@
                 days.push(cur.toISOString().split('T')[0]);
             }
 
+            // 1. Identificar todos os turnos únicos em cada dia para criar colunas dinâmicas
+            const dayShiftStructure = days.map(dateStr => {
+                const eventsOnDay = appData.events.filter(e => e.date === dateStr);
+                const shiftLabels = new Set(['MANHÃ', 'TARDE', 'NOITE']); // Base mínima
+                eventsOnDay.forEach(ev => {
+                    ev.shifts.forEach(s => shiftLabels.add(s.label.toUpperCase().trim()));
+                });
+                // Ordenar: M, T, N, e depois os outros por hora ou nome
+                const sortedLabels = Array.from(shiftLabels).sort((a, b) => {
+                    const order = { 'MANHÃ': 1, 'MANHA': 1, 'TARDE': 2, 'NOITE': 3 };
+                    if (order[a] && order[b]) return order[a] - order[b];
+                    if (order[a]) return -1;
+                    if (order[b]) return 1;
+                    return a.localeCompare(b);
+                });
+                return { dateStr, labels: sortedLabels };
+            });
+
             const staffSorted = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
             
+            // 2. Legenda de Locais
             const legend = document.getElementById('venueLegend');
             legend.innerHTML = Object.entries(appData.venues).map(([code, name], i) => {
                 const color = VENUE_PALETTE[i % VENUE_PALETTE.length];
                 return `<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full" style="background:${color}"></div><span class="text-[9px] font-bold uppercase text-zinc-400 legend-item"><b>${code}:</b> ${name}</span></div>`;
             }).join('');
 
+            // 3. Cabeçalho Principal (Dias)
             let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th>`;
-            days.forEach(dateStr => {
-                const dObj = new Date(dateStr);
+            dayShiftStructure.forEach(day => {
+                const dObj = new Date(day.dateStr);
                 const dayName = dObj.toLocaleDateString('pt-PT', {weekday: 'short'});
                 const dayNum = dObj.getDate();
-                html += `<th colspan="4" class="day-header bg-zinc-900/40 uppercase font-black text-[7px]">${dayName} ${dayNum}</th>`;
+                html += `<th colspan="${day.labels.length}" class="day-header uppercase font-black text-[7px] border-l-2 border-zinc-800">${dayName} ${dayNum}</th>`;
             });
             html += `</tr><tr>`;
-            days.forEach(() => html += `<th class="sub-header">M</th><th class="sub-header">T</th><th class="sub-header">N</th><th class="sub-header">D</th>`);
+            
+            // 4. Sub-cabeçalho (Labels dos Turnos)
+            dayShiftStructure.forEach(day => {
+                day.labels.forEach(label => {
+                    let short = label.charAt(0);
+                    if (label.startsWith('EXTRA')) short = 'EX';
+                    if (label.startsWith('DESMON')) short = 'D';
+                    html += `<th class="sub-header border-l border-zinc-900/50" title="${label}">${short}</th>`;
+                });
+            });
             html += `</tr></thead><tbody>`;
 
+            // 5. Linhas de Staff
             staffSorted.forEach(([code, data]) => {
+                const staffName = data.name.toLowerCase().trim();
                 html += `<tr><td class="col-staff uppercase" title="${data.name}">${data.name}</td>`;
-                days.forEach(dateStr => {
-                    const dayEvents = appData.events.filter(e => e.date === dateStr);
-                    const columnMapping = [
-                        ['MANHÃ', 'M', 'EXTRA'], 
-                        ['TARDE', 'T'], 
-                        ['NOITE', 'N'], 
-                        ['DESMONTAGEM', 'D']
-                    ];
-
-                    columnMapping.forEach(mapGroup => {
+                
+                dayShiftStructure.forEach(day => {
+                    const dayEvents = appData.events.filter(e => e.date === day.dateStr);
+                    
+                    day.labels.forEach(label => {
                         let activeCode = "", activeColor = "", activeVenueName = "";
+                        
                         dayEvents.forEach(ev => {
-                            const shift = ev.shifts.find(s => mapGroup.some(m => s.label.toUpperCase().includes(m)));
-                            if(shift) {
+                            const matchingShift = ev.shifts.find(s => s.label.toUpperCase().trim() === label);
+
+                            if(matchingShift) {
                                 let isWorking = false;
-                                SHIFT_COLS.forEach(c => { if(shift[c].includes(data.name)) isWorking = true; });
-                                if(isWorking) { 
-                                    const info = getVenueInfo(ev.venue); 
-                                    activeCode = info.code; 
-                                    activeColor = info.color; 
+                                SHIFT_COLS.forEach(c => {
+                                    if(matchingShift[c] && matchingShift[c].toLowerCase().includes(staffName)) isWorking = true;
+                                });
+
+                                if(isWorking) {
+                                    const info = getVenueInfo(ev.venue);
+                                    activeCode = info.code;
+                                    activeColor = info.color;
                                     activeVenueName = info.name;
                                 }
                             }
                         });
-                        // Mostra apenas cor no software (CSS controla font-size: 0), mas texto existe para Impressão
-                        html += `<td class="shift-cell ${activeCode ? 'active' : ''}" 
+
+                        html += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/50" 
                                      style="background-color: ${activeCode ? activeColor : 'transparent'}" 
                                      title="${activeVenueName ? activeVenueName + ' (' + activeCode + ')' : ''}">${activeCode}</td>`;
                     });
@@ -422,9 +458,10 @@
         function changeWeek(v) { currentDate.setDate(currentDate.getDate() + (v*7)); renderWeeklyMap(); }
 
         function printWeeklyMap() {
-            const content = document.getElementById('counterView').innerHTML;
+            const content = document.getElementById('weeklyMap').innerHTML;
+            const legend = document.getElementById('venueLegend').innerHTML;
             const win = window.open('', '_blank');
-            win.document.write(`<html><head><style>@page{size:landscape;margin:5mm;} body{font-family:sans-serif;padding:10px;background:white;color:black;} table{width:100%;border-collapse:collapse;table-layout:fixed;} th,td{border:1px solid black !important;text-align:center;font-size:7px;height:18px;color:black !important;} .col-staff{text-align:left !important;font-weight:bold;width:90px;padding-left:4px;font-size:8px;} .shift-cell{font-size:7px !important; color: black !important;} .no-print,button{display:none !important;} #venueLegend{margin-top:10px;display:flex;flex-wrap:wrap;} .sub-header{background:#f0f0f0;font-size:6px;}</style></head><body>${content}</body></html>`);
+            win.document.write(`<html><head><style>@page{size:landscape;margin:5mm;} body{font-family:sans-serif;padding:10px;background:white;color:black;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid black !important;text-align:center;font-size:7px;height:18px;color:black !important;} .col-staff{text-align:left !important;font-weight:bold;width:90px;padding-left:4px;font-size:8px;} .shift-cell{font-size:7px !important; color: black !important;} .no-print,button{display:none !important;} #venueLegend{margin-top:10px;display:flex;flex-wrap:wrap;} .sub-header{background:#f0f0f0;font-size:6px;}</style></head><body>${content}<div id="venueLegend">${legend}</div></body></html>`);
             win.document.close(); setTimeout(() => { win.print(); win.close(); }, 500);
         }
 
@@ -484,7 +521,9 @@
         function pickStaff(n, sid, col) {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             const s = ev.shifts.find(x => x.id === sid);
-            s[col] = s[col] ? (s[col].trim().endsWith(',') || s[col].trim().endsWith('\n') ? s[col] + " " + n : s[col] + ", " + n) : n;
+            let current = s[col] || "";
+            if(current.includes(n)) return; 
+            s[col] = current ? (current.trim().endsWith(',') || current.trim().endsWith('\n') ? current + " " + n : current + ", " + n) : n;
             saveData(); renderShifts(ev);
         }
 
