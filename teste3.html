@@ -8,23 +8,20 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
         
-        :root {
-            --accent: #6366f1;
-            --bg-dark: #050505;
-        }
+        :root { --accent: #6366f1; --bg-dark: #050505; }
 
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-dark); 
             color: #efefef;
+            font-size: 12px; 
             -webkit-font-smoothing: antialiased;
-            font-size: 13px; /* Reduzido ligeiramente a base */
         }
 
+        /* Custom UI Elements */
         .tab-btn.active { 
             color: white; 
             border-left: 4px solid var(--accent); 
-            padding-left: 12px; 
             background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%); 
         }
         
@@ -32,19 +29,22 @@
             background-color: #0d0d0d; 
             border: 1px solid #1a1a1a; 
             color: #efefef; 
-            min-height: 38px; 
-            font-size: 12px;
-            line-height: 1.4;
-            width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            resize: none;
-            overflow: hidden;
+            min-height: 32px; 
+            font-size: 11px;
+            line-height: 1.3;
             transition: all 0.2s;
-            display: block; 
         }
         
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
+
+        .delete-btn { opacity: 0; transition: all 0.2s; }
+        .event-card:hover .delete-btn { opacity: 1; }
+
+        #quickStaffPicker {
+            position: fixed; z-index: 50; background: #18181b; border: 1px solid #27272a;
+            border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            max-height: 200px; overflow-y: auto; display: none; width: 180px;
+        }
 
         @media print {
             .no-print { display: none !important; }
@@ -53,101 +53,83 @@
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 10px; }
-
-        .delete-btn {
-            opacity: 0;
-            transition: all 0.2s;
-        }
-        .event-card:hover .delete-btn {
-            opacity: 1;
-        }
-        
-        /* Ajuste para ecrãs médios/pequenos */
-        .main-table {
-            min-width: 900px; /* Garante que a tabela não colapse totalmente, permitindo scroll horizontal se necessário */
-        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Sidebar mais estreita (w-56 em vez de w-64) -->
-    <aside class="w-56 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
-        <div class="p-5 border-b border-zinc-900">
-            <h1 class="text-xl font-black tracking-tighter italic uppercase">Backstage<span class="text-indigo-500">PRO</span></h1>
-            <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Operations Suite</p>
+    <!-- Picker Flutuante -->
+    <div id="quickStaffPicker" class="no-print"></div>
+
+    <!-- Sidebar -->
+    <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
+        <div class="p-4 border-b border-zinc-900">
+            <h1 class="text-lg font-black tracking-tighter italic uppercase leading-none">Backstage<span class="text-indigo-500">PRO</span></h1>
+            <p class="text-[9px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Ops Suite</p>
         </div>
 
         <nav class="flex flex-col gap-1 mt-4 px-2">
-            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-3 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
-                📅 Agenda e Fichas
-            </button>
-            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-3 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                👥 Equipa Técnica
-            </button>
-            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-3 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                📍 Espaços e Locais
-            </button>
-            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-3 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                📊 Contagem Turnos
-            </button>
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">📅 Agenda</button>
+            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">👥 Equipa</button>
+            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📍 Locais</button>
+            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📊 Turnos</button>
         </nav>
 
         <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
-            <div class="flex gap-2">
-                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Export</button>
-                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Import</button>
+            <div class="flex gap-1.5">
+                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Export</button>
+                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Import</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
             </div>
-            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition">
-                + Novo Espectáculo
-            </button>
+            <button onclick="printAllEvents()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-lg text-[9px] uppercase tracking-widest transition">🖨️ Imprimir Agenda</button>
+            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-lg text-[10px] uppercase tracking-widest transition shadow-lg shadow-indigo-900/20">+ Novo Evento</button>
+            <button onclick="resetSystem()" class="w-full border border-zinc-800 text-zinc-700 hover:text-red-500 hover:border-red-900 py-2 rounded-lg text-[8px] uppercase tracking-[0.2em] transition">Reset Geral</button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto bg-zinc-950 p-4 md:p-6">
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-zinc-950 p-4">
         
+        <!-- Vista de Eventos -->
         <div id="eventsView">
-            <div class="flex flex-col lg:flex-row gap-6">
-                <!-- Lista lateral de eventos mais compacta -->
-                <div class="w-full lg:w-60 no-print">
-                    <h2 class="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Agenda</h2>
-                    <div id="eventList" class="space-y-1.5"></div>
+            <div class="flex flex-col lg:flex-row gap-4 h-full">
+                <div class="w-full lg:w-48 no-print shrink-0">
+                    <h2 class="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-3 px-1">Próximos Dias</h2>
+                    <div id="eventList" class="space-y-1"></div>
                 </div>
 
                 <div id="editorContainer" class="flex-1 min-w-0">
-                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-700">
-                        <span class="text-2xl mb-3">📋</span>
-                        <p class="text-[10px] font-black uppercase tracking-widest">Seleccione um espectáculo</p>
+                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border border-dashed border-zinc-900 rounded-2xl text-zinc-800">
+                        <p class="text-[10px] font-black uppercase tracking-widest italic">Nenhum evento selecionado</p>
                     </div>
 
                     <div id="editorArea" class="hidden">
-                        <header class="flex justify-between items-end mb-6 border-b border-zinc-900 pb-5">
-                            <div class="flex-1 min-w-0">
-                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-3xl font-black text-white p-0 focus:ring-0 w-full truncate" placeholder="Nome do Espectáculo">
-                                <div class="flex flex-wrap gap-4 mt-1">
-                                    <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-[11px] font-bold uppercase focus:ring-0 p-0 [color-scheme:dark] text-indigo-400 w-32">
-                                    <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Local (Cód. + Espaço)" class="bg-transparent border-none text-[11px] font-bold uppercase focus:ring-0 p-0 text-zinc-400 flex-1 min-w-[150px]">
+                        <header class="flex justify-between items-start mb-4 border-b border-zinc-900 pb-4">
+                            <div class="flex-1 min-w-0 pr-4">
+                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-2xl font-black text-white p-0 focus:ring-0 w-full truncate" placeholder="Título">
+                                <div class="flex flex-wrap gap-3 mt-1">
+                                    <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-[10px] font-bold uppercase focus:ring-0 p-0 text-indigo-400 w-28 [color-scheme:dark]">
+                                    <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Cód + Local" class="bg-transparent border-none text-[10px] font-bold uppercase focus:ring-0 p-0 text-zinc-500 flex-1 min-w-[120px]">
                                 </div>
                             </div>
-                            <div class="flex gap-2 no-print ml-4 shrink-0">
-                                <button onclick="addShift()" class="bg-zinc-900 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase text-zinc-400 hover:bg-zinc-800 transition">+ Horário</button>
-                                <button onclick="printSingleEvent()" class="bg-white text-black px-3 py-1.5 rounded-lg text-[9px] font-black uppercase shadow-lg hover:bg-zinc-200 transition">Imprimir</button>
-                                <button onclick="printAllEvents()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition">Todas</button>
+                            <div class="flex gap-1.5 no-print shrink-0">
+                                <button onclick="duplicateActiveEvent()" class="bg-zinc-900 p-2 rounded text-zinc-400 hover:text-white transition">👯</button>
+                                <button onclick="addShift()" class="bg-zinc-900 px-3 py-2 rounded text-[9px] font-black uppercase text-zinc-400 hover:bg-zinc-800 transition">+ Fase</button>
+                                <button onclick="printSingleEvent()" class="bg-white text-black px-3 py-2 rounded text-[9px] font-black uppercase shadow-lg hover:bg-zinc-200 transition">Imprimir</button>
                             </div>
                         </header>
 
-                        <div class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-900/10">
-                            <table class="main-table w-full text-left table-fixed">
+                        <div class="rounded-xl border border-zinc-900 bg-zinc-900/10 overflow-hidden overflow-x-auto">
+                            <table class="w-full min-w-[800px] table-fixed">
                                 <thead>
-                                    <tr class="bg-zinc-900/50 text-[9px] font-black text-zinc-500 uppercase tracking-widest">
-                                        <th class="p-3 w-32">Fase / Hora</th>
-                                        <th class="p-3 border-l border-zinc-800">Técnicos</th>
-                                        <th class="p-3 border-l border-zinc-800">Produção</th>
-                                        <th class="p-3 border-l border-zinc-800">Bilheteira</th>
-                                        <th class="p-3 border-l border-zinc-800">Portas</th>
-                                        <th class="p-3 border-l border-zinc-800">Bar/Coz.</th>
-                                        <th class="p-3 border-l border-zinc-800">Segur.</th>
-                                        <th class="p-3 w-8 no-print"></th>
+                                    <tr class="bg-zinc-900 text-[8px] font-black text-zinc-500 uppercase tracking-widest">
+                                        <th class="p-2 w-24 text-center">Fase/Hora</th>
+                                        <th class="p-2 border-l border-zinc-800">Técnicos</th>
+                                        <th class="p-2 border-l border-zinc-800">Produção</th>
+                                        <th class="p-2 border-l border-zinc-800">Bilheteira</th>
+                                        <th class="p-2 border-l border-zinc-800">Portas</th>
+                                        <th class="p-2 border-l border-zinc-800">Bar/Coz.</th>
+                                        <th class="p-2 border-l border-zinc-800">Segur.</th>
+                                        <th class="p-2 w-8 no-print"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="shiftsBody" class="divide-y divide-zinc-900/50"></tbody>
@@ -158,66 +140,68 @@
             </div>
         </div>
 
-        <!-- Outras Views (Mantidas similares, mas com escala ajustada) -->
+        <!-- Outras Vistas -->
         <div id="staffView" class="hidden">
-            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Equipa</h2>
-            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
-                <div class="flex gap-3">
-                    <input type="text" id="newStaffCode" placeholder="Cód (Auto)" class="w-24 bg-black border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-indigo-500">
-                    <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome Completo" class="flex-1 bg-black border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-indigo-500">
-                    <button onclick="addStaffMember()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
-                </div>
+            <h2 class="text-lg font-black uppercase mb-4 italic">Equipa</h2>
+            <div class="flex gap-2 mb-6 max-w-xl">
+                <input type="text" id="newStaffCode" placeholder="Cód" class="w-16 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
+                <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome" class="flex-1 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
+                <button onclick="addStaffMember()" class="bg-indigo-600 px-4 py-2 rounded text-[9px] font-black uppercase">Adicionar</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3" id="staffGrid"></div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2" id="staffGrid"></div>
         </div>
 
         <div id="venuesView" class="hidden">
-            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Espaços</h2>
-            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
-                <div class="flex gap-3">
-                    <input type="text" id="newVenueCode" placeholder="Cód" class="w-24 bg-black border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-indigo-500">
-                    <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Nome do Local" class="flex-1 bg-black border border-zinc-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-indigo-500">
-                    <button onclick="addVenue()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
-                </div>
+            <h2 class="text-lg font-black uppercase mb-4 italic">Locais</h2>
+            <div class="flex gap-2 mb-6 max-w-xl">
+                <input type="text" id="newVenueCode" placeholder="Cód" class="w-16 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
+                <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Nome" class="flex-1 bg-zinc-900 border-none rounded p-2 text-xs focus:ring-1 focus:ring-indigo-500">
+                <button onclick="addVenue()" class="bg-indigo-600 px-4 py-2 rounded text-[9px] font-black uppercase">Adicionar</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="venueGrid"></div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" id="venueGrid"></div>
         </div>
 
         <div id="counterView" class="hidden">
-            <div class="flex justify-between items-center mb-6 border-b border-zinc-900 pb-4">
-                <div>
-                    <h2 class="text-2xl font-black uppercase italic">Resumo de Turnos</h2>
-                    <p class="text-xs text-zinc-500 font-bold uppercase tracking-widest">Contagem acumulada</p>
-                </div>
-                <button onclick="printTurnos()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl text-xs font-black uppercase transition shadow-lg">Imprimir Contagem</button>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black uppercase italic">Contagem de Turnos</h2>
+                <button onclick="printTurnos()" class="bg-indigo-600 px-4 py-2 rounded text-[9px] font-black uppercase">Imprimir Mapa</button>
             </div>
-            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+            <div id="monthlyCounterGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2"></div>
         </div>
 
     </main>
 
     <script>
+        // LÓGICA DE DADOS E ESTADO
         const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
+        const defaultStaff = { "rs": { name: "Rita Sousa" }, "mv": { name: "Madalena Victorino" }, "gs": { name: "Giacomo Scalisi" }, "ss": { name: "Sandra Sanches" }, "is": { name: "Inderjeet Singh" }, "g": { name: "Gurpreet Singh" }, "as": { name: "Alexandra Silva" }, "rf": { name: "Ricardo Falcão" }, "mm": { name: "Marisa Miranda" }, "jm": { name: "Joaquim Madaíl" }, "aj": { name: "Ajudante João" }, "am": { name: "Ajudante Manuel" } };
+        const defaultVenues = { "TP": "Teatro de Palha", "EN": "Escola Nova", "NB": "Novo Bowing", "NANC": "Novo Ano Novo Circo" };
 
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_v2')) || {
-            events: [],
-            staff: { "101": { name: "EXEMPLO TÉCNICO" } },
-            venues: { "TNM": "Teatro Nacional" },
-            activeEventId: null
-        };
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v3')) || null;
+        if (!appData) initializeDefaults();
 
-        function saveData() {
-            localStorage.setItem('backstage_pro_v2', JSON.stringify(appData));
+        function initializeDefaults() {
+            appData = { events: [], staff: {...defaultStaff}, venues: {...defaultVenues}, activeEventId: null };
+            saveData();
         }
 
+        function saveData() { localStorage.setItem('backstage_pro_v3', JSON.stringify(appData)); }
+
+        function resetSystem() {
+            if (prompt("Escreva RESET para apagar tudo:") === "RESET") {
+                initializeDefaults();
+                location.reload();
+            }
+        }
+
+        // NAVEGAÇÃO E RENDERIZAÇÃO
         function switchTab(tab) {
             ['events', 'staff', 'venues', 'counter'].forEach(t => {
-                document.getElementById(t + 'View').classList.add('hidden');
-                document.getElementById('btn-tab-' + t).classList.remove('active');
+                document.getElementById(t + 'View')?.classList.add('hidden');
+                document.getElementById('btn-tab-' + t)?.classList.remove('active');
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
-
             if(tab === 'staff') renderStaff();
             if(tab === 'venues') renderVenues();
             if(tab === 'counter') updateMonthlyCount();
@@ -226,116 +210,106 @@
 
         function renderEventList() {
             const list = document.getElementById('eventList');
-            const sorted = [...appData.events].sort((a, b) => {
-                if (!a.date) return 1;
-                if (!b.date) return -1;
-                return a.date.localeCompare(b.date);
-            });
-            
+            const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
             list.innerHTML = sorted.map(ev => `
-                <div class="event-card relative group">
-                    <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-3 rounded-lg border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/40 border-zinc-900'} hover:border-zinc-700 transition">
-                        <div class="text-[9px] font-black text-indigo-400 uppercase">${ev.date ? ev.date.split('-').reverse().join('/') : 'Sem data'}</div>
-                        <div class="text-xs font-bold text-white truncate pr-5">${ev.name}</div>
+                <div class="event-card relative">
+                    <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-2 rounded border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/30 border-zinc-900'} hover:border-zinc-700 transition">
+                        <div class="text-[7px] font-black text-indigo-400 uppercase">${ev.date ? ev.date.split('-').reverse().join('/') : 'S/ DATA'}</div>
+                        <div class="text-[10px] font-bold text-white truncate pr-4">${ev.name}</div>
                     </button>
-                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-3 right-2 text-zinc-700 hover:text-red-500 text-lg leading-none no-print">×</button>
+                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-1 right-1 text-zinc-800 hover:text-red-500 text-xs">×</button>
                 </div>
             `).join('');
-        }
-
-        function deleteEvent(id) {
-            const ev = appData.events.find(e => e.id === id);
-            if (confirm(`Deseja apagar "${ev.name}"?`)) {
-                appData.events = appData.events.filter(e => e.id !== id);
-                if (appData.activeEventId === id) {
-                    appData.activeEventId = null;
-                    document.getElementById('editorArea').classList.add('hidden');
-                    document.getElementById('emptyState').classList.remove('hidden');
-                }
-                saveData();
-                renderEventList();
-            }
         }
 
         function selectEvent(id) {
             appData.activeEventId = id;
             const ev = appData.events.find(e => e.id === id);
-            if (!ev) return;
-
+            if (!ev) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('editorArea').classList.add('hidden');
+                return;
+            }
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('editorArea').classList.remove('hidden');
             document.getElementById('curEventName').value = ev.name;
             document.getElementById('curEventDate').value = ev.date;
             document.getElementById('curEventVenue').value = ev.venue;
-            
             renderShifts(ev);
             renderEventList();
-        }
-
-        function sortShifts(ev) {
-            if (!ev || !ev.shifts) return;
-            ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
         }
 
         function renderShifts(ev) {
             const tbody = document.getElementById('shiftsBody');
             tbody.innerHTML = ev.shifts.map(s => `
-                <tr class="group hover:bg-zinc-900/30">
-                    <td class="p-2 align-top">
-                        <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" 
-                                  class="bg-transparent border-none text-[10px] font-black text-indigo-400 uppercase w-full p-0 focus:ring-0 mb-0.5" 
-                                  placeholder="FASE">${s.label || ''}</textarea>
-                        <input type="text" value="${s.time}" 
-                               onchange="updateShiftField('${s.id}', 'time', this.value); sortAndReRender()" 
-                               class="bg-transparent border-none text-xs font-black text-white w-full p-0 focus:ring-0" 
-                               placeholder="00:00">
+                <tr class="group hover:bg-zinc-900/20">
+                    <td class="p-1 align-top text-center">
+                        <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" class="bg-transparent border-none text-[8px] font-black text-indigo-500/80 uppercase text-center w-full p-0 focus:ring-0">${s.label || ''}</textarea>
+                        <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value); sortAndReRender()" class="bg-transparent border-none text-[11px] font-black text-white text-center w-full p-0 focus:ring-0">
                     </td>
                     ${APP_COLUMNS.map(col => `
-                        <td class="p-1.5 border-l border-zinc-900/50 align-top">
-                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" placeholder="..." class="text-[11px]"> ${s[col] || ''}</textarea>
+                        <td class="p-1 border-l border-zinc-900 align-top">
+                            <textarea 
+                                onclick="showQuickStaff(this, '${s.id}', '${col}')"
+                                onkeyup="processShortcodes(this, '${s.id}', '${col}')" 
+                                oninput="adjustHeight(this)" class="w-full p-1.5 rounded">${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
-                    <td class="p-2 no-print align-top text-right">
-                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition text-xl">×</button>
+                    <td class="p-1 no-print align-top text-center">
+                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 text-lg">×</button>
                     </td>
                 </tr>
             `).join('');
-            
-            setTimeout(() => { tbody.querySelectorAll('textarea').forEach(adjustHeight); }, 50);
+            tbody.querySelectorAll('textarea').forEach(adjustHeight);
         }
+
+        function adjustHeight(el) { el.style.height = '32px'; if (el.scrollHeight > 32) el.style.height = el.scrollHeight + 'px'; }
 
         function sortAndReRender() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if (ev) {
-                sortShifts(ev);
-                saveData();
-                renderShifts(ev);
-            }
-        }
-
-        function adjustHeight(el) {
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight) + 'px';
+            if (ev) { ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00")); saveData(); renderShifts(ev); }
         }
 
         function updateActiveEvent(field, val) {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                ev[field] = val;
-                saveData();
-                if(field === 'name' || field === 'date') renderEventList();
-            }
+            if(ev) { ev[field] = val; saveData(); if(field === 'name' || field === 'date') renderEventList(); }
         }
 
         function updateShiftField(shiftId, field, val) {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                const shift = ev.shifts.find(s => s.id === shiftId);
-                if(shift) {
-                    shift[field] = val;
-                    saveData();
-                }
-            }
+            const shift = ev?.shifts.find(s => s.id === shiftId);
+            if(shift) { shift[field] = val; saveData(); }
+        }
+
+        // STAFF PICKER E SHORTCODES
+        let currentTextarea = null;
+        let currentEditingShift = null;
+        let currentEditingField = null;
+
+        function showQuickStaff(textarea, shiftId, field) {
+            currentEditingShift = shiftId; currentEditingField = field; currentTextarea = textarea;
+            const picker = document.getElementById('quickStaffPicker');
+            const staffList = Object.values(appData.staff);
+            if (staffList.length === 0) return;
+
+            picker.innerHTML = staffList.map(s => `<div class="staff-item p-2 text-[10px] cursor-pointer hover:bg-indigo-600 hover:text-white" onclick="selectStaffQuickly('${s.name}')">${s.name}</div>`).join('');
+            const rect = textarea.getBoundingClientRect();
+            picker.style.top = (rect.bottom + window.scrollY) + 'px';
+            picker.style.left = (rect.left + window.scrollX) + 'px';
+            picker.style.width = rect.width + 'px';
+            picker.style.display = 'block';
+
+            const closePicker = (e) => { if (!picker.contains(e.target) && e.target !== textarea) { picker.style.display = 'none'; document.removeEventListener('mousedown', closePicker); } };
+            document.addEventListener('mousedown', closePicker);
+        }
+
+        function selectStaffQuickly(name) {
+            let val = currentTextarea.value.trim();
+            val += (val.length > 0 && !val.endsWith(',') ? ', ' : (val.length > 0 ? ' ' : '')) + name;
+            currentTextarea.value = val;
+            updateShiftField(currentEditingShift, currentEditingField, val);
+            adjustHeight(currentTextarea);
+            document.getElementById('quickStaffPicker').style.display = 'none';
         }
 
         function processShortcodes(textarea, shiftId, field) {
@@ -343,18 +317,11 @@
             const regex = /(\b\w+\b)([ ,;\n\r])/g;
             let changed = false;
             const newVal = val.replace(regex, (match, code, delimiter) => {
-                if (appData.staff[code]) {
-                    changed = true;
-                    return appData.staff[code].name + delimiter;
-                }
+                if (appData.staff[code.toLowerCase()]) { changed = true; return appData.staff[code.toLowerCase()].name + delimiter; }
                 return match;
             });
-            if (changed) {
-                textarea.value = newVal;
-                updateShiftField(shiftId, field, newVal);
-            } else {
-                updateShiftField(shiftId, field, val);
-            }
+            if (changed) { textarea.value = newVal; updateShiftField(shiftId, field, newVal); }
+            else { updateShiftField(shiftId, field, val); }
             adjustHeight(textarea);
         }
 
@@ -370,278 +337,134 @@
             updateActiveEvent('venue', val);
         }
 
-        // FUNÇÃO DE IMPRESSÃO MELHORADA PARA P&B
-        function buildEventHTML(ev) {
-            const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar/Coz.','Segur.'];
-            const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
-            sortShifts(ev);
-
-            const rows = ev.shifts.map(s => `
-                <tr>
-                    <td style="padding:10px 8px; border:1px solid #000; font-size:10px; vertical-align:top; background:#f2f2f2; line-height:1.3;">
-                        <div style="color:#000; font-weight:900; text-transform:uppercase; margin-bottom:2px;">${(s.label||'').toUpperCase()}</div>
-                        <div style="color:#000; font-weight:900; border-top:1px solid #000; padding-top:2px; font-size:14px;">${s.time||''}</div>
-                    </td>
-                    ${keys.map(k => `<td style="padding:10px 8px; border:1px solid #000; font-size:11px; vertical-align:top; white-space:pre-wrap; word-break:break-word; line-height:1.4; color:#000;">${(s[k]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>`).join('')}
-                </tr>`).join('');
-
-            return `
-                <div class="ev-block" style="margin-bottom: 40px; page-break-after: always;">
-                    <div style="border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
-                        <div>
-                            <h2 style="font-size:28px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-0.5px">${ev.name}</h2>
-                            <p style="font-size:13px; color:#000; margin:4px 0 0; font-weight:800; text-transform:uppercase; letter-spacing:0.5px">${ev.date}${ev.venue ? ' &bull; ' + ev.venue : ''}</p>
-                        </div>
-                        <div style="text-align:right; font-size:9px; font-weight:900; color:#555; text-transform:uppercase;">Backstage PRO Ops</div>
-                    </div>
-                    <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:2px solid #000;">
-                        <thead>
-                            <tr style="background:#000; font-size:10px; font-weight:900; text-transform:uppercase; color:#fff">
-                                <th style="padding:12px 8px; border:1px solid #000; width:110px; text-align:left">Fase / Hora</th>
-                                ${cols.map(c=>`<th style="padding:12px 8px; border:1px solid #000; text-align:left">${c}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                </div>`;
-        }
-
-        function printTurnos() {
-            const counts = {};
-            const displayName = {};
-            appData.events.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    const uniqueInShift = new Set();
-                    APP_COLUMNS.forEach(col => {
-                        if (s[col]) {
-                            s[col].split(/[,\n;]/).forEach(n => {
-                                const clean = n.trim();
-                                if(clean.length > 2) {
-                                    uniqueInShift.add(clean.toLowerCase());
-                                    displayName[clean.toLowerCase()] = clean;
-                                }
-                            });
-                        }
-                    });
-                    uniqueInShift.forEach(nameLower => counts[nameLower] = (counts[nameLower] || 0) + 1);
-                });
-            });
-
-            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-            let html = `
-                <div style="padding: 10px;">
-                    <div style="border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 25px;">
-                        <h1 style="font-size:24px; font-weight:900; margin:0; text-transform:uppercase;">Resumo Geral de Turnos</h1>
-                        <p style="font-size:11px; color:#000; text-transform:uppercase; font-weight:800; margin-top:4px;">Total Colaboradores: ${sorted.length} &bull; Gerado em: ${new Date().toLocaleDateString()}</p>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                        ${sorted.map(([nameLower, count]) => `
-                            <div style="border-bottom: 1px solid #ccc; padding: 6px 0; display: flex; justify-content: space-between; align-items: center; break-inside: avoid;">
-                                <span style="font-weight:700; font-size:12px; text-transform: uppercase;">${displayName[nameLower]}</span>
-                                <span style="background:#eee; padding:3px 8px; border-radius:3px; font-weight:900; font-size:13px; border:1px solid #000;">${count}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            executePrint(html, 'Contagem Turnos');
-        }
-
-        function executePrint(contentHtml, title = 'Backstage PRO') {
-            const win = window.open('', '_blank');
-            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap');
-                    @page { size: portrait; margin: 1cm; }
-                    body { font-family: 'Inter', sans-serif; color: #000; background: #fff; line-height: 1.4; }
-                    .ev-block { page-break-inside: avoid; }
-                    table { width: 100%; border-collapse: collapse; }
-                </style>
-            </head><body>${contentHtml}</body></html>`);
-            win.document.close();
-            win.focus();
-            setTimeout(() => { win.print(); }, 500);
-        }
-
-        function printSingleEvent() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) executePrint(buildEventHTML(ev), `Ficha - ${ev.name}`);
-        }
-
-        function printAllEvents() {
-            const sorted = [...appData.events].sort((a,b) => (a.date||"").localeCompare(b.date||""));
-            executePrint(sorted.map(ev => buildEventHTML(ev)).join(''), 'Todas as Fichas');
-        }
-
+        // OPERAÇÕES DE EVENTOS
         function createNewEvent() {
-            switchTab('events');
             const id = 'ev_' + Date.now();
-            const newEv = {
-                id,
-                name: "Novo Espectáculo",
-                date: new Date().toISOString().split('T')[0],
-                venue: "",
-                shifts: [
-                    { id: 's1', label: 'MONTAGEM', time: '10:00', tecnicos:'', producao:'', bilheteira:'', portas:'', bar:'', seguranca:'' },
-                    { id: 's2', label: 'ESPETÁCULO', time: '21:30', tecnicos:'', producao:'', bilheteira:'', portas:'', bar:'', seguranca:'' }
-                ]
-            };
+            const newEv = { id, name: "Novo Espectáculo", date: new Date().toISOString().split('T')[0], venue: "", shifts: [{ id: 's1', label: 'MONTAGEM', time: '14:00' }, { id: 's2', label: 'EVENTO', time: '21:30' }] };
+            APP_COLUMNS.forEach(c => newEv.shifts.forEach(s => s[c] = ''));
             appData.events.unshift(newEv);
-            appData.activeEventId = id;
-            saveData();
-            renderEventList();
-            selectEvent(id);
+            saveData(); switchTab('events'); selectEvent(id);
+        }
+
+        function duplicateActiveEvent() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(!ev) return;
+            const newEv = JSON.parse(JSON.stringify(ev));
+            newEv.id = 'ev_' + Date.now(); newEv.name += " (CÓPIA)";
+            appData.events.unshift(newEv); saveData(); renderEventList(); selectEvent(newEv.id);
+        }
+
+        function deleteEvent(id) {
+            if(confirm("Apagar evento?")) {
+                appData.events = appData.events.filter(e => e.id !== id);
+                if(appData.activeEventId === id) appData.activeEventId = null;
+                saveData(); renderEventList();
+                if(!appData.activeEventId) { document.getElementById('emptyState').classList.remove('hidden'); document.getElementById('editorArea').classList.add('hidden'); }
+            }
         }
 
         function addShift() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                const newShift = { id: 's'+Date.now(), label:'FASE', time:'12:00' };
-                APP_COLUMNS.forEach(c => newShift[c] = '');
-                ev.shifts.push(newShift);
-                sortShifts(ev);
-                saveData();
-                renderShifts(ev);
-            }
+            if(ev) { const s = { id: 's'+Date.now(), label:'FASE', time:'12:00' }; APP_COLUMNS.forEach(c => s[c] = ''); ev.shifts.push(s); sortAndReRender(); }
         }
 
         function removeShift(id) {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev && confirm("Remover esta fase?")) {
-                ev.shifts = ev.shifts.filter(s => s.id !== id);
-                renderShifts(ev);
-                saveData();
-            }
+            if(ev && confirm("Remover fase?")) { ev.shifts = ev.shifts.filter(s => s.id !== id); saveData(); renderShifts(ev); }
         }
 
+        // STAFF & VENUES MANAGEMENT
         function addStaffMember() {
-            let code = document.getElementById('newStaffCode').value.trim();
+            let code = document.getElementById('newStaffCode').value.trim().toLowerCase() || (Object.keys(appData.staff).length + 101).toString();
             const name = document.getElementById('newStaffName').value.trim();
-            if(!name) return;
-            if(!code) {
-                const existing = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
-                code = existing.length > 0 ? (Math.max(...existing) + 1).toString() : "101";
-            }
-            appData.staff[code] = { name };
-            saveData();
-            renderStaff();
-            document.getElementById('newStaffCode').value = '';
-            document.getElementById('newStaffName').value = '';
-            document.getElementById('newStaffName').focus();
+            if(!name) return; appData.staff[code] = { name }; saveData(); renderStaff();
+            document.getElementById('newStaffName').value = ''; document.getElementById('newStaffName').focus();
         }
 
         function renderStaff() {
-            const grid = document.getElementById('staffGrid');
-            grid.innerHTML = Object.entries(appData.staff).map(([code, data]) => `
-                <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-800 flex justify-between items-center group">
-                    <div>
-                        <div class="text-[8px] font-black text-indigo-500 uppercase">${code}</div>
-                        <div class="text-[11px] font-bold text-white">${data.name}</div>
-                    </div>
+            document.getElementById('staffGrid').innerHTML = Object.entries(appData.staff).map(([code, data]) => `
+                <div class="bg-zinc-900 p-2 rounded flex justify-between items-center group">
+                    <div class="truncate pr-2"><span class="text-[8px] text-indigo-500 font-black mr-2">${code.toUpperCase()}</span><span class="text-[10px] font-bold">${data.name}</span></div>
                     <button onclick="deleteStaff('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        function deleteStaff(code) {
-            if(confirm("Eliminar técnico?")) {
-                delete appData.staff[code];
-                saveData();
-                renderStaff();
-            }
-        }
+        function deleteStaff(code) { if(confirm("Eliminar?")) { delete appData.staff[code]; saveData(); renderStaff(); } }
 
         function addVenue() {
-            let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
+            let code = document.getElementById('newVenueCode').value.trim().toUpperCase() || "LOC";
             const name = document.getElementById('newVenueName').value.trim();
-            if(!name) return;
-            if(!code) code = name.substring(0, 3).toUpperCase() + (Object.keys(appData.venues).length + 1);
-            appData.venues[code] = name;
-            saveData();
-            renderVenues();
-            document.getElementById('newVenueCode').value = '';
+            if(!name) return; appData.venues[code] = name; saveData(); renderVenues();
             document.getElementById('newVenueName').value = '';
-            document.getElementById('newVenueName').focus();
         }
 
         function renderVenues() {
-            const grid = document.getElementById('venueGrid');
-            grid.innerHTML = Object.entries(appData.venues).map(([code, name]) => `
-                <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-800 flex justify-between items-center group">
-                    <div>
-                        <div class="text-[8px] font-black text-indigo-400 uppercase">${code}</div>
-                        <div class="text-[11px] font-bold text-white">${name}</div>
-                    </div>
+            document.getElementById('venueGrid').innerHTML = Object.entries(appData.venues).map(([code, name]) => `
+                <div class="bg-zinc-900 p-2 rounded flex justify-between items-center group">
+                    <div class="truncate pr-2"><span class="text-[8px] text-indigo-400 font-black mr-2">${code}</span><span class="text-[10px] font-bold">${name}</span></div>
                     <button onclick="deleteVenue('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        function deleteVenue(code) {
-            if(confirm("Eliminar local?")) {
-                delete appData.venues[code];
-                saveData();
-                renderVenues();
-            }
-        }
+        function deleteVenue(code) { if(confirm("Eliminar?")) { delete appData.venues[code]; saveData(); renderVenues(); } }
 
+        // TURNOS & ESTATÍSTICAS
         function updateMonthlyCount() {
-            const counts = {};
-            const displayName = {};
-            appData.events.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    const uniqueInShift = new Set();
-                    APP_COLUMNS.forEach(col => {
-                        if (s[col]) {
-                            s[col].split(/[,\n;]/).forEach(n => {
-                                const clean = n.trim();
-                                if(clean.length > 2) {
-                                    uniqueInShift.add(clean.toLowerCase());
-                                    displayName[clean.toLowerCase()] = clean;
-                                }
-                            });
-                        }
-                    });
-                    uniqueInShift.forEach(nameLower => counts[nameLower] = (counts[nameLower] || 0) + 1);
-                });
-            });
-            const grid = document.getElementById('monthlyCounterGrid');
+            const counts = {}; const displayName = {};
+            appData.events.forEach(ev => ev.shifts.forEach(s => {
+                const uniqueInShift = new Set();
+                APP_COLUMNS.forEach(col => { if (s[col]) s[col].split(/[,\n;]/).forEach(n => {
+                    const clean = n.trim(); if(clean.length > 2) { uniqueInShift.add(clean.toLowerCase()); displayName[clean.toLowerCase()] = clean; }
+                }); });
+                uniqueInShift.forEach(n => counts[n] = (counts[n] || 0) + 1);
+            }));
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-            if(sorted.length === 0) {
-                grid.innerHTML = '<div class="col-span-full py-12 text-center text-zinc-700 font-bold uppercase text-[10px] tracking-widest border border-dashed border-zinc-900 rounded-3xl">Sem registos</div>';
-                return;
-            }
-            grid.innerHTML = sorted.map(([nameLower, count]) => `
-                <div class="bg-zinc-900/50 p-3 rounded-lg border border-zinc-900 flex justify-between items-center">
-                    <span class="text-[11px] font-bold text-white">${displayName[nameLower]}</span>
-                    <span class="bg-indigo-600/20 text-indigo-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-indigo-500/10">${count}</span>
+            document.getElementById('monthlyCounterGrid').innerHTML = sorted.map(([n, c]) => `
+                <div class="bg-zinc-900/50 p-2 rounded flex justify-between items-center">
+                    <span class="text-[10px] font-bold truncate pr-2">${displayName[n]}</span>
+                    <span class="text-indigo-400 text-[9px] font-black">${c}</span>
+                </div>`).join('');
+        }
+
+        // IMPRESSÃO E EXPORTAÇÃO
+        function buildEventHTML(ev) {
+            const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar / Cozinha','Segurança'];
+            const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
+            ev.shifts.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
+            const rows = ev.shifts.map(s => `<tr><td style="padding:6px; border:1px solid #000; font-size:9px; background:#f5f5f5;"><div style="font-weight:900; text-transform:uppercase;">${s.label||''}</div><div style="font-weight:900; font-size:11px;">${s.time||''}</div></td>${keys.map(k => `<td style="padding:6px; border:1px solid #000; font-size:10px; white-space:pre-wrap;">${s[k]||''}</td>`).join('')}</tr>`).join('');
+            return `<div style="page-break-after:always; margin-bottom:30px; font-family: sans-serif;">
+                <div style="border-bottom:4px solid #000; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-end;">
+                    <div><h1 style="font-size:24px; font-weight:900; margin:0; text-transform:uppercase;">${ev.name}</h1><p style="font-size:12px; margin:4px 0; font-weight:700;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue||'S/ LOCAL'}</p></div>
+                    <div style="font-size:9px; font-weight:900; text-transform:uppercase;">Ficha de Produção</div>
                 </div>
-            `).join('');
+                <table style="width:100%; border-collapse:collapse; border:2px solid #000;">
+                    <thead><tr style="background:#000; color:#fff;">
+                        <th style="width:100px; padding:10px; font-size:10px; text-transform:uppercase; text-align:left;">Horário</th>
+                        ${cols.map(c=>`<th style="padding:10px; font-size:10px; text-transform:uppercase; text-align:left;">${c}</th>`).join('')}
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table></div>`;
         }
 
-        function exportData() {
-            const blob = new Blob([JSON.stringify(appData, null, 2)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `backstage_pro_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
+        function executePrint(html, isLandscape = true) {
+            const win = window.open('', '_blank');
+            win.document.write(`<html><head><title>Print</title><style>@page { size: ${isLandscape ? 'landscape' : 'portrait'}; margin: 1cm; } body { margin: 0; }</style></head><body>${html}</body></html>`);
+            win.document.close(); setTimeout(() => win.print(), 500);
         }
 
-        function importData(event) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                appData = JSON.parse(e.target.result);
-                saveData();
-                location.reload();
-            };
-            reader.readAsText(event.target.files[0]);
+        function printSingleEvent() { const ev = appData.events.find(e => e.id === appData.activeEventId); if(ev) executePrint(buildEventHTML(ev), true); }
+        function printAllEvents() { if(appData.events.length) executePrint(appData.events.sort((a,b)=>a.date.localeCompare(b.date)).map(ev => buildEventHTML(ev)).join(''), true); }
+        function printTurnos() {
+            // Reutiliza a lógica de contagem para o HTML de impressão
+            updateMonthlyCount(); // Garante que temos dados
+            const gridHtml = document.getElementById('monthlyCounterGrid').innerHTML;
+            executePrint(`<div style="font-family:sans-serif;"><h1>Mapa de Turnos</h1><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">${gridHtml}</div></div>`, false);
         }
 
-        window.onload = () => {
-            renderEventList();
-            if(appData.activeEventId) selectEvent(appData.activeEventId);
-        };
+        function exportData() { const b = new Blob([JSON.stringify(appData)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_pro.json'; a.click(); }
+        function importData(e) { const r = new FileReader(); r.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); }; r.readAsText(e.target.files[0]); }
+
+        window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
     </script>
 </body>
 </html>
