@@ -3,659 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backstage PRO - Produção de Eventos</title>
+    <title>Backstage PRO - Gestão de Produção</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
         
-        :root {
-            --accent: #6366f1;
-            --bg-dark: #050505;
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-dark); 
-            color: #efefef;
-            -webkit-font-smoothing: antialiased;
-            font-size: 14px; 
-        }
+        :root { --accent: #6366f1; --bg-dark: #050505; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: #efefef; font-size: 12px; }
 
         .tab-btn.active { 
-            color: white; 
-            border-left: 4px solid var(--accent); 
-            padding-left: 12px; 
+            color: white; border-left: 4px solid var(--accent); padding-left: 12px; 
             background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%); 
         }
         
         textarea { 
-            background-color: #0d0d0d; 
-            border: 1px solid #1a1a1a; 
-            color: #efefef; 
-            min-height: 40px; 
-            font-size: 13px;
-            line-height: 1.5;
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            resize: none;
-            overflow: hidden;
-            transition: all 0.2s;
-            display: block; 
+            background-color: #0d0d0d; border: 1px solid #1a1a1a; color: #efefef; 
+            min-height: 32px; font-size: 11px; padding: 6px; border-radius: 4px; resize: none; overflow: hidden;
         }
         
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
-        @media print {
-            .no-print { display: none !important; }
+        /* Mapa de Turnos */
+        .map-container { overflow-x: auto; border: 1px solid #1a1a1a; border-radius: 12px; background: #0a0a0a; margin-bottom: 20px; }
+        .map-table { border-collapse: collapse; font-size: 8px; width: 100%; table-layout: fixed; min-width: 1300px; }
+        .map-table th, .map-table td { border: 1px solid #1a1a1a; text-align: center; height: 28px; vertical-align: middle; }
+        
+        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 130px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 8px !important; font-size: 9px; }
+        
+        .shift-cell { width: 24px; transition: all 0.2s; position: relative; font-size: 7px; font-weight: 900; }
+        .shift-cell.active { color: white; }
+
+        .day-header { border-bottom: 2px solid #1a1a1a !important; font-size: 9px; }
+        .sub-header { font-size: 7px; color: #555; background: #080808; height: 18px !important; }
+
+        /* Calendário Mensal */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #1a1a1a; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .calendar-day { background: #0a0a0a; min-height: 100px; padding: 6px; border: 1px solid #111; }
+        .calendar-day.other-month { opacity: 0.3; background: #050505; }
+        .calendar-day-header { font-weight: 900; font-size: 10px; text-zinc-500 mb-2 flex justify-between; }
+        .calendar-event { font-size: 8px; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: white; text-transform: uppercase; }
+
+        @media print { 
+            .no-print { display: none !important; } 
             body { background: white !important; color: black !important; }
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
-
-        .delete-btn {
-            opacity: 0;
-            transition: all 0.2s;
-        }
-        .event-card:hover .delete-btn {
-            opacity: 1;
+            .print-page { padding: 5px; color: black; width: 100%; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid black !important; padding: 1px; text-align: center; vertical-align: middle; font-size: 7px; color: black !important; }
+            .map-table { min-width: 100%; table-layout: fixed; }
+            .col-staff { position: static; background: transparent; width: 70px; border-right: 1px solid black !important; font-size: 7px; }
+            .shift-cell.active { -webkit-print-color-adjust: exact; print-color-adjust: exact; color: black !important; background: transparent !important; }
+            .legend-item { color: black !important; font-size: 7px; }
+            .bg-zinc-900\/50 { background: transparent !important; }
         }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <aside class="w-64 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
-        <div class="p-6 border-b border-zinc-900">
-            <h1 class="text-2xl font-black tracking-tighter italic uppercase">Backstage<span class="text-indigo-500">PRO</span></h1>
-            <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Full Operations Suite</p>
+    <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
+        <div class="p-4 border-b border-zinc-900">
+            <h1 class="text-lg font-black tracking-tighter italic uppercase leading-none">Backstage<span class="text-indigo-500">PRO</span></h1>
+            <p class="text-[9px] text-zinc-600 font-bold uppercase tracking-widest mt-1">Ops Suite</p>
         </div>
 
         <nav class="flex flex-col gap-1 mt-4 px-2">
-            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-4 px-4 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition">
-                📅 Agenda e Fichas
-            </button>
-            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                👥 Equipa Técnica
-            </button>
-            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                📍 Espaços e Locais
-            </button>
-            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-3 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">
-                📊 Contagem Turnos
-            </button>
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📅 Agenda</button>
+            <button onclick="switchTab('monthly')" id="btn-tab-monthly" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">🗓️ Vista Mensal</button>
+            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📊 Mapa Turnos</button>
+            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">👥 Equipa</button>
+            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📍 Locais</button>
         </nav>
 
         <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
-            <div class="flex gap-2">
-                <button onclick="exportData()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Exportar</button>
-                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 py-2 rounded-lg text-[9px] font-bold uppercase">Importar</button>
-                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-lg text-[10px] uppercase tracking-widest transition">+ Novo Evento</button>
+            <button onclick="printAllEvents()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2 rounded-lg text-[9px] uppercase tracking-widest transition">🖨️ Imprimir Agenda</button>
+            <div class="flex gap-1">
+                <button onclick="exportData()" class="flex-1 bg-zinc-900 text-zinc-500 py-1.5 rounded text-[8px] font-bold uppercase">Exp</button>
+                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 text-zinc-500 py-1.5 rounded text-[8px] font-bold uppercase">Imp</button>
+                <input type="file" id="importFile" class="hidden" onchange="importData(event)">
             </div>
-            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition">
-                + Novo Espectáculo
-            </button>
+            <button onclick="resetSystem()" class="w-full text-zinc-800 hover:text-red-900 text-[8px] font-black uppercase transition italic">Reset Sistema</button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto bg-zinc-950 p-6 md:p-8">
+    <main class="flex-1 overflow-y-auto bg-zinc-950 p-6">
         
+        <!-- Vista Agenda -->
         <div id="eventsView">
-            <div class="flex flex-col lg:flex-row gap-8">
-                <div class="w-full lg:w-72 no-print">
-                    <h2 class="text-xs font-black text-zinc-500 uppercase tracking-widest mb-4">Próximos Espectáculos</h2>
-                    <div id="eventList" class="space-y-2"></div>
+            <div class="flex gap-6">
+                <div class="w-48 shrink-0 no-print">
+                    <h2 class="text-[9px] font-black text-zinc-600 uppercase mb-3 px-1">Eventos</h2>
+                    <div id="eventList" class="space-y-1"></div>
                 </div>
-
-                <div id="editorContainer" class="flex-1">
-                    <div id="emptyState" class="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-900 rounded-3xl text-zinc-700">
-                        <span class="text-3xl mb-3">📋</span>
-                        <p class="text-[10px] font-black uppercase tracking-widest">Seleccione um espectáculo</p>
-                    </div>
-
-                    <div id="editorArea" class="hidden">
-                        <header class="flex justify-between items-end mb-8 border-b border-zinc-900 pb-6">
-                            <div class="flex-1">
-                                <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-4xl font-black text-white p-0 focus:ring-0 w-full" placeholder="Nome do Espectáculo">
-                                <div class="flex gap-4 mt-2">
-                                    <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-sm font-bold uppercase focus:ring-0 p-0 [color-scheme:dark] text-indigo-400">
-                                    <input type="text" id="curEventVenue" oninput="processVenueCode(this)" placeholder="Local (Cód. + Espaço)" class="bg-transparent border-none text-sm font-bold uppercase focus:ring-0 p-0 text-zinc-400">
-                                </div>
+                <div id="editorArea" class="flex-1 hidden">
+                    <div class="flex justify-between items-end mb-6 border-b border-zinc-900 pb-4">
+                        <div class="flex-1">
+                            <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-2xl font-black text-white w-full p-0 focus:ring-0 uppercase" placeholder="NOME DO EVENTO">
+                            <div class="flex gap-4 mt-2">
+                                <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-xs text-indigo-400 font-bold [color-scheme:dark]">
+                                <input type="text" id="curEventVenue" oninput="processVenueCode(this)" class="bg-transparent border-none text-xs text-zinc-500 flex-1 p-0 focus:ring-0 uppercase tracking-tighter" placeholder="CÓDIGO DO LOCAL">
                             </div>
-                            <div class="flex gap-2 no-print">
-                                <button onclick="addShift()" class="bg-zinc-900 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-zinc-400 hover:bg-zinc-800 transition">+ Horário</button>
-                                <button onclick="printSingleEvent()" class="bg-white text-black px-4 py-2 rounded-lg text-[9px] font-black uppercase shadow-lg hover:bg-zinc-200 transition">Imprimir Ficha</button>
-                                <button onclick="printAllEvents()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase transition">Imprimir Todas</button>
-                            </div>
-                        </header>
-
-                        <div class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-900/10">
-                            <table class="w-full text-left">
-                                <thead>
-                                    <tr class="bg-zinc-900/50 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                                        <th class="p-4 w-48">Fase / Hora</th>
-                                        <th class="p-4 border-l border-zinc-800">Técnicos</th>
-                                        <th class="p-4 border-l border-zinc-800">Produção</th>
-                                        <th class="p-4 border-l border-zinc-800">Bilheteira</th>
-                                        <th class="p-4 border-l border-zinc-800">Portas</th>
-                                        <th class="p-4 border-l border-zinc-800">Bar/Cozinha</th>
-                                        <th class="p-4 border-l border-zinc-800">Segurança</th>
-                                        <th class="p-4 w-10 no-print"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="shiftsBody" class="divide-y divide-zinc-900/50"></tbody>
-                            </table>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="duplicateEvent()" class="bg-zinc-800 text-zinc-300 px-4 py-2 rounded text-[9px] font-black uppercase italic">Duplicar</button>
+                            <button onclick="printSingleEvent()" class="bg-white text-black px-4 py-2 rounded text-[9px] font-black uppercase italic">Imprimir Ficha</button>
                         </div>
                     </div>
+                    <div class="rounded-xl border border-zinc-900 overflow-hidden bg-black shadow-2xl">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-zinc-900 text-[8px] font-black text-zinc-500 uppercase">
+                                    <th class="p-2 w-24">Turno/Hora</th>
+                                    <th class="p-2 border-l border-zinc-800">Técnicos</th>
+                                    <th class="p-2 border-l border-zinc-800">Produção</th>
+                                    <th class="p-2 border-l border-zinc-800">Bilheteira</th>
+                                    <th class="p-2 border-l border-zinc-800">Portas</th>
+                                    <th class="p-2 border-l border-zinc-800">Bar/Coz.</th>
+                                    <th class="p-2 border-l border-zinc-800">Segur.</th>
+                                    <th class="p-2 w-8 border-l border-zinc-800"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="shiftsBody"></tbody>
+                        </table>
+                        <button onclick="addShift()" class="w-full py-2 bg-zinc-900/30 text-zinc-600 text-[8px] font-black uppercase hover:text-white transition">+ Adicionar Turno Extra</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="staffView" class="hidden">
-            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Equipa</h2>
-            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
-                <div class="flex gap-3">
-                    <input type="text" id="newStaffCode" placeholder="Cód (Auto se vazio)" class="w-40 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
-                    <input type="text" id="newStaffName" onkeydown="if(event.key === 'Enter') addStaffMember()" placeholder="Nome (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
-                    <button onclick="addStaffMember()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="staffGrid"></div>
-        </div>
-
-        <div id="venuesView" class="hidden">
-            <h2 class="text-xl font-black uppercase mb-6 italic">Gestão de Espaços</h2>
-            <div class="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-900 mb-8 max-w-2xl">
-                <div class="flex gap-3">
-                    <input type="text" id="newVenueCode" placeholder="Cód (Opcional)" class="w-32 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
-                    <input type="text" id="newVenueName" onkeydown="if(event.key === 'Enter') addVenue()" placeholder="Nome do Local (Enter para adicionar)" class="flex-1 bg-black border border-zinc-800 rounded-lg px-4 py-2 text-xs outline-none focus:border-indigo-500">
-                    <button onclick="addVenue()" class="bg-indigo-600 px-6 py-2 rounded-lg text-[10px] font-black uppercase">Add</button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="venueGrid"></div>
-        </div>
-
-        <div id="counterView" class="hidden">
-            <div class="flex justify-between items-center mb-6 border-b border-zinc-900 pb-4">
+        <!-- Vista Mensal (Calendário) -->
+        <div id="monthlyView" class="hidden">
+            <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-2xl font-black uppercase italic">Resumo de Turnos</h2>
-                    <p class="text-xs text-zinc-500 font-bold uppercase tracking-widest">Contagem acumulada por colaborador</p>
+                    <h2 class="text-xl font-black uppercase italic" id="calendarTitle"></h2>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Resumo mensal de produções</p>
                 </div>
-                <button onclick="printTurnos()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl text-xs font-black uppercase transition shadow-lg">Imprimir Contagem</button>
+                <div class="flex gap-2 no-print">
+                    <button onclick="changeMonth(-1)" class="bg-zinc-900 p-2 rounded">◀</button>
+                    <button onclick="renderCalendar(true)" class="bg-zinc-900 px-4 py-2 rounded text-[10px] font-bold uppercase">Hoje</button>
+                    <button onclick="changeMonth(1)" class="bg-zinc-900 p-2 rounded">▶</button>
+                </div>
             </div>
-            <div id="monthlyCounterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+            <div id="calendarHeaderRow" class="grid grid-cols-7 gap-1 mb-2"></div>
+            <div id="calendarGrid" class="calendar-grid"></div>
         </div>
+
+        <!-- Mapa de Turnos -->
+        <div id="counterView" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-black uppercase italic">Mapa de Turnos</h2>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Colunas: M: Manhã | T: Tarde | N: Noite | D: Desm.</p>
+                </div>
+                <div class="flex gap-2 no-print">
+                    <button onclick="changeWeek(-1)" class="bg-zinc-900 p-2 rounded">◀</button>
+                    <button onclick="renderWeeklyMap(true)" class="bg-zinc-900 px-4 py-2 rounded text-[10px] font-bold uppercase">Hoje</button>
+                    <button onclick="changeWeek(1)" class="bg-zinc-900 p-2 rounded">▶</button>
+                    <button onclick="printWeeklyMap()" class="bg-indigo-600 px-4 py-2 rounded text-[10px] font-bold uppercase">🖨️ Imprimir Mapa</button>
+                </div>
+            </div>
+            
+            <div class="map-container" id="weeklyMap"></div>
+            
+            <div class="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800">
+                <h3 class="text-[10px] font-black uppercase text-zinc-500 mb-3">Legenda de Locais (Siglas)</h3>
+                <div id="venueLegend" class="flex flex-wrap gap-4"></div>
+            </div>
+        </div>
+
+        <div id="staffView" class="hidden"></div>
+        <div id="venuesView" class="hidden"></div>
 
     </main>
 
-    <script>
-        const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
+    <div id="quickStaffPicker" class="hidden fixed z-50 bg-zinc-900 border border-zinc-800 rounded shadow-2xl max-h-48 overflow-y-auto w-44"></div>
 
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_v2')) || {
+    <script>
+        const SHIFT_COLS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
+        const VENUE_PALETTE = ['#4f46e5', '#db2777', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#ea580c', '#525252'];
+        const TURNOS_DEFAULT = [
+            { id: 's_m', label: 'MANHÃ', time: '09:00' },
+            { id: 's_t', label: 'TARDE', time: '14:00' },
+            { id: 's_n', label: 'NOITE', time: '19:00' },
+            { id: 's_d', label: 'DESMONTAGEM', time: '23:00' }
+        ];
+
+        const defaultStaff = {
+            "rs": { name: "Rita Sousa" }, "mv": { name: "Madalena Victorino" }, "gs": { name: "Giacomo Scalisi" },
+            "ss": { name: "Sandra Sanches" }, "is": { name: "Inderjeet Singh" }, "g": { name: "Gurpreet Singh" },
+            "as": { name: "Alexandra Silva" }, "rf": { name: "Ricardo Falcão" }, "mm": { name: "Marisa Miranda" },
+            "jm": { name: "Joaquim Madaíl" }, "aj": { name: "Ajudante João" }, "am": { name: "Ajudante Manuel" }
+        };
+
+        const defaultVenues = {
+            "TP": "Teatro de Palha", "EN": "Escola Nova", "NB": "Novo Bowing", "NANC": "Novo Ano Novo Circo"
+        };
+
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v8')) || {
             events: [],
-            staff: { "101": { name: "EXEMPLO TÉCNICO" } },
-            venues: { "TNM": "Teatro Nacional" },
+            staff: defaultStaff,
+            venues: defaultVenues,
             activeEventId: null
         };
 
-        function saveData() {
-            localStorage.setItem('backstage_pro_v2', JSON.stringify(appData));
-        }
+        let currentDate = new Date();
+        let currentMonthDate = new Date();
+
+        function saveData() { localStorage.setItem('backstage_pro_v8', JSON.stringify(appData)); }
+        function resetSystem() { if(confirm("Cuidado: Isto apaga todos os dados. Continuar?")) { localStorage.removeItem('backstage_pro_v8'); location.reload(); } }
 
         function switchTab(tab) {
-            ['events', 'staff', 'venues', 'counter'].forEach(t => {
-                document.getElementById(t + 'View').classList.add('hidden');
-                document.getElementById('btn-tab-' + t).classList.remove('active');
+            ['events', 'staff', 'venues', 'counter', 'monthly'].forEach(t => {
+                const el = document.getElementById(t + 'View');
+                const btn = document.getElementById('btn-tab-' + t);
+                if(el) el.classList.add('hidden');
+                if(btn) btn.classList.remove('active');
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
-
-            if(tab === 'staff') renderStaff();
-            if(tab === 'venues') renderVenues();
-            if(tab === 'counter') updateMonthlyCount();
-            if(tab === 'events') renderEventList();
+            
+            if(tab === 'counter') renderWeeklyMap();
+            if(tab === 'monthly') renderCalendar();
+            if(tab === 'staff') renderManager('staff');
+            if(tab === 'venues') renderManager('venues');
         }
+
+        /* --- VISTA MENSAL (CALENDÁRIO) --- */
+        function changeMonth(v) { 
+            currentMonthDate.setMonth(currentMonthDate.getMonth() + v); 
+            renderCalendar(); 
+        }
+
+        function renderCalendar(resetToToday = false) {
+            if(resetToToday) currentMonthDate = new Date();
+            
+            const grid = document.getElementById('calendarGrid');
+            const title = document.getElementById('calendarTitle');
+            const headerRow = document.getElementById('calendarHeaderRow');
+            
+            title.innerText = currentMonthDate.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
+            
+            // Corrigir dias da semana
+            const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            headerRow.innerHTML = diasSemana.map(d => `<div class="text-[9px] font-black text-zinc-600 uppercase text-center py-2">${d}</div>`).join('');
+
+            const firstDayOfMonth = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+            const lastDayOfMonth = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 0);
+            
+            let startDay = firstDayOfMonth.getDay() || 7;
+            const startDate = new Date(firstDayOfMonth);
+            startDate.setDate(startDate.getDate() - (startDay - 1));
+            
+            const endDate = new Date(lastDayOfMonth);
+            let endDay = lastDayOfMonth.getDay() || 7;
+            endDate.setDate(endDate.getDate() + (7 - endDay));
+            
+            let html = "";
+            let curr = new Date(startDate);
+            
+            while(curr <= endDate) {
+                const dateStr = curr.toISOString().split('T')[0];
+                const dayEvents = appData.events.filter(e => e.date === dateStr);
+                const isOtherMonth = curr.getMonth() !== currentMonthDate.getMonth();
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                
+                html += `
+                    <div class="calendar-day ${isOtherMonth ? 'other-month' : ''}">
+                        <div class="calendar-day-header">
+                            <span class="${isToday ? 'bg-indigo-600 text-white w-5 h-5 flex items-center justify-center rounded-full' : ''}">${curr.getDate()}</span>
+                        </div>
+                        <div class="space-y-1">
+                            ${dayEvents.map(ev => {
+                                const info = getVenueInfo(ev.venue);
+                                return `<div onclick="selectEvent('${ev.id}'); switchTab('events');" 
+                                             class="calendar-event" 
+                                             style="background: ${info.color}"
+                                             title="${ev.name}">
+                                             [${info.code}] ${ev.name}
+                                        </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                curr.setDate(curr.getDate() + 1);
+            }
+            grid.innerHTML = html;
+        }
+
+        /* --- GESTÃO DE EVENTOS E TURNOS --- */
 
         function renderEventList() {
             const list = document.getElementById('eventList');
-            const sorted = [...appData.events].sort((a, b) => {
-                if (!a.date) return 1;
-                if (!b.date) return -1;
-                return a.date.localeCompare(b.date);
-            });
-            
+            const sorted = [...appData.events].sort((a,b) => b.date.localeCompare(a.date));
             list.innerHTML = sorted.map(ev => `
-                <div class="event-card relative group">
-                    <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-4 rounded-xl border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900/40 border-zinc-900'} hover:border-zinc-700 transition">
-                        <div class="text-[10px] font-black text-indigo-400 uppercase">${ev.date || 'Sem data'}</div>
-                        <div class="text-sm font-bold text-white truncate pr-6">${ev.name}</div>
-                    </button>
-                    <button onclick="deleteEvent('${ev.id}')" class="delete-btn absolute top-4 right-3 text-zinc-700 hover:text-red-500 text-xl leading-none no-print">×</button>
-                </div>
+                <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-2 rounded border transition ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900 border-zinc-900'}">
+                    <div class="text-[7px] font-bold text-zinc-500 uppercase">${ev.date.split('-').reverse().join('/')}</div>
+                    <div class="text-[10px] font-bold text-white truncate uppercase">${ev.name}</div>
+                </button>
             `).join('');
-        }
-
-        function deleteEvent(id) {
-            const ev = appData.events.find(e => e.id === id);
-            // Simulação de confirmação simples e menos intrusiva que alert
-            const confirmacao = prompt(`Para apagar "${ev.name}", escreva APAGAR:`);
-            if (confirmacao === 'APAGAR') {
-                appData.events = appData.events.filter(e => e.id !== id);
-                if (appData.activeEventId === id) {
-                    appData.activeEventId = null;
-                    document.getElementById('editorArea').classList.add('hidden');
-                    document.getElementById('emptyState').classList.remove('hidden');
-                }
-                saveData();
-                renderEventList();
-            }
         }
 
         function selectEvent(id) {
             appData.activeEventId = id;
             const ev = appData.events.find(e => e.id === id);
             if (!ev) return;
-
-            document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('editorArea').classList.remove('hidden');
             document.getElementById('curEventName').value = ev.name;
             document.getElementById('curEventDate').value = ev.date;
             document.getElementById('curEventVenue').value = ev.venue;
-            
             renderShifts(ev);
             renderEventList();
-        }
-
-        function sortShifts(ev) {
-            if (!ev || !ev.shifts) return;
-            ev.shifts.sort((a, b) => {
-                const timeA = a.time || "00:00";
-                const timeB = b.time || "00:00";
-                return timeA.localeCompare(timeB);
-            });
         }
 
         function renderShifts(ev) {
             const tbody = document.getElementById('shiftsBody');
             tbody.innerHTML = ev.shifts.map(s => `
-                <tr class="group hover:bg-zinc-900/30">
-                    <td class="p-3 align-top">
-                        <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" 
-                                  class="bg-transparent border-none text-xs font-black text-indigo-400 uppercase w-full p-0 focus:ring-0 mb-1" 
-                                  placeholder="Fase">${s.label || ''}</textarea>
-                        <input type="text" value="${s.time}" 
-                               onchange="updateShiftField('${s.id}', 'time', this.value); sortAndReRender()" 
-                               class="bg-transparent border-none text-sm font-black text-white w-full p-0 focus:ring-0" 
-                               placeholder="00:00">
+                <tr class="border-b border-zinc-900/50 group">
+                    <td class="p-2 bg-zinc-900/20 text-center relative">
+                        <input type="text" value="${s.label}" onchange="updateShiftField('${s.id}', 'label', this.value)" class="bg-transparent border-none text-[8px] font-black text-indigo-500 uppercase text-center w-full p-0">
+                        <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value)" class="bg-transparent border-none text-[11px] font-black text-white text-center w-full p-0 mt-1">
                     </td>
-                    ${APP_COLUMNS.map(col => `
-                        <td class="p-2 border-l border-zinc-900/50 align-top">
-                            <textarea onkeyup="processShortcodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" placeholder="..." class="text-xs"> ${s[col] || ''}</textarea>
+                    ${SHIFT_COLS.map(col => `
+                        <td class="p-1 border-l border-zinc-900">
+                            <textarea onclick="showStaffPicker(this, '${s.id}', '${col}')" onkeyup="processCodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" class="w-full">${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
-                    <td class="p-4 no-print align-top text-right">
-                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition text-2xl">×</button>
+                    <td class="p-1 border-l border-zinc-900 text-center">
+                        <button onclick="deleteShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition opacity-0 group-hover:opacity-100 font-bold">×</button>
                     </td>
                 </tr>
             `).join('');
-            
-            setTimeout(() => {
-                tbody.querySelectorAll('textarea').forEach(adjustHeight);
-            }, 50);
+            tbody.querySelectorAll('textarea').forEach(adjustHeight);
         }
 
-        function sortAndReRender() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if (ev) {
-                sortShifts(ev);
-                saveData();
-                renderShifts(ev);
-            }
-        }
-
-        function adjustHeight(el) {
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight) + 'px';
-        }
-
-        function updateActiveEvent(field, val) {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                ev[field] = val;
-                saveData();
-                if(field === 'name' || field === 'date') renderEventList();
-            }
-        }
-
-        function updateShiftField(shiftId, field, val) {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                const shift = ev.shifts.find(s => s.id === shiftId);
-                if(shift) {
-                    shift[field] = val;
-                    saveData();
-                }
-            }
-        }
-
-        function processShortcodes(textarea, shiftId, field) {
-            const val = textarea.value;
-            const regex = /(\b\w+\b)([ ,;\n\r])/g;
-            let changed = false;
-            const newVal = val.replace(regex, (match, code, delimiter) => {
-                if (appData.staff[code]) {
-                    changed = true;
-                    return appData.staff[code].name + delimiter;
-                }
-                return match;
+        function createNewEvent() {
+            const id = 'ev_' + Date.now();
+            appData.events.push({
+                id, name: "NOVO EVENTO", date: new Date().toISOString().split('T')[0], venue: "",
+                shifts: TURNOS_DEFAULT.map(t => ({ 
+                    id: 's_' + t.id + '_' + Date.now(), label: t.label, time: t.time, 
+                    tecnicos: '', producao: '', bilheteira: '', portas: '', bar: '', seguranca: '' 
+                }))
             });
-            if (changed) {
-                textarea.value = newVal;
-                updateShiftField(shiftId, field, newVal);
-            } else {
-                updateShiftField(shiftId, field, val);
+            saveData(); selectEvent(id);
+        }
+
+        function addShift() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(!ev) return;
+            ev.shifts.push({ id: 's' + Date.now(), label: 'EXTRA', time: '00:00', tecnicos: '', producao: '', bilheteira: '', portas: '', bar: '', seguranca: '' });
+            saveData(); renderShifts(ev);
+        }
+
+        function deleteShift(sid) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(!ev) return;
+            if(confirm("Deseja apagar este turno?")) {
+                ev.shifts = ev.shifts.filter(s => s.id !== sid);
+                saveData(); renderShifts(ev);
             }
+        }
+
+        function getVenueInfo(venueName) {
+            const entry = Object.entries(appData.venues).find(([code, name]) => name === venueName);
+            if(entry) {
+                const index = Object.values(appData.venues).indexOf(venueName);
+                return { code: entry[0], color: VENUE_PALETTE[index % VENUE_PALETTE.length] };
+            }
+            return { code: "?", color: "#525252" };
+        }
+
+        /* --- MAPA DE TURNOS (MELHORADO) --- */
+        function renderWeeklyMap(resetToToday = false) {
+            if(resetToToday) currentDate = new Date();
+            const container = document.getElementById('weeklyMap');
+            const d = new Date(currentDate);
+            const day = d.getDay() || 7;
+            d.setDate(d.getDate() - day + 1);
+            const weekStart = new Date(d);
+            const days = [];
+            for(let i=0; i<7; i++) {
+                const cur = new Date(weekStart); cur.setDate(cur.getDate() + i);
+                days.push(cur.toISOString().split('T')[0]);
+            }
+
+            const staffSorted = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
+            
+            const legend = document.getElementById('venueLegend');
+            legend.innerHTML = Object.entries(appData.venues).map(([code, name], i) => {
+                const color = VENUE_PALETTE[i % VENUE_PALETTE.length];
+                return `<div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full" style="background:${color}"></div><span class="text-[9px] font-bold uppercase text-zinc-300 legend-item"><b>${code}:</b> ${name}</span></div>`;
+            }).join('');
+
+            let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th>`;
+            days.forEach(dateStr => {
+                const dayName = new Date(dateStr).toLocaleDateString('pt-PT', {weekday: 'short', day: '2-digit', month: '2-digit'});
+                html += `<th colspan="4" class="day-header bg-zinc-900/50 uppercase tracking-widest font-black">${dayName}</th>`;
+            });
+            html += `</tr><tr>`;
+            days.forEach(() => html += `<th class="sub-header">M</th><th class="sub-header">T</th><th class="sub-header">N</th><th class="sub-header">D</th>`);
+            html += `</tr></thead><tbody>`;
+
+            staffSorted.forEach(([code, data]) => {
+                html += `<tr><td class="col-staff uppercase">${data.name}</td>`;
+                days.forEach(dateStr => {
+                    const dayEvents = appData.events.filter(e => e.date === dateStr);
+                    // Mapeamento lógico: M -> Manhã, T -> Tarde, N -> Noite, D -> Desmontagem/Extra
+                    const columnMapping = [
+                        ['MANHÃ', 'M', 'EXTRA'], 
+                        ['TARDE', 'T'], 
+                        ['NOITE', 'N'], 
+                        ['DESMONTAGEM', 'D']
+                    ];
+
+                    columnMapping.forEach(mapGroup => {
+                        let activeCode = "", activeColor = "";
+                        dayEvents.forEach(ev => {
+                            const shift = ev.shifts.find(s => mapGroup.some(m => s.label.toUpperCase().includes(m)));
+                            if(shift) {
+                                let isWorking = false;
+                                SHIFT_COLS.forEach(c => { if(shift[c].includes(data.name)) isWorking = true; });
+                                if(isWorking) { const info = getVenueInfo(ev.venue); activeCode = info.code; activeColor = info.color; }
+                            }
+                        });
+                        html += `<td class="shift-cell ${activeCode ? 'active' : ''}" style="background-color: ${activeCode ? activeColor : 'transparent'}">${activeCode}</td>`;
+                    });
+                });
+                html += `</tr>`;
+            });
+            container.innerHTML = html + `</tbody></table>`;
+        }
+
+        function changeWeek(v) { currentDate.setDate(currentDate.getDate() + (v*7)); renderWeeklyMap(); }
+
+        function printWeeklyMap() {
+            const content = document.getElementById('counterView').innerHTML;
+            const win = window.open('', '_blank');
+            win.document.write(`<html><head><style>@page{size:landscape;margin:5mm;} body{font-family:sans-serif;padding:10px;background:white;color:black;} table{width:100%;border-collapse:collapse;table-layout:fixed;} th,td{border:1px solid black !important;text-align:center;font-size:7px;height:18px;color:black !important;} .col-staff{text-align:left !important;font-weight:bold;width:90px;padding-left:4px;font-size:8px;} .shift-cell.active{color:black !important;background:transparent !important;} .no-print,button{display:none !important;} #venueLegend{margin-top:10px;display:flex;flex-wrap:wrap;} .sub-header{background:#f0f0f0;font-size:6px;}</style></head><body>${content}</body></html>`);
+            win.document.close(); setTimeout(() => { win.print(); win.close(); }, 500);
+        }
+
+        function adjustHeight(el) { el.style.height = '32px'; if (el.scrollHeight > 32) el.style.height = el.scrollHeight + 'px'; }
+        
+        function processCodes(textarea, sid, col) {
+            const val = textarea.value;
+            const newVal = val.replace(/(\b\w+\b)([ ,;\n\r])/g, (m, code, d) => {
+                const s = appData.staff[code.toLowerCase()];
+                return s ? s.name + d : m;
+            });
+            if(newVal !== val) { textarea.value = newVal; updateShiftField(sid, col, newVal); }
+            else updateShiftField(sid, col, val);
             adjustHeight(textarea);
         }
 
         function processVenueCode(input) {
             const val = input.value;
-            for(let code in appData.venues) {
-                if(val.toUpperCase() === code.toUpperCase() + " ") {
-                    input.value = appData.venues[code];
-                    updateActiveEvent('venue', appData.venues[code]);
-                    return;
-                }
+            for(let code in appData.venues) { 
+                if(val.toUpperCase() === code + " ") { 
+                    input.value = appData.venues[code]; 
+                    updateActiveEvent('venue', appData.venues[code]); 
+                    return; 
+                } 
             }
             updateActiveEvent('venue', val);
         }
 
-        function buildEventHTML(ev) {
-            const cols = ['Técnicos','Produção','Bilheteira','Portas','Bar/Cozinha','Segurança'];
-            const keys = ['tecnicos','producao','bilheteira','portas','bar','seguranca'];
-            sortShifts(ev);
-
-            const rows = ev.shifts.map(s => `
-                <tr>
-                    <td style="padding:12px; border:1px solid #ccc; font-size:11px; vertical-align:top; background:#f9f9f9; line-height:1.4;">
-                        <div style="color:#4338ca; font-weight:900; text-transform:uppercase; margin-bottom:4px; font-size:11px;">${(s.label||'').toUpperCase()}</div>
-                        <div style="color:#000; font-weight:800; border-top:2px solid #ddd; padding-top:4px; font-size:13px;">${s.time||''}</div>
-                    </td>
-                    ${keys.map(k => `<td style="padding:12px; border:1px solid #ccc; font-size:11px; vertical-align:top; white-space:pre-wrap; word-break:break-word; line-height:1.5; color:#000;">${(s[k]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>`).join('')}
-                </tr>`).join('');
-
-            return `
-                <div class="ev-block" style="margin-bottom: 40px; page-break-after: always;">
-                    <div style="border-bottom: 6px solid #000; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end;">
-                        <div>
-                            <h2 style="font-size:32px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:-1px">${ev.name}</h2>
-                            <p style="font-size:14px; color:#000; margin:5px 0 0; font-weight:800; text-transform:uppercase; letter-spacing:1px">${ev.date}${ev.venue ? ' &bull; ' + ev.venue : ''}</p>
-                        </div>
-                        <div style="text-align:right; font-size:10px; font-weight:900; color:#888; text-transform:uppercase;">Backstage PRO System</div>
-                    </div>
-                    <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:2px solid #000;">
-                        <thead>
-                            <tr style="background:#000; font-size:10px; font-weight:900; text-transform:uppercase; color:#fff">
-                                <th style="padding:14px 12px; border:1px solid #000; width:130px; text-align:left">Fase / Hora</th>
-                                ${cols.map(c=>`<th style="padding:14px 12px; border:1px solid #000; text-align:left">${c}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                </div>`;
+        function updateActiveEvent(f, v) { 
+            const ev = appData.events.find(e => e.id === appData.activeEventId); 
+            if(ev) { ev[f] = v; saveData(); if(f==='name'||f==='date') renderEventList(); } 
         }
 
-        function printTurnos() {
-            const counts = {};
-            const displayName = {};
-
-            appData.events.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    const uniqueInShift = new Set();
-                    APP_COLUMNS.forEach(col => {
-                        if (s[col]) {
-                            s[col].split(/[,\n;]/).forEach(n => {
-                                const clean = n.trim();
-                                if(clean.length > 2) {
-                                    uniqueInShift.add(clean.toLowerCase());
-                                    displayName[clean.toLowerCase()] = clean;
-                                }
-                            });
-                        }
-                    });
-                    uniqueInShift.forEach(nameLower => {
-                        counts[nameLower] = (counts[nameLower] || 0) + 1;
-                    });
-                });
-            });
-
-            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-            
-            let html = `
-                <div style="padding: 20px;">
-                    <div style="border-bottom: 5px solid #000; padding-bottom: 15px; margin-bottom: 30px;">
-                        <h1 style="font-size:28px; font-weight:900; margin:0; text-transform:uppercase;">Resumo Geral de Turnos</h1>
-                        <p style="font-size:12px; color:#444; text-transform:uppercase; font-weight:800; margin-top:5px;">Total de Colaboradores Activos: ${sorted.length} &bull; Gerado em: ${new Date().toLocaleDateString()}</p>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-                        ${sorted.map(([nameLower, count]) => `
-                            <div style="border-bottom: 1px solid #ddd; padding: 8px 0; display: flex; justify-content: space-between; align-items: center; break-inside: avoid;">
-                                <span style="font-weight:700; font-size:13px; color:#000; text-transform: uppercase;">${displayName[nameLower]}</span>
-                                <span style="background:#f0f0f0; padding:4px 10px; border-radius:4px; font-weight:900; font-size:14px; border:1px solid #ccc;">${count}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            executePrint(html, 'Contagem de Turnos');
+        function updateShiftField(sid, field, val) { 
+            const ev = appData.events.find(e => e.id === appData.activeEventId); 
+            const s = ev.shifts.find(x => x.id === sid); 
+            if(s) { s[field] = val; saveData(); } 
         }
 
-        function executePrint(contentHtml, title = 'Backstage PRO') {
-            const win = window.open('', '_blank');
-            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-                <title>${title}</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
-                    @page { size: portrait; margin: 1.5cm; }
-                    body { font-family: 'Inter', Arial, sans-serif; color: #000; background: #fff; line-height: 1.5; padding: 0; margin: 0; -webkit-print-color-adjust: exact; }
-                    .ev-block { page-break-inside: avoid; }
-                    table { width: 100%; border-collapse: collapse; }
-                </style>
-            </head><body>${contentHtml}</body></html>`);
-            win.document.close();
-            win.focus();
-            setTimeout(() => { win.print(); }, 500);
+        function duplicateEvent() {
+            const original = appData.events.find(e => e.id === appData.activeEventId);
+            if(!original) return;
+            const copy = JSON.parse(JSON.stringify(original));
+            copy.id = 'ev_' + Date.now(); copy.name += " (CÓPIA)";
+            appData.events.push(copy); saveData(); selectEvent(copy.id);
+        }
+
+        function showStaffPicker(t, sid, col) {
+            const p = document.getElementById('quickStaffPicker');
+            p.innerHTML = Object.values(appData.staff).sort((a,b)=>a.name.localeCompare(b.name)).map(s => `<div onclick="pickStaff('${s.name}', '${sid}', '${col}')" class="p-2 text-[10px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${s.name}</div>`).join('');
+            const r = t.getBoundingClientRect(); p.style.top = (r.bottom + window.scrollY) + 'px'; p.style.left = (r.left + window.scrollX) + 'px';
+            p.classList.remove('hidden');
+            const close = (e) => { if(!p.contains(e.target) && e.target !== t) { p.classList.add('hidden'); document.removeEventListener('click', close); } };
+            setTimeout(() => document.addEventListener('click', close), 10);
+        }
+
+        function pickStaff(n, sid, col) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            const s = ev.shifts.find(x => x.id === sid);
+            s[col] = s[col] ? (s[col].trim().endsWith(',') || s[col].trim().endsWith('\n') ? s[col] + " " + n : s[col] + ", " + n) : n;
+            saveData(); renderShifts(ev);
+        }
+
+        function renderManager(type) {
+            const v = document.getElementById(type + 'View');
+            const isS = type === 'staff';
+            const d = isS ? appData.staff : appData.venues;
+            v.innerHTML = `<h2 class="text-xl font-black uppercase mb-6 italic">${isS ? 'Equipa' : 'Locais'}</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">${Object.entries(d).sort().map(([c, x]) => `
+                    <div class="bg-zinc-900 p-3 rounded border border-zinc-800 flex justify-between items-center">
+                        <span class="text-[10px] font-bold uppercase"><b class="text-indigo-500 mr-2">${c}</b> ${isS ? x.name : x}</span>
+                        <button onclick="deleteEntry('${type}', '${c}')" class="text-zinc-700 hover:text-red-500 font-bold px-2">×</button>
+                    </div>`).join('')}</div>
+                <div class="flex gap-2 max-w-sm"><input id="add-c" placeholder="Cód" class="w-16 bg-zinc-900 p-2 rounded text-xs uppercase"><input id="add-n" placeholder="Nome" class="flex-1 bg-zinc-900 p-2 rounded text-xs uppercase"><button onclick="saveEntry('${type}')" class="bg-indigo-600 px-4 rounded text-[10px] font-black uppercase">Adicionar</button></div>`;
+        }
+
+        function saveEntry(t) { 
+            const c = document.getElementById('add-c').value.toUpperCase(); 
+            const n = document.getElementById('add-n').value; 
+            if(c && n) { if(t === 'staff') appData.staff[c.toLowerCase()] = { name: n }; else appData.venues[c] = n; saveData(); renderManager(t); } 
+        }
+
+        function deleteEntry(t, c) { if(confirm("Eliminar?")) { if(t === 'staff') delete appData.staff[c.toLowerCase()]; else delete appData.venues[c]; saveData(); renderManager(t); } }
+        function exportData() { const b = new Blob([JSON.stringify(appData)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_backup.json'; a.click(); }
+        function importData(e) { const fr = new FileReader(); fr.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); }; fr.readAsText(e.target.files[0]); }
+
+        function generatePrintHTML(events) {
+            return events.map(ev => `
+                <div class="print-page">
+                    <h1 style="font-size:24px; font-weight:900; margin:0; border-bottom:3px solid black; padding-bottom:5px;">${ev.name.toUpperCase()}</h1>
+                    <p style="font-weight:700; margin:10px 0;">Data: ${ev.date.split('-').reverse().join('/')} | Local: ${ev.venue}</p>
+                    <table><thead><tr style="background:#eee;"><th style="width:100px">Turno</th><th>Técnicos</th><th>Produção</th><th>Bilheteira</th><th>Portas</th><th>Bar</th><th>Segur.</th></tr></thead>
+                    <tbody>${ev.shifts.map(s => `<tr><td style="text-align:center"><b>${s.label}</b><br>${s.time}</td><td>${s.tecnicos.replace(/\n/g, '<br>')}</td><td>${s.producao.replace(/\n/g, '<br>')}</td><td>${s.bilheteira.replace(/\n/g, '<br>')}</td><td>${s.portas.replace(/\n/g, '<br>')}</td><td>${s.bar.replace(/\n/g, '<br>')}</td><td>${s.seguranca.replace(/\n/g, '<br>')}</td></tr>`).join('')}</tbody></table>
+                </div>`).join('');
         }
 
         function printSingleEvent() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(!ev) return;
-            executePrint(buildEventHTML(ev), `Ficha - ${ev.name}`);
+            const ev = appData.events.find(e => e.id === appData.activeEventId); if(!ev) return;
+            const win = window.open('', '_blank');
+            win.document.write(`<html><head><style>body{font-family:sans-serif;margin:0;padding:20px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid black;padding:8px;font-size:10px;vertical-align:top;}</style></head><body>${generatePrintHTML([ev])}</body></html>`);
+            win.document.close(); win.print();
         }
 
         function printAllEvents() {
-            const sorted = [...appData.events].sort((a,b) => {
-                if(!a.date) return 1; if(!b.date) return -1;
-                return a.date.localeCompare(b.date);
-            });
-            executePrint(sorted.map(ev => buildEventHTML(ev)).join(''), 'Todas as Fichas');
+            const win = window.open('', '_blank');
+            win.document.write(`<html><head><style>body{font-family:sans-serif;margin:0;} .print-page{page-break-after:always;padding:40px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid black;padding:8px;font-size:10px;vertical-align:top;}</style></head><body>${generatePrintHTML(appData.events)}</body></html>`);
+            win.document.close(); win.print();
         }
 
-        function createNewEvent() {
-            switchTab('events');
-            const id = 'ev_' + Date.now();
-            const newEv = {
-                id,
-                name: "Novo Espectáculo",
-                date: new Date().toISOString().split('T')[0],
-                venue: "",
-                shifts: [
-                    { id: 's1', label: 'MONTAGEM', time: '10:00', tecnicos:'', producao:'', bilheteira:'', portas:'', bar:'', seguranca:'' },
-                    { id: 's2', label: 'ESPETÁCULO', time: '21:30', tecnicos:'', producao:'', bilheteira:'', portas:'', bar:'', seguranca:'' }
-                ]
-            };
-            appData.events.unshift(newEv);
-            appData.activeEventId = id;
-            saveData();
-            renderEventList();
-            selectEvent(id);
-        }
-
-        function addShift() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                const newShift = { id: 's'+Date.now(), label:'NOVA FASE', time:'12:00' };
-                APP_COLUMNS.forEach(c => newShift[c] = '');
-                ev.shifts.push(newShift);
-                sortShifts(ev);
-                saveData();
-                renderShifts(ev);
-            }
-        }
-
-        function removeShift(id) {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(ev) {
-                ev.shifts = ev.shifts.filter(s => s.id !== id);
-                renderShifts(ev);
-                saveData();
-            }
-        }
-
-        function addStaffMember() {
-            let code = document.getElementById('newStaffCode').value.trim();
-            const name = document.getElementById('newStaffName').value.trim();
-            if(!name) return;
-
-            if(!code) {
-                const existing = Object.keys(appData.staff).map(c => parseInt(c)).filter(n => !isNaN(n));
-                code = existing.length > 0 ? (Math.max(...existing) + 1).toString() : "101";
-            }
-
-            appData.staff[code] = { name };
-            saveData();
-            renderStaff();
-            document.getElementById('newStaffCode').value = '';
-            document.getElementById('newStaffName').value = '';
-            document.getElementById('newStaffName').focus();
-        }
-
-        function renderStaff() {
-            const grid = document.getElementById('staffGrid');
-            grid.innerHTML = Object.entries(appData.staff).map(([code, data]) => `
-                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center group">
-                    <div>
-                        <div class="text-[9px] font-black text-indigo-500 uppercase">${code}</div>
-                        <div class="text-xs font-bold text-white">${data.name}</div>
-                    </div>
-                    <button onclick="deleteStaff('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
-                </div>
-            `).join('');
-        }
-
-        function deleteStaff(code) {
-            delete appData.staff[code];
-            saveData();
-            renderStaff();
-        }
-
-        function addVenue() {
-            let code = document.getElementById('newVenueCode').value.trim().toUpperCase();
-            const name = document.getElementById('newVenueName').value.trim();
-            if(!name) return;
-            if(!code) code = name.substring(0, 3).toUpperCase() + (Object.keys(appData.venues).length + 1);
-
-            appData.venues[code] = name;
-            saveData();
-            renderVenues();
-            document.getElementById('newVenueCode').value = '';
-            document.getElementById('newVenueName').value = '';
-            document.getElementById('newVenueName').focus();
-        }
-
-        function renderVenues() {
-            const grid = document.getElementById('venueGrid');
-            grid.innerHTML = Object.entries(appData.venues).map(([code, name]) => `
-                <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between items-center group">
-                    <div>
-                        <div class="text-[9px] font-black text-indigo-400 uppercase">${code}</div>
-                        <div class="text-xs font-bold text-white">${name}</div>
-                    </div>
-                    <button onclick="deleteVenue('${code}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
-                </div>
-            `).join('');
-        }
-
-        function deleteVenue(code) {
-            delete appData.venues[code];
-            saveData();
-            renderVenues();
-        }
-
-        function updateMonthlyCount() {
-            const counts = {};
-            const displayName = {};
-
-            appData.events.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    const uniqueInShift = new Set();
-                    APP_COLUMNS.forEach(col => {
-                        if (s[col]) {
-                            s[col].split(/[,\n;]/).forEach(n => {
-                                const clean = n.trim();
-                                if(clean.length > 2) {
-                                    uniqueInShift.add(clean.toLowerCase());
-                                    displayName[clean.toLowerCase()] = clean;
-                                }
-                            });
-                        }
-                    });
-                    uniqueInShift.forEach(nameLower => {
-                        counts[nameLower] = (counts[nameLower] || 0) + 1;
-                    });
-                });
-            });
-
-            const grid = document.getElementById('monthlyCounterGrid');
-            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-
-            if(sorted.length === 0) {
-                grid.innerHTML = '<div class="col-span-full py-12 text-center text-zinc-700 font-bold uppercase text-[10px] tracking-widest border border-dashed border-zinc-900 rounded-3xl">Sem registos de nomes nos eventos</div>';
-                return;
-            }
-
-            grid.innerHTML = sorted.map(([nameLower, count]) => `
-                <div class="bg-zinc-900/50 p-4 rounded-xl border border-zinc-900 flex justify-between items-center">
-                    <span class="text-xs font-bold text-white">${displayName[nameLower]}</span>
-                    <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/10">${count} Turnos</span>
-                </div>
-            `).join('');
-        }
-
-        function exportData() {
-            const blob = new Blob([JSON.stringify(appData, null, 2)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `backstage_pro_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-        }
-
-        function importData(event) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                appData = JSON.parse(e.target.result);
-                saveData();
-                location.reload();
-            };
-            reader.readAsText(event.target.files[0]);
-        }
-
-        window.onload = () => {
-            renderEventList();
-            if(appData.activeEventId) selectEvent(appData.activeEventId);
-        };
+        window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
     </script>
 </body>
 </html>
