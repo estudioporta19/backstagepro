@@ -558,7 +558,7 @@
             grid.innerHTML = html;
         }
 
-        function renderWeeklyMap(resetToToday = false) {
+  function renderWeeklyMap(resetToToday = false) {
     if(resetToToday) currentDate = new Date();
     const container = document.getElementById('weeklyMap');
     const d = new Date(currentDate);
@@ -593,16 +593,12 @@
     
     let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th>`;
 
-    // Cabeçalhos dos dias
     dayShiftStructure.forEach(day => {
         const dObj = new Date(day.dateStr);
         html += `<th colspan="${day.labels.length}" class="day-header uppercase font-black text-[7px] border-l-2 border-zinc-800">${dObj.toLocaleDateString('pt-PT', {weekday: 'short'})} ${dObj.getDate()}/${dObj.getMonth()+1}</th>`;
     });
+    html += `</tr><tr>`;
 
-    // Coluna Total
-    html += `<th rowspan="2" class="col-staff day-header bg-indigo-600/20 border-l-4 border-indigo-500 text-indigo-400">TOTAL</th></tr><tr>`;
-
-    // Sub-cabeçalhos dos turnos
     dayShiftStructure.forEach(day => {
         day.labels.forEach(label => {
             let short = label.charAt(0);
@@ -615,45 +611,49 @@
     // Corpo da tabela
     staffSorted.forEach(([code, data]) => {
         const staffName = data.name.toLowerCase().trim();
-        let totalShifts = 0;
-
         html += `<tr><td class="col-staff uppercase" title="${data.name}">${data.name}</td>`;
 
         dayShiftStructure.forEach(day => {
             const dayEvents = appData.events.filter(e => e.date === day.dateStr);
+            
             day.labels.forEach(label => {
-                let activeCode = "", activeColor = "";
-                let isWorking = false;
+                let activeCode = "";
+                let activeColor = "";
 
-                dayEvents.forEach(ev => {
+                // Procura o primeiro evento onde a pessoa está alocada nesse turno
+                for (const ev of dayEvents) {
                     const matchingShift = ev.shifts.find(s => s.label.toUpperCase().trim() === label);
-                    if(matchingShift) {
-                        SHIFT_COLS.forEach(c => { 
-                            if(matchingShift[c] && matchingShift[c].toLowerCase().includes(staffName)) {
-                                isWorking = true;
-                            }
-                        });
-                        if(isWorking) { 
-                            const info = getVenueInfo(ev.venue); 
-                            activeCode = info.code; 
-                            activeColor = info.color; 
+                    if (!matchingShift) continue;
+
+                    let isWorking = false;
+                    SHIFT_COLS.forEach(c => {
+                        if (matchingShift[c] && matchingShift[c].toLowerCase().includes(staffName)) {
+                            isWorking = true;
                         }
+                    });
+
+                    if (isWorking) {
+                        const info = getVenueInfo(ev.venue);
+                        activeCode = info.code;
+                        activeColor = info.color;
+                        break;                    // ← IMPORTANTE: para no primeiro match
                     }
-                });
+                }
 
-                if(isWorking) totalShifts++;
-
-                html += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/30" style="background-color: ${activeCode ? activeColor : 'transparent'}">${activeCode}</td>`;
+                html += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/30" 
+                         style="background-color: ${activeCode ? activeColor : 'transparent'}"
+                         title="${activeCode ? getVenueInfo(activeCode).name : ''}">
+                    ${activeCode}
+                </td>`;
             });
         });
 
-        // Célula do Total
-        html += `<td class="col-staff text-center font-black text-lg border-l-4 border-indigo-500 ${totalShifts > 0 ? 'text-indigo-400' : 'text-zinc-600'}">${totalShifts}</td></tr>`;
+        html += `</tr>`;
     });
 
     container.innerHTML = html + `</tbody></table>`;
-
-    // Legenda (mantida igual)
+    
+    // Legenda
     const legend = document.getElementById('venueLegend');
     legend.innerHTML = Object.entries(appData.venues).map(([code, name], i) => {
         const color = VENUE_PALETTE[i % VENUE_PALETTE.length];
