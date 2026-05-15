@@ -51,58 +51,47 @@
             body { background: white !important; color: black !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .map-container { overflow: visible !important; border: none !important; }
-            .map-table { border: 2px solid #000 !important; }
+            .map-table { border: 2px solid #000 !important; width: 100% !important; }
         }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 10px; }
 
-        /* Mapa de Turnos Avançado */
+        /* Mapa de Turnos Estruturado */
         .map-container {
             overflow-x: auto;
             border: 1px solid #1a1a1a;
             border-radius: 12px;
             background: #0a0a0a;
-            position: relative;
         }
         .map-table {
             border-collapse: collapse;
-            width: 100%;
             font-size: 9px;
-            border-spacing: 0;
+            table-layout: fixed;
         }
         .map-table th, .map-table td {
             border: 1px solid #1a1a1a;
-            padding: 8px 4px;
+            padding: 4px 2px;
             text-align: center;
-            min-width: 90px;
         }
-        .map-table th:first-child, .map-table td:first-child {
+        .map-table th.event-header {
+            min-width: 120px;
+        }
+        .map-table .col-staff {
             position: sticky;
             left: 0;
             background: #0d0d0d;
             z-index: 20;
             text-align: left;
-            min-width: 140px;
+            width: 140px;
             font-weight: 800;
             border-right: 2px solid #1a1a1a;
         }
-        .map-table thead th {
-            background: #111;
-            z-index: 10;
-        }
-
-        .shift-tag {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 18px;
-            height: 18px;
-            border-radius: 3px;
-            font-size: 8px;
+        
+        .shift-cell {
+            width: 25px;
             font-weight: 900;
-            margin: 1px;
-            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 8px;
         }
 
         /* Legenda */
@@ -114,32 +103,18 @@
             margin-right: 6px;
         }
 
-        /* Calendário Styles */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 1px;
             background-color: #1a1a1a;
-            border: 1px solid #1a1a1a;
             border-radius: 8px;
             overflow: hidden;
         }
         .calendar-day {
             background-color: #050505;
-            min-height: 180px;
+            min-height: 150px;
             padding: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .calendar-event {
-            background: #0f172a;
-            border-left: 4px solid #6366f1;
-            padding: 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
         }
     </style>
 </head>
@@ -168,6 +143,7 @@
                 <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 text-zinc-500 py-2 rounded text-[8px] font-bold uppercase">Import</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
             </div>
+            <button onclick="resetSystem()" class="w-full text-zinc-800 hover:text-red-900 text-[8px] font-black uppercase tracking-widest transition">Limpar Sistema</button>
         </div>
     </aside>
 
@@ -190,22 +166,19 @@
                             </div>
                         </div>
                         <div class="flex gap-2 no-print">
-                            <button onclick="addShift()" class="bg-zinc-800 px-3 py-2 rounded text-[9px] font-black text-zinc-400 uppercase">+ Fase</button>
-                            <button onclick="printSingleEvent()" class="bg-white text-black px-4 py-2 rounded text-[9px] font-black uppercase">Imprimir</button>
+                            <button onclick="printSingleEvent()" class="bg-white text-black px-4 py-2 rounded text-[9px] font-black uppercase italic">🖨️ Imprimir Ficha</button>
                         </div>
                     </header>
                     <div class="rounded-xl border border-zinc-900 bg-zinc-900/10 overflow-hidden">
                         <table class="w-full border-collapse">
                             <thead>
                                 <tr class="bg-zinc-900 text-[8px] font-black text-zinc-500 uppercase tracking-widest">
-                                    <th class="p-2 w-24">Horário</th>
+                                    <th class="p-2 w-24">Turno / Hora</th>
                                     <th class="p-2 border-l border-zinc-800">Técnicos</th>
                                     <th class="p-2 border-l border-zinc-800">Produção</th>
                                     <th class="p-2 border-l border-zinc-800">Bilheteira</th>
                                     <th class="p-2 border-l border-zinc-800">Portas</th>
-                                    <th class="p-2 border-l border-zinc-800">Bar</th>
-                                    <th class="p-2 border-l border-zinc-800">Segurança</th>
-                                    <th class="p-2 w-8 no-print"></th>
+                                    <th class="p-2 border-l border-zinc-800">Bar / Seg.</th>
                                 </tr>
                             </thead>
                             <tbody id="shiftsBody" class="divide-y divide-zinc-900/50"></tbody>
@@ -213,33 +186,17 @@
                     </div>
                 </div>
                 <div id="emptyState" class="flex-1 flex flex-col items-center justify-center h-64 border border-dashed border-zinc-900 rounded-2xl text-zinc-800 uppercase font-black text-[10px]">
-                    Nenhum evento selecionado
+                    Selecione ou crie um evento
                 </div>
             </div>
-        </div>
-
-        <!-- Calendário -->
-        <div id="calendarView" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h2 class="text-xl font-black uppercase italic italic">Calendário de Produção</h2>
-                    <p id="weekRangeLabel" class="text-[10px] text-indigo-400 uppercase font-bold tracking-widest mt-1">...</p>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="changeWeek(-1)" class="bg-zinc-900 px-3 py-1.5 rounded text-xs">◀ Ant</button>
-                    <button onclick="goToToday()" class="bg-zinc-800 px-4 py-1.5 rounded text-xs font-bold">Hoje</button>
-                    <button onclick="changeWeek(1)" class="bg-zinc-900 px-3 py-1.5 rounded text-xs">Próx ▶</button>
-                </div>
-            </div>
-            <div class="calendar-grid" id="calendarDays"></div>
         </div>
 
         <!-- Mapa de Turnos -->
         <div id="counterView" class="hidden">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-xl font-black uppercase italic">Mapa Geral de Turnos</h2>
-                    <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-1">Alocações e Horários</p>
+                    <h2 class="text-xl font-black uppercase italic">Mapa Estruturado de Turnos</h2>
+                    <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-1">M: Manhã | T: Tarde | N: Noite | D: Desm.</p>
                 </div>
                 <button onclick="printTurnos()" class="bg-indigo-600 px-4 py-2 rounded text-[10px] font-black uppercase">🖨️ Imprimir Mapa</button>
             </div>
@@ -252,35 +209,44 @@
                     <div id="venueLegend" class="flex flex-wrap gap-4"></div>
                 </div>
                 <div>
-                    <h3 class="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-4">Totais Mensais</h3>
+                    <h3 class="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-4">Volume de Trabalho</h3>
                     <div id="monthlyCounterGrid" class="grid grid-cols-2 gap-2"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Outras vistas simplificadas -->
-        <div id="staffView" class="hidden staff-content"></div>
-        <div id="venuesView" class="hidden venues-content"></div>
+        <!-- Outras vistas -->
+        <div id="calendarView" class="hidden"><div class="calendar-grid" id="calendarDays"></div></div>
+        <div id="staffView" class="hidden"></div>
+        <div id="venuesView" class="hidden"></div>
 
     </main>
 
     <script>
-        const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
+        const APP_COLUMNS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar'];
         const VENUE_COLORS = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316'];
-        
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_v4')) || {
+        const DEFAULT_SHIFTS = [
+            { id: 'M', label: 'MANHÃ', time: '09:00' },
+            { id: 'T', label: 'TARDE', time: '14:30' },
+            { id: 'N', label: 'NOITE', time: '20:00' },
+            { id: 'D', label: 'DESM.', time: '23:30' }
+        ];
+
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v5')) || {
             events: [],
-            staff: { 
-                "rs": { name: "Rita Sousa" }, "mv": { name: "Madalena Victorino" }, "gs": { name: "Giacomo Scalisi" },
-                "ss": { name: "Sandra Sanches" }, "is": { name: "Inderjeet Singh" }, "g": { name: "Gurpreet Singh" }
-            },
-            venues: { "TP": "Teatro de Palha", "EN": "Escola Nova", "NB": "Novo Bowing" },
+            staff: { "rs": { name: "Rita Sousa" }, "mv": { name: "Madalena Victorino" } },
+            venues: { "TP": "Teatro de Palha", "EN": "Escola Nova" },
             activeEventId: null
         };
 
-        let currentWeekDate = new Date();
+        function saveData() { localStorage.setItem('backstage_pro_v5', JSON.stringify(appData)); }
 
-        function saveData() { localStorage.setItem('backstage_pro_v4', JSON.stringify(appData)); }
+        function resetSystem() {
+            if(confirm("ATENÇÃO: Isto irá apagar TODOS os dados permanentemente. Continuar?")) {
+                localStorage.removeItem('backstage_pro_v5');
+                location.reload();
+            }
+        }
 
         function switchTab(tab) {
             ['events', 'calendar', 'staff', 'venues', 'counter'].forEach(t => {
@@ -289,26 +255,10 @@
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
-            
             if(tab === 'counter') updateTurnosMap();
             if(tab === 'calendar') renderCalendar();
             if(tab === 'staff') renderStaffManager();
             if(tab === 'venues') renderVenuesManager();
-        }
-
-        /* Gestão de Agenda */
-        function renderEventList() {
-            const list = document.getElementById('eventList');
-            const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-            list.innerHTML = sorted.map(ev => `
-                <div class="relative group">
-                    <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-2.5 rounded border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900 border-zinc-900'} transition">
-                        <div class="text-[7px] font-black text-indigo-400 uppercase mb-1">${ev.date ? ev.date.split('-').reverse().join('/') : 'S/ DATA'}</div>
-                        <div class="text-[10px] font-bold text-white truncate">${ev.name}</div>
-                    </button>
-                    <button onclick="deleteEvent('${ev.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-zinc-700 hover:text-red-500 transition">×</button>
-                </div>
-            `).join('');
         }
 
         function selectEvent(id) {
@@ -324,13 +274,27 @@
             renderEventList();
         }
 
+        function renderEventList() {
+            const list = document.getElementById('eventList');
+            const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+            list.innerHTML = sorted.map(ev => `
+                <div class="relative group">
+                    <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-2.5 rounded border ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900 border-zinc-900'} transition">
+                        <div class="text-[7px] font-black text-indigo-400 uppercase mb-1">${ev.date ? ev.date.split('-').reverse().join('/') : 'S/ DATA'}</div>
+                        <div class="text-[10px] font-bold text-white truncate">${ev.name}</div>
+                    </button>
+                    <button onclick="deleteEvent('${ev.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-zinc-700 hover:text-red-500 transition">×</button>
+                </div>
+            `).join('');
+        }
+
         function renderShifts(ev) {
             const tbody = document.getElementById('shiftsBody');
             tbody.innerHTML = ev.shifts.map(s => `
                 <tr>
-                    <td class="p-1 align-top text-center">
-                        <textarea oninput="updateShiftField('${s.id}', 'label', this.value); adjustHeight(this)" placeholder="FASE" class="bg-transparent border-none text-[8px] font-black text-indigo-500/80 uppercase text-center p-0 focus:ring-0">${s.label || ''}</textarea>
-                        <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value); sortShifts()" class="bg-transparent border-none text-[11px] font-black text-white text-center w-full p-0 focus:ring-0">
+                    <td class="p-2 align-top text-center bg-zinc-900/30">
+                        <div class="text-[8px] font-black text-indigo-500 uppercase">${s.label}</div>
+                        <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value)" class="bg-transparent border-none text-[11px] font-black text-white text-center w-full p-0 focus:ring-0">
                     </td>
                     ${APP_COLUMNS.map(col => `
                         <td class="p-1 border-l border-zinc-900 align-top">
@@ -341,9 +305,6 @@
                                 placeholder="..." class="bg-transparent border-none text-[10px] text-zinc-300 w-full p-1 focus:ring-0">${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
-                    <td class="p-1 no-print align-top text-center">
-                        <button onclick="removeShift('${s.id}')" class="text-zinc-800 hover:text-red-500">×</button>
-                    </td>
                 </tr>
             `).join('');
             tbody.querySelectorAll('textarea').forEach(adjustHeight);
@@ -357,28 +318,11 @@
             if(shift) { shift[field] = val; saveData(); }
         }
 
-        function sortShifts() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            ev.shifts.sort((a,b) => (a.time||"00:00").localeCompare(b.time||"00:00"));
-            saveData(); renderShifts(ev);
-        }
-
-        /* Mapa de Turnos Atualizado */
+        /* Mapa de Turnos Refactorizado */
         function getVenueColor(venueName) {
-            if(!venueName) return '#333';
             const venues = Object.values(appData.venues);
             const idx = venues.indexOf(venueName);
-            return idx !== -1 ? VENUE_COLORS[idx % VENUE_COLORS.length] : '#555';
-        }
-
-        function getShiftInitial(label) {
-            if(!label) return 'T';
-            const l = label.toUpperCase();
-            if(l.includes('MONTAGEM')) return 'M';
-            if(l.includes('EVENTO')) return 'E';
-            if(l.includes('DESMONTAGEM')) return 'D';
-            if(l.includes('PORTAS')) return 'P';
-            return label.charAt(0).toUpperCase();
+            return idx !== -1 ? VENUE_COLORS[idx % VENUE_COLORS.length] : '#333';
         }
 
         function updateTurnosMap() {
@@ -387,79 +331,76 @@
             const counter = document.getElementById('monthlyCounterGrid');
             
             const sortedEvents = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-            const staffList = {}; // { id: { name, totalShifts, matrix: { eventId: [initials] } } }
+            const staffEntries = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
 
-            // Analisar dados
-            sortedEvents.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    APP_COLUMNS.forEach(col => {
-                        if(s[col]) s[col].split(/[,\n;]/).forEach(name => {
-                            const clean = name.trim();
-                            if(!clean) return;
-                            const id = clean.toLowerCase();
-                            if(!staffList[id]) staffList[id] = { name: clean, totalShifts: 0, matrix: {} };
-                            if(!staffList[id].matrix[ev.id]) staffList[id].matrix[ev.id] = [];
-                            
-                            staffList[id].matrix[ev.id].push(getShiftInitial(s.label));
-                            staffList[id].totalShifts++;
-                        });
-                    });
-                });
-            });
-
-            // Gerar Tabela
-            const staffEntries = Object.entries(staffList).sort((a,b) => a[0].localeCompare(b[0]));
-            if(staffEntries.length === 0) {
-                container.innerHTML = `<div class="p-12 text-center text-zinc-800 font-black uppercase text-xs">Sem alocações para exibir</div>`;
+            if(sortedEvents.length === 0) {
+                container.innerHTML = `<div class="p-12 text-center text-zinc-800 font-black uppercase text-xs">Crie eventos para visualizar o mapa</div>`;
                 return;
             }
 
-            let html = `<table class="map-table"><thead><tr><th>Colaborador</th>`;
+            let html = `<table class="map-table"><thead><tr><th class="col-staff">Colaborador</th>`;
+            
+            // Cabeçalhos de Eventos (M T N D)
             sortedEvents.forEach(ev => {
                 const color = getVenueColor(ev.venue);
-                html += `<th style="border-top: 3px solid ${color}">
+                html += `<th colspan="4" class="event-header" style="border-top: 3px solid ${color}">
                     <div class="text-[7px] text-zinc-500">${ev.date ? ev.date.split('-').reverse().slice(0,2).join('/') : ''}</div>
-                    <div class="truncate w-24 mx-auto">${ev.name}</div>
+                    <div class="truncate text-[9px] uppercase font-black">${ev.name}</div>
+                    <div class="flex mt-1 border-t border-zinc-900">
+                        <div class="flex-1 text-[7px] border-r border-zinc-900">M</div>
+                        <div class="flex-1 text-[7px] border-r border-zinc-900">T</div>
+                        <div class="flex-1 text-[7px] border-r border-zinc-900">N</div>
+                        <div class="flex-1 text-[7px]">D</div>
+                    </div>
                 </th>`;
             });
             html += `</tr></thead><tbody>`;
 
-            staffEntries.forEach(([id, data]) => {
-                html += `<tr><td>${data.name}</td>`;
+            // Linhas de Staff
+            const totals = {};
+            staffEntries.forEach(([code, data]) => {
+                totals[code] = 0;
+                html += `<tr><td class="col-staff">${data.name}</td>`;
+                
                 sortedEvents.forEach(ev => {
-                    const initials = data.matrix[ev.id] || [];
                     const color = getVenueColor(ev.venue);
-                    html += `<td style="${initials.length > 0 ? `background: ${color}15;` : ''}">
-                        ${initials.map(init => `<span class="shift-tag" style="background: ${color}; color: #fff;">${init}</span>`).join('')}
-                    </td>`;
+                    ['M','T','N','D'].forEach(shiftId => {
+                        const shift = ev.shifts.find(s => s.id === shiftId);
+                        let isActive = false;
+                        if(shift) {
+                            APP_COLUMNS.forEach(col => {
+                                if(shift[col] && shift[col].toLowerCase().includes(data.name.toLowerCase())) isActive = true;
+                            });
+                        }
+                        
+                        if(isActive) totals[code]++;
+                        html += `<td class="shift-cell" style="${isActive ? `background: ${color}; color: white;` : ''}">
+                            ${isActive ? shiftId : ''}
+                        </td>`;
+                    });
                 });
                 html += `</tr>`;
             });
+            
             html += `</tbody></table>`;
             container.innerHTML = html;
 
-            // Legenda de Locais
-            legend.innerHTML = Object.values(appData.venues).map(v => `
-                <div class="flex items-center text-[10px] font-bold text-zinc-400">
-                    <span class="legend-dot" style="background: ${getVenueColor(v)}"></span> ${v}
-                </div>
-            `).join('');
-
-            // Contador Simples
-            counter.innerHTML = staffEntries.map(([id, data]) => `
+            // Legenda e Contadores
+            legend.innerHTML = Object.values(appData.venues).map(v => `<div class="flex items-center text-[10px] font-bold text-zinc-400"><span class="legend-dot" style="background: ${getVenueColor(v)}"></span> ${v}</div>`).join('');
+            counter.innerHTML = staffEntries.map(([code, data]) => `
                 <div class="bg-zinc-900 p-2 rounded flex justify-between">
                     <span class="text-[10px] text-zinc-400">${data.name}</span>
-                    <span class="text-indigo-400 font-black text-[10px]">${data.totalShifts}</span>
+                    <span class="text-indigo-400 font-black text-[10px]">${totals[code]} Turnos</span>
                 </div>
             `).join('');
         }
 
-        /* Funções Auxiliares */
+        /* Core Functions */
         function createNewEvent() {
             const id = 'ev_' + Date.now();
             appData.events.unshift({
                 id, name: "Novo Evento", date: new Date().toISOString().split('T')[0], venue: "",
-                shifts: [{ id: 's1', label: 'MONTAGEM', time: '14:00' }, { id: 's2', label: 'EVENTO', time: '21:30' }]
+                shifts: JSON.parse(JSON.stringify(DEFAULT_SHIFTS)) // Copia os turnos fixos
             });
             saveData(); switchTab('events'); selectEvent(id);
         }
@@ -469,23 +410,8 @@
                 appData.events = appData.events.filter(e => e.id !== id);
                 if(appData.activeEventId === id) appData.activeEventId = null;
                 saveData(); renderEventList();
-                if(!appData.activeEventId) {
-                    document.getElementById('emptyState').classList.remove('hidden');
-                    document.getElementById('editorArea').classList.add('hidden');
-                }
+                if(!appData.activeEventId) { document.getElementById('emptyState').classList.remove('hidden'); document.getElementById('editorArea').classList.add('hidden'); }
             }
-        }
-
-        function addShift() {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            ev.shifts.push({ id: 's'+Date.now(), label:'NOVA FASE', time:'12:00' });
-            sortShifts();
-        }
-
-        function removeShift(sid) {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            ev.shifts = ev.shifts.filter(s => s.id !== sid);
-            saveData(); renderShifts(ev);
         }
 
         function processCodes(textarea, sid, col) {
@@ -516,7 +442,6 @@
             if(ev) { ev[f] = v; saveData(); if(f==='name'||f==='date') renderEventList(); }
         }
 
-        /* Staff Picker */
         function showStaffPicker(textarea, sid, col) {
             const picker = document.getElementById('quickStaffPicker');
             picker.innerHTML = Object.values(appData.staff).map(s => `
@@ -526,7 +451,6 @@
             picker.style.top = (rect.bottom + window.scrollY) + 'px';
             picker.style.left = (rect.left + window.scrollX) + 'px';
             picker.classList.remove('hidden');
-            
             const close = (e) => { if(!picker.contains(e.target) && e.target !== textarea) { picker.classList.add('hidden'); document.removeEventListener('click', close); } };
             setTimeout(() => document.addEventListener('click', close), 10);
         }
@@ -539,153 +463,38 @@
             saveData(); renderShifts(ev);
         }
 
-        /* Calendar */
-        function renderCalendar() {
-            const grid = document.getElementById('calendarDays');
-            const d = new Date(currentWeekDate);
-            const start = new Date(d.setDate(d.getDate() - d.getDay() + 1)); // Segunda
-            
-            document.getElementById('weekRangeLabel').innerText = `${start.toLocaleDateString('pt-PT', {day:'2-digit', month:'short'})} - ${new Date(d.setDate(d.getDate()+6)).toLocaleDateString('pt-PT', {day:'2-digit', month:'short', year:'numeric'})}`;
-            
-            let html = '';
-            for(let i=0; i<7; i++) {
-                const day = new Date(start); day.setDate(start.getDate() - 6 + i);
-                const iso = day.toISOString().split('T')[0];
-                const evs = appData.events.filter(e => e.date === iso);
-                
-                html += `
-                    <div class="calendar-day">
-                        <div class="text-[9px] font-black text-zinc-600 mb-2">${day.getDate()} ${day.toLocaleDateString('pt-PT', {weekday:'short'})}</div>
-                        <div class="flex-1 space-y-2">
-                            ${evs.map(e => `
-                                <div onclick="selectEvent('${e.id}'); switchTab('events')" class="calendar-event" style="border-left-color: ${getVenueColor(e.venue)}">
-                                    <div class="font-black truncate">${e.name}</div>
-                                    <div class="text-[8px] text-zinc-500 truncate">${e.venue || '...'}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            grid.innerHTML = html;
-        }
-
-        function changeWeek(v) { currentWeekDate.setDate(currentWeekDate.getDate() + (v*7)); renderCalendar(); }
-        function goToToday() { currentWeekDate = new Date(); renderCalendar(); }
-
         /* Managers */
         function renderStaffManager() {
             const view = document.getElementById('staffView');
-            view.innerHTML = `
-                <h2 class="text-xl font-black uppercase italic mb-6">Gestão de Equipa</h2>
-                <div class="flex gap-2 mb-8 bg-zinc-900 p-4 rounded-xl border border-zinc-800 max-w-lg">
-                    <input id="ns-c" placeholder="Cód" class="w-16 bg-black border-zinc-800 rounded p-2 text-xs uppercase">
-                    <input id="ns-n" placeholder="Nome Completo" class="flex-1 bg-black border-zinc-800 rounded p-2 text-xs">
-                    <button onclick="saveStaff()" class="bg-indigo-600 px-4 rounded text-[10px] font-black uppercase">Gravar</button>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    ${Object.entries(appData.staff).map(([c, d]) => `
-                        <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-800 flex justify-between items-center group">
-                            <div><span class="text-[8px] font-black text-indigo-500 mr-2 uppercase">${c}</span><span class="text-xs font-bold">${d.name}</span></div>
-                            <button onclick="delStaff('${c}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            view.innerHTML = `<h2 class="text-xl font-black uppercase mb-6">Equipa</h2><div id="staffList" class="grid grid-cols-2 md:grid-cols-4 gap-2">${Object.entries(appData.staff).map(([c, d]) => `<div class="bg-zinc-900 p-3 rounded border border-zinc-800 flex justify-between"><span><b class="text-indigo-500 uppercase mr-2 text-[8px]">${c}</b>${d.name}</span><button onclick="delStaff('${c}')" class="text-zinc-700 hover:text-red-500">×</button></div>`).join('')}</div><div class="mt-4 flex gap-2"><input id="ns-c" placeholder="Cód" class="w-12 bg-zinc-900 border-zinc-800 rounded p-2 text-xs"><input id="ns-n" placeholder="Nome" class="bg-zinc-900 border-zinc-800 rounded p-2 text-xs flex-1"><button onclick="saveStaff()" class="bg-indigo-600 px-4 rounded text-[10px] font-black uppercase">Adicionar</button></div>`;
         }
-
-        function saveStaff() {
-            const c = document.getElementById('ns-c').value.toLowerCase();
-            const n = document.getElementById('ns-n').value;
-            if(!c || !n) return;
-            appData.staff[c] = { name: n }; saveData(); renderStaffManager();
-        }
-
-        function delStaff(c) { if(confirm("Remover?")) { delete appData.staff[c]; saveData(); renderStaffManager(); } }
+        function saveStaff() { const c = document.getElementById('ns-c').value.toLowerCase(); const n = document.getElementById('ns-n').value; if(c && n) { appData.staff[c] = { name: n }; saveData(); renderStaffManager(); } }
+        function delStaff(c) { delete appData.staff[c]; saveData(); renderStaffManager(); }
 
         function renderVenuesManager() {
             const view = document.getElementById('venuesView');
-            view.innerHTML = `
-                <h2 class="text-xl font-black uppercase italic mb-6">Locais de Evento</h2>
-                <div class="flex gap-2 mb-8 bg-zinc-900 p-4 rounded-xl border border-zinc-800 max-w-lg">
-                    <input id="nv-c" placeholder="Cód" class="w-16 bg-black border-zinc-800 rounded p-2 text-xs uppercase">
-                    <input id="nv-n" placeholder="Nome do Local" class="flex-1 bg-black border-zinc-800 rounded p-2 text-xs">
-                    <button onclick="saveVenue()" class="bg-indigo-600 px-4 rounded text-[10px] font-black uppercase">Gravar</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    ${Object.entries(appData.venues).map(([c, n]) => `
-                        <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-800 flex items-center group">
-                            <span class="legend-dot" style="background: ${getVenueColor(n)}"></span>
-                            <div class="flex-1"><span class="text-[8px] font-black text-zinc-500 mr-2">${c}</span><span class="text-xs font-bold">${n}</span></div>
-                            <button onclick="delVenue('${c}')" class="text-zinc-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">×</button>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            view.innerHTML = `<h2 class="text-xl font-black uppercase mb-6">Locais</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-2">${Object.entries(appData.venues).map(([c, n]) => `<div class="bg-zinc-900 p-3 rounded border border-zinc-800 flex justify-between"><span><b class="text-zinc-500 mr-2 text-[8px]">${c}</b>${n}</span><button onclick="delVenue('${c}')" class="text-zinc-700 hover:text-red-500">×</button></div>`).join('')}</div><div class="mt-4 flex gap-2"><input id="nv-c" placeholder="Cód" class="w-12 bg-zinc-900 border-zinc-800 rounded p-2 text-xs"><input id="nv-n" placeholder="Nome Local" class="bg-zinc-900 border-zinc-800 rounded p-2 text-xs flex-1"><button onclick="saveVenue()" class="bg-indigo-600 px-4 rounded text-[10px] font-black uppercase">Adicionar</button></div>`;
         }
+        function saveVenue() { const c = document.getElementById('nv-c').value.toUpperCase(); const n = document.getElementById('nv-n').value; if(c && n) { appData.venues[c] = n; saveData(); renderVenuesManager(); } }
+        function delVenue(c) { delete appData.venues[c]; saveData(); renderVenuesManager(); }
 
-        function saveVenue() {
-            const c = document.getElementById('nv-c').value.toUpperCase();
-            const n = document.getElementById('nv-n').value;
-            if(!c || !n) return;
-            appData.venues[c] = n; saveData(); renderVenuesManager();
-        }
-
-        function delVenue(c) { if(confirm("Remover?")) { delete appData.venues[c]; saveData(); renderVenuesManager(); } }
-
-        /* Print */
+        /* Print Ficha */
         function printSingleEvent() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
-            if(!ev) return;
-            const html = `
-                <div style="font-family:sans-serif; padding:40px;">
-                    <div style="border-bottom:4px solid #000; padding-bottom:10px; margin-bottom:20px;">
-                        <h1 style="margin:0; text-transform:uppercase; font-size:32px;">${ev.name}</h1>
-                        <p style="font-weight:bold; margin:5px 0;">${ev.date.split('-').reverse().join('/')} &bull; ${ev.venue}</p>
-                    </div>
-                    <table style="width:100%; border-collapse:collapse;">
-                        <thead><tr style="background:#000; color:#fff;">
-                            <th style="padding:10px; font-size:10px;">HORÁRIO</th>
-                            ${APP_COLUMNS.map(c=>`<th style="padding:10px; font-size:10px; text-transform:uppercase;">${c}</th>`).join('')}
-                        </tr></thead>
-                        <tbody>${ev.shifts.map(s=>`
-                            <tr>
-                                <td style="border:1px solid #000; padding:8px; text-align:center; background:#eee;">
-                                    <div style="font-size:8px; font-weight:bold;">${s.label}</div>
-                                    <div style="font-size:14px; font-weight:900;">${s.time}</div>
-                                </td>
-                                ${APP_COLUMNS.map(col=>`<td style="border:1px solid #000; padding:8px; font-size:11px; vertical-align:top; white-space:pre-wrap;">${s[col]||''}</td>`).join('')}
-                            </tr>
-                        `).join('')}</tbody>
-                    </table>
-                </div>
-            `;
-            const win = window.open('', '_blank'); win.document.write(html); win.document.close();
-            setTimeout(()=> { win.print(); win.close(); }, 500);
+            const html = `<div style="font-family:sans-serif; padding:30px;"><h1 style="text-transform:uppercase; margin:0">${ev.name}</h1><p><b>DATA:</b> ${ev.date} | <b>LOCAL:</b> ${ev.venue}</p><table style="width:100%; border-collapse:collapse; margin-top:20px;"><thead><tr style="background:#000; color:#fff;"><th>HORA</th>${APP_COLUMNS.map(c=>`<th style="text-transform:uppercase; font-size:10px; padding:5px;">${c}</th>`).join('')}</tr></thead><tbody>${ev.shifts.map(s=>`<tr><td style="border:1px solid #000; padding:10px; text-align:center;"><b>${s.label}</b><br>${s.time}</td>${APP_COLUMNS.map(c=>`<td style="border:1px solid #000; padding:10px; font-size:11px;">${s[c]||''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+            const win = window.open('', '_blank'); win.document.write(html); win.document.close(); setTimeout(()=> { win.print(); win.close(); }, 500);
         }
 
         function printTurnos() {
             const mapHtml = document.getElementById('autoTurnosMap').innerHTML;
-            const legendHtml = document.getElementById('venueLegend').innerHTML;
             const win = window.open('', '_blank');
-            win.document.write(`<html><head><style>
-                body { font-family: sans-serif; padding: 20px; }
-                .map-table { width: 100%; border-collapse: collapse; font-size: 10px; }
-                .map-table th, .map-table td { border: 1px solid #000; padding: 5px; }
-                .shift-tag { border: 1px solid #000; padding: 2px 4px; margin: 1px; display: inline-block; font-weight: bold; }
-                .legend-dot { width: 10px; height: 10px; display: inline-block; margin-right: 5px; }
-            </style></head><body>
-                <h1 style="text-transform:uppercase">Mapa de Turnos de Produção</h1>
-                <div style="margin-bottom: 20px">${legendHtml}</div>
-                ${mapHtml}
-            </body></html>`);
-            win.document.close();
-            setTimeout(()=> { win.print(); win.close(); }, 500);
+            win.document.write(`<html><head><style>body { font-family:sans-serif; } .map-table { width:100%; border-collapse:collapse; font-size:8px; } .map-table th, .map-table td { border:1px solid #000; padding:2px; } .col-staff { width: 100px; font-weight:bold; }</style></head><body><h1>MAPA GERAL DE TURNOS</h1>${mapHtml}</body></html>`);
+            win.document.close(); setTimeout(()=> { win.print(); win.close(); }, 500);
         }
 
         function exportData() {
             const blob = new Blob([JSON.stringify(appData)], {type:'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'backstage_pro_v4.json'; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'backstage_pro.json'; a.click();
         }
 
         function importData(e) {
