@@ -26,13 +26,14 @@
         /* Mapa de Turnos Dinâmico */
         .map-container { overflow-x: auto; border: 1px solid #1a1a1a; border-radius: 12px; background: #0a0a0a; margin-bottom: 20px; }
         .map-table { border-collapse: collapse; font-size: 8px; width: 100%; min-width: 800px; }
-        .map-table th, .map-table td { border: 1px solid #1a1a1a; text-align: center; height: 24px; vertical-align: middle; padding: 0 2px; }
+        .map-table th, .map-table td { border: 1px solid #1a1a1a; text-align: center; height: 26px; vertical-align: middle; padding: 0; }
         
-        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 120px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 8px !important; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 130px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 8px !important; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .shift-cell { width: 16px; transition: all 0.2s; position: relative; font-size: 7px; font-weight: bold; color: rgba(255,255,255,0.3); }
-        .shift-cell.active { color: white; cursor: help; }
-        .shift-cell.active:hover { filter: brightness(1.2); }
+        /* Estilo da Célula: No Software é apenas Cor */
+        .shift-cell { width: 18px; transition: all 0.2s; position: relative; font-size: 0px; } 
+        .shift-cell.active { cursor: help; border: 1px solid rgba(255,255,255,0.05); }
+        .shift-cell.active:hover { filter: brightness(1.3); transform: scale(1.1); z-index: 10; }
 
         .day-header { border-bottom: 2px solid #1a1a1a !important; font-size: 9px; padding: 6px 0; background: #0f0f0f; }
         .sub-header { font-size: 7px; color: #555; background: #080808; height: 18px !important; font-weight: 900; }
@@ -51,14 +52,16 @@
             table { width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid black !important; padding: 1px; text-align: center; vertical-align: middle; font-size: 7px; color: black !important; }
             .map-table { min-width: 100%; table-layout: auto; }
-            .col-staff { position: static; background: transparent; width: 80px; border-right: 1px solid black !important; font-size: 7px; }
-            .shift-cell { font-size: 6px !important; color: black !important; width: auto; }
-            .shift-cell.active { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #eee !important; border: 1px solid #ccc !important; }
+            .col-staff { position: static; background: transparent; width: 90px; border-right: 1px solid black !important; font-size: 8px; }
+            /* Na Impressão: Mostra a Sigla e remove cores fortes */
+            .shift-cell { font-size: 7px !important; color: black !important; width: auto; background-color: transparent !important; }
+            .shift-cell.active { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #f2f2f2 !important; border: 0.5pt solid black !important; font-weight: bold; }
         }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
+    <!-- Sidebar -->
     <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
         <div class="p-4 border-b border-zinc-900">
             <h1 class="text-lg font-black tracking-tighter italic uppercase leading-none">Backstage<span class="text-indigo-500">PRO</span></h1>
@@ -87,7 +90,7 @@
 
     <main class="flex-1 overflow-y-auto bg-zinc-950 p-6">
         
-        <!-- Vista Agenda -->
+        <!-- Agenda -->
         <div id="eventsView">
             <div class="flex gap-6">
                 <div class="w-48 shrink-0 no-print">
@@ -105,6 +108,7 @@
                         </div>
                         <div class="flex gap-2">
                             <button onclick="duplicateEvent()" class="bg-zinc-800 text-zinc-300 px-4 py-2 rounded text-[9px] font-black uppercase italic">Duplicar</button>
+                            <button onclick="deleteEvent()" class="bg-zinc-900 text-red-500 hover:bg-red-900/20 px-4 py-2 rounded text-[9px] font-black uppercase italic">Eliminar</button>
                             <button onclick="printSingleEvent()" class="bg-white text-black px-4 py-2 rounded text-[9px] font-black uppercase italic">Imprimir Ficha</button>
                         </div>
                     </div>
@@ -130,34 +134,34 @@
             </div>
         </div>
 
-        <!-- Vista Mensal (Calendário) -->
+        <!-- Vista Mensal -->
         <div id="monthlyView" class="hidden">
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h2 class="text-xl font-black uppercase italic" id="calendarTitle"></h2>
-                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Resumo mensal de produções</p>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Resumo mensal</p>
                 </div>
                 <div class="flex gap-2 no-print">
-                    <button onclick="changeMonth(-1)" class="bg-zinc-900 p-2 rounded">◀</button>
+                    <button onclick="changeMonth(-1)" class="bg-zinc-900 p-2 rounded text-xs">◀</button>
                     <button onclick="renderCalendar(true)" class="bg-zinc-900 px-4 py-2 rounded text-[10px] font-bold uppercase">Hoje</button>
-                    <button onclick="changeMonth(1)" class="bg-zinc-900 p-2 rounded">▶</button>
+                    <button onclick="changeMonth(1)" class="bg-zinc-900 p-2 rounded text-xs">▶</button>
                 </div>
             </div>
             <div id="calendarHeaderRow" class="grid grid-cols-7 gap-1 mb-2"></div>
             <div id="calendarGrid" class="calendar-grid"></div>
         </div>
 
-        <!-- Mapa de Turnos Dinâmico -->
+        <!-- Mapa de Turnos -->
         <div id="counterView" class="hidden">
             <div class="flex justify-between items-center mb-4">
                 <div>
                     <h2 class="text-xl font-black uppercase italic">Mapa de Turnos</h2>
-                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Vista Dinâmica com Turnos Extras</p>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Apenas Cores (Software) / Siglas (Impressão)</p>
                 </div>
                 <div class="flex gap-2 no-print">
-                    <button onclick="changeWeek(-1)" class="bg-zinc-900 p-2 rounded">◀</button>
+                    <button onclick="changeWeek(-1)" class="bg-zinc-900 p-2 rounded text-xs">◀</button>
                     <button onclick="renderWeeklyMap(true)" class="bg-zinc-900 px-4 py-2 rounded text-[10px] font-bold uppercase">Hoje</button>
-                    <button onclick="changeWeek(1)" class="bg-zinc-900 p-2 rounded">▶</button>
+                    <button onclick="changeWeek(1)" class="bg-zinc-900 p-2 rounded text-xs">▶</button>
                     <button onclick="printWeeklyMap()" class="bg-indigo-600 px-4 py-2 rounded text-[10px] font-bold uppercase">🖨️ Imprimir Mapa</button>
                 </div>
             </div>
@@ -183,22 +187,20 @@
         const TURNOS_DEFAULT = [
             { id: 's_m', label: 'MANHÃ', time: '09:00' },
             { id: 's_t', label: 'TARDE', time: '14:00' },
-            { id: 's_n', label: 'NOITE', time: '19:00' },
-            { id: 's_d', label: 'DESMONTAGEM', time: '23:00' }
+            { id: 's_n', label: 'NOITE', time: '19:00' }
         ];
 
         const defaultStaff = {
             "rs": { name: "Rita Sousa" }, "mv": { name: "Madalena Victorino" }, "gs": { name: "Giacomo Scalisi" },
             "ss": { name: "Sandra Sanches" }, "is": { name: "Inderjeet Singh" }, "g": { name: "Gurpreet Singh" },
-            "as": { name: "Alexandra Silva" }, "rf": { name: "Ricardo Falcão" }, "mm": { name: "Marisa Miranda" },
-            "jm": { name: "Joaquim Madaíl" }, "aj": { name: "Ajudante João" }, "am": { name: "Ajudante Manuel" }
+            "as": { name: "Alexandra Silva" }, "rf": { name: "Ricardo Falcão" }, "mm": { name: "Marisa Miranda" }
         };
 
         const defaultVenues = {
             "TP": "Teatro de Palha", "EN": "Escola Nova", "NB": "Novo Bowing", "NANC": "Novo Ano Novo Circo"
         };
 
-        let appData = JSON.parse(localStorage.getItem('backstage_pro_v9')) || {
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v10')) || {
             events: [],
             staff: defaultStaff,
             venues: defaultVenues,
@@ -208,8 +210,8 @@
         let currentDate = new Date();
         let currentMonthDate = new Date();
 
-        function saveData() { localStorage.setItem('backstage_pro_v9', JSON.stringify(appData)); }
-        function resetSystem() { if(confirm("Cuidado: Isto apaga todos os dados. Continuar?")) { localStorage.removeItem('backstage_pro_v9'); location.reload(); } }
+        function saveData() { localStorage.setItem('backstage_pro_v10', JSON.stringify(appData)); }
+        function resetSystem() { if(confirm("Cuidado: Isto apaga todos os dados.")) { localStorage.removeItem('backstage_pro_v10'); location.reload(); } }
 
         function switchTab(tab) {
             ['events', 'staff', 'venues', 'counter', 'monthly'].forEach(t => {
@@ -220,17 +222,13 @@
             });
             document.getElementById(tab + 'View').classList.remove('hidden');
             document.getElementById('btn-tab-' + tab).classList.add('active');
-            
             if(tab === 'counter') renderWeeklyMap();
             if(tab === 'monthly') renderCalendar();
             if(tab === 'staff') renderManager('staff');
             if(tab === 'venues') renderManager('venues');
         }
 
-        function changeMonth(v) { 
-            currentMonthDate.setMonth(currentMonthDate.getMonth() + v); 
-            renderCalendar(); 
-        }
+        function changeMonth(v) { currentMonthDate.setMonth(currentMonthDate.getMonth() + v); renderCalendar(); }
 
         function renderCalendar(resetToToday = false) {
             if(resetToToday) currentMonthDate = new Date();
@@ -259,7 +257,7 @@
                     <div class="calendar-day-header"><span class="${isToday ? 'bg-indigo-600 text-white w-5 h-5 flex items-center justify-center rounded-full' : ''}">${curr.getDate()}</span></div>
                     <div class="space-y-1">${dayEvents.map(ev => {
                         const info = getVenueInfo(ev.venue);
-                        return `<div onclick="selectEvent('${ev.id}'); switchTab('events');" class="calendar-event" style="background: ${info.color}" title="${ev.name}">[${info.code}] ${ev.name}</div>`;
+                        return `<div onclick="selectEvent('${ev.id}'); switchTab('events');" class="calendar-event" style="background: ${info.color}">[${info.code}] ${ev.name}</div>`;
                     }).join('')}</div></div>`;
                 curr.setDate(curr.getDate() + 1);
             }
@@ -280,13 +278,27 @@
         function selectEvent(id) {
             appData.activeEventId = id;
             const ev = appData.events.find(e => e.id === id);
-            if (!ev) return;
+            if (!ev) {
+                document.getElementById('editorArea').classList.add('hidden');
+                return;
+            }
             document.getElementById('editorArea').classList.remove('hidden');
             document.getElementById('curEventName').value = ev.name;
             document.getElementById('curEventDate').value = ev.date;
             document.getElementById('curEventVenue').value = ev.venue;
             renderShifts(ev);
             renderEventList();
+        }
+
+        function deleteEvent() {
+            if(!appData.activeEventId) return;
+            if(confirm("Tens a certeza que queres eliminar este evento permanentemente?")) {
+                appData.events = appData.events.filter(e => e.id !== appData.activeEventId);
+                appData.activeEventId = null;
+                saveData();
+                document.getElementById('editorArea').classList.add('hidden');
+                renderEventList();
+            }
         }
 
         function renderShifts(ev) {
@@ -325,24 +337,15 @@
         function addShift() {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(!ev) return;
-            const newShift = { 
-                id: 'extra_' + Date.now(), 
-                label: 'EXTRA', 
-                time: '00:00', 
-                tecnicos: '', producao: '', bilheteira: '', portas: '', bar: '', seguranca: '' 
-            };
+            const newShift = { id: 'extra_' + Date.now(), label: 'EXTRA', time: '00:00', tecnicos: '', producao: '', bilheteira: '', portas: '', bar: '', seguranca: '' };
             ev.shifts.push(newShift);
-            saveData(); 
-            renderShifts(ev); 
+            saveData(); renderShifts(ev); 
         }
 
         function deleteShift(sid) {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(!ev) return;
-            if(confirm("Deseja apagar este turno?")) {
-                ev.shifts = ev.shifts.filter(s => s.id !== sid);
-                saveData(); renderShifts(ev);
-            }
+            if(confirm("Apagar turno?")) { ev.shifts = ev.shifts.filter(s => s.id !== sid); saveData(); renderShifts(ev); }
         }
 
         function getVenueInfo(venueName) {
@@ -354,7 +357,7 @@
             return { code: "?", color: "#525252", name: venueName || "N/A" };
         }
 
-        // --- LÓGICA DO MAPA DINÂMICO ---
+        // --- MAPA DE TURNOS ---
         function renderWeeklyMap(resetToToday = false) {
             if(resetToToday) currentDate = new Date();
             const container = document.getElementById('weeklyMap');
@@ -368,14 +371,10 @@
                 days.push(cur.toISOString().split('T')[0]);
             }
 
-            // 1. Identificar todos os turnos únicos em cada dia para criar colunas dinâmicas
             const dayShiftStructure = days.map(dateStr => {
                 const eventsOnDay = appData.events.filter(e => e.date === dateStr);
-                const shiftLabels = new Set(['MANHÃ', 'TARDE', 'NOITE']); // Base mínima
-                eventsOnDay.forEach(ev => {
-                    ev.shifts.forEach(s => shiftLabels.add(s.label.toUpperCase().trim()));
-                });
-                // Ordenar: M, T, N, e depois os outros por hora ou nome
+                const shiftLabels = new Set(['MANHÃ', 'TARDE', 'NOITE']);
+                eventsOnDay.forEach(ev => ev.shifts.forEach(s => shiftLabels.add(s.label.toUpperCase().trim())));
                 const sortedLabels = Array.from(shiftLabels).sort((a, b) => {
                     const order = { 'MANHÃ': 1, 'MANHA': 1, 'TARDE': 2, 'NOITE': 3 };
                     if (order[a] && order[b]) return order[a] - order[b];
@@ -388,54 +387,43 @@
 
             const staffSorted = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
             
-            // 2. Legenda de Locais
             const legend = document.getElementById('venueLegend');
             legend.innerHTML = Object.entries(appData.venues).map(([code, name], i) => {
                 const color = VENUE_PALETTE[i % VENUE_PALETTE.length];
-                return `<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full" style="background:${color}"></div><span class="text-[9px] font-bold uppercase text-zinc-400 legend-item"><b>${code}:</b> ${name}</span></div>`;
+                return `<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full" style="background:${color}"></div><span class="text-[9px] font-bold uppercase text-zinc-400"><b>${code}:</b> ${name}</span></div>`;
             }).join('');
 
-            // 3. Cabeçalho Principal (Dias)
             let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th>`;
             dayShiftStructure.forEach(day => {
                 const dObj = new Date(day.dateStr);
-                const dayName = dObj.toLocaleDateString('pt-PT', {weekday: 'short'});
-                const dayNum = dObj.getDate();
-                html += `<th colspan="${day.labels.length}" class="day-header uppercase font-black text-[7px] border-l-2 border-zinc-800">${dayName} ${dayNum}</th>`;
+                html += `<th colspan="${day.labels.length}" class="day-header uppercase font-black text-[7px] border-l-2 border-zinc-800">${dObj.toLocaleDateString('pt-PT', {weekday: 'short'})} ${dObj.getDate()}</th>`;
             });
             html += `</tr><tr>`;
             
-            // 4. Sub-cabeçalho (Labels dos Turnos)
             dayShiftStructure.forEach(day => {
                 day.labels.forEach(label => {
                     let short = label.charAt(0);
                     if (label.startsWith('EXTRA')) short = 'EX';
-                    if (label.startsWith('DESMON')) short = 'D';
-                    html += `<th class="sub-header border-l border-zinc-900/50" title="${label}">${short}</th>`;
+                    html += `<th class="sub-header border-l border-zinc-900/30" title="${label}">${short}</th>`;
                 });
             });
             html += `</tr></thead><tbody>`;
 
-            // 5. Linhas de Staff
             staffSorted.forEach(([code, data]) => {
                 const staffName = data.name.toLowerCase().trim();
                 html += `<tr><td class="col-staff uppercase" title="${data.name}">${data.name}</td>`;
                 
                 dayShiftStructure.forEach(day => {
                     const dayEvents = appData.events.filter(e => e.date === day.dateStr);
-                    
                     day.labels.forEach(label => {
                         let activeCode = "", activeColor = "", activeVenueName = "";
-                        
                         dayEvents.forEach(ev => {
                             const matchingShift = ev.shifts.find(s => s.label.toUpperCase().trim() === label);
-
                             if(matchingShift) {
                                 let isWorking = false;
                                 SHIFT_COLS.forEach(c => {
                                     if(matchingShift[c] && matchingShift[c].toLowerCase().includes(staffName)) isWorking = true;
                                 });
-
                                 if(isWorking) {
                                     const info = getVenueInfo(ev.venue);
                                     activeCode = info.code;
@@ -445,9 +433,9 @@
                             }
                         });
 
-                        html += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/50" 
+                        html += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/30" 
                                      style="background-color: ${activeCode ? activeColor : 'transparent'}" 
-                                     title="${activeVenueName ? activeVenueName + ' (' + activeCode + ')' : ''}">${activeCode}</td>`;
+                                     title="${activeVenueName ? activeVenueName : ''}">${activeCode}</td>`;
                     });
                 });
                 html += `</tr>`;
@@ -461,7 +449,7 @@
             const content = document.getElementById('weeklyMap').innerHTML;
             const legend = document.getElementById('venueLegend').innerHTML;
             const win = window.open('', '_blank');
-            win.document.write(`<html><head><style>@page{size:landscape;margin:5mm;} body{font-family:sans-serif;padding:10px;background:white;color:black;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid black !important;text-align:center;font-size:7px;height:18px;color:black !important;} .col-staff{text-align:left !important;font-weight:bold;width:90px;padding-left:4px;font-size:8px;} .shift-cell{font-size:7px !important; color: black !important;} .no-print,button{display:none !important;} #venueLegend{margin-top:10px;display:flex;flex-wrap:wrap;} .sub-header{background:#f0f0f0;font-size:6px;}</style></head><body>${content}<div id="venueLegend">${legend}</div></body></html>`);
+            win.document.write(`<html><head><style>@page{size:landscape;margin:5mm;} body{font-family:sans-serif;padding:10px;background:white;color:black;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid black !important;text-align:center;font-size:7px;height:20px;color:black !important;} .col-staff{text-align:left !important;font-weight:bold;width:100px;padding-left:4px;font-size:8px;} .shift-cell{font-size:7px !important; color: black !important; background-color: transparent !important;} .shift-cell.active{background:#eee !important; font-weight:bold;} .no-print,button{display:none !important;} #venueLegend{margin-top:10px;display:flex;flex-wrap:wrap;} .sub-header{background:#f0f0f0;font-size:6px;}</style></head><body>${content}<div id="venueLegend">${legend}</div></body></html>`);
             win.document.close(); setTimeout(() => { win.print(); win.close(); }, 500);
         }
 
@@ -547,15 +535,15 @@
         }
 
         function deleteEntry(t, c) { if(confirm("Eliminar?")) { if(t === 'staff') delete appData.staff[c.toLowerCase()]; else delete appData.venues[c]; saveData(); renderManager(t); } }
-        function exportData() { const b = new Blob([JSON.stringify(appData)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_backup.json'; a.click(); }
+        function exportData() { const b = new Blob([JSON.stringify(appData)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup_backstage.json'; a.click(); }
         function importData(e) { const fr = new FileReader(); fr.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); }; fr.readAsText(e.target.files[0]); }
 
         function generatePrintHTML(events) {
             return events.map(ev => `
                 <div class="print-page">
-                    <h1 style="font-size:24px; font-weight:900; margin:0; border-bottom:3px solid black; padding-bottom:5px;">${ev.name.toUpperCase()}</h1>
+                    <h1 style="font-size:22px; font-weight:900; margin:0; border-bottom:2px solid black;">${ev.name.toUpperCase()}</h1>
                     <p style="font-weight:700; margin:10px 0;">Data: ${ev.date.split('-').reverse().join('/')} | Local: ${ev.venue}</p>
-                    <table><thead><tr style="background:#eee;"><th style="width:100px">Turno</th><th>Técnicos</th><th>Produção</th><th>Bilheteira</th><th>Portas</th><th>Bar</th><th>Segur.</th></tr></thead>
+                    <table><thead><tr style="background:#eee;"><th style="width:90px">Turno</th><th>Técnicos</th><th>Produção</th><th>Bilheteira</th><th>Portas</th><th>Bar</th><th>Segur.</th></tr></thead>
                     <tbody>${ev.shifts.map(s => `<tr><td style="text-align:center"><b>${s.label}</b><br>${s.time}</td><td>${s.tecnicos.replace(/\n/g, '<br>')}</td><td>${s.producao.replace(/\n/g, '<br>')}</td><td>${s.bilheteira.replace(/\n/g, '<br>')}</td><td>${s.portas.replace(/\n/g, '<br>')}</td><td>${s.bar.replace(/\n/g, '<br>')}</td><td>${s.seguranca.replace(/\n/g, '<br>')}</td></tr>`).join('')}</tbody></table>
                 </div>`).join('');
         }
