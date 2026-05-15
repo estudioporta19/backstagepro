@@ -864,7 +864,14 @@
         }
 
         function deleteEntry(t, c) { if(confirm("Eliminar?")) { if(t === 'staff') delete appData.staff[c.toLowerCase()]; else delete appData.venues[c]; saveData(); renderManager(t); } }
-        function exportData() { const b = new Blob([JSON.stringify(appData)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup_backstage.json'; a.click(); }
+        function exportData() {
+    const dateStr = new Date().toISOString().slice(0,10);
+    const b = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = `Backstage_Producao_${dateStr}.json`;
+    a.click();
+}
         function importData(e) { const fr = new FileReader(); fr.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); }; fr.readAsText(e.target.files[0]); }
 
         window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
