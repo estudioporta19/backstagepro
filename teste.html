@@ -118,7 +118,7 @@
             font-weight: 900;
         }
 
-        /* Calendário Styles */
+        /* Calendário Styles Melhorado */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -130,23 +130,49 @@
         }
         .calendar-day {
             background-color: #050505;
-            min-height: 120px;
+            min-height: 180px;
             padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
         .calendar-day.today {
             background-color: #0c0c0e;
         }
         .calendar-event {
-            background: #1e1b4b;
-            border-left: 3px solid #6366f1;
-            padding: 4px 6px;
+            background: #0f172a;
+            border-left: 4px solid #6366f1;
+            padding: 6px;
             border-radius: 4px;
             font-size: 10px;
-            margin-bottom: 4px;
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: all 0.2s;
+            border-bottom: 1px solid #1e293b;
         }
-        .calendar-event:hover { transform: scale(1.02); background: #2d2a77; }
+        .calendar-event:hover { background: #1e293b; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+        
+        .cal-shift-pill {
+            display: inline-block;
+            background: #312e81;
+            color: #a5b4fc;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-size: 8px;
+            font-weight: 800;
+            margin-right: 3px;
+            margin-top: 2px;
+        }
+
+        .cal-staff-tag {
+            color: #94a3b8;
+            font-size: 8px;
+            border-top: 1px solid #1e293b;
+            margin-top: 4px;
+            padding-top: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -255,8 +281,8 @@
         <div id="calendarView" class="hidden">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-lg font-black uppercase italic">Calendário Semanal</h2>
-                    <p id="weekRangeLabel" class="text-[10px] text-indigo-400 uppercase font-bold tracking-widest mt-1">S12 - S18 Outubro</p>
+                    <h2 class="text-lg font-black uppercase italic">Mapa Semanal de Trabalho</h2>
+                    <p id="weekRangeLabel" class="text-[10px] text-indigo-400 uppercase font-bold tracking-widest mt-1">...</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="changeWeek(-1)" class="bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded text-xs font-bold transition">◀ Ant.</button>
@@ -274,7 +300,6 @@
                 <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-600">Sábado</div>
                 <div class="bg-zinc-900/50 p-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-600">Domingo</div>
                 
-                <!-- Os dias serão gerados aqui -->
                 <div id="calendarDays" class="contents"></div>
             </div>
         </div>
@@ -381,7 +406,7 @@
             if(tab === 'events') renderEventList();
         }
 
-        /* Funções de Calendário */
+        /* Funções de Calendário Semanal com Turnos Visíveis */
         function changeWeek(diff) {
             currentWeekDate.setDate(currentWeekDate.getDate() + (diff * 7));
             renderCalendar();
@@ -396,10 +421,10 @@
             const daysContainer = document.getElementById('calendarDays');
             const rangeLabel = document.getElementById('weekRangeLabel');
             
-            // Obter segunda-feira da semana atual
+            // Segunda-feira da semana em visualização
             const d = new Date(currentWeekDate);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            const dayNum = d.getDay();
+            const diff = d.getDate() - dayNum + (dayNum === 0 ? -6 : 1);
             const monday = new Date(d.setDate(diff));
             
             const sunday = new Date(monday);
@@ -419,17 +444,38 @@
                 const dayEvents = appData.events.filter(e => e.date === curStr);
 
                 html += `
-                    <div class="calendar-day ${isToday ? 'today' : ''}">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-[10px] font-black ${isToday ? 'text-indigo-400' : 'text-zinc-700'}">${current.getDate()}</span>
+                    <div class="calendar-day ${isToday ? 'today border border-indigo-500/30' : ''}">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] font-black ${isToday ? 'text-indigo-400' : 'text-zinc-600'}">${current.getDate()}</span>
+                            <span class="text-[8px] font-bold text-zinc-800 uppercase">${current.toLocaleDateString('pt-PT', { weekday: 'short' })}</span>
                         </div>
-                        <div class="space-y-1">
-                            ${dayEvents.map(e => `
+                        <div class="space-y-2 overflow-y-auto max-h-[220px] pr-1">
+                            ${dayEvents.length === 0 ? '<div class="text-[8px] text-zinc-900 font-bold uppercase tracking-tighter mt-4 italic text-center">Vazio</div>' : ''}
+                            ${dayEvents.map(e => {
+                                // Recolher todos os técnicos alocados no dia para este evento
+                                const allStaff = new Set();
+                                e.shifts.forEach(s => {
+                                    APP_COLUMNS.forEach(col => {
+                                        if(s[col]) s[col].split(/[,\n;]/).forEach(n => { if(n.trim()) allStaff.add(n.trim()); });
+                                    });
+                                });
+
+                                return `
                                 <div onclick="selectEventFromCalendar('${e.id}')" class="calendar-event">
-                                    <div class="font-bold truncate">${e.name}</div>
-                                    <div class="text-[8px] text-zinc-400 truncate opacity-70">${e.venue || 'Local n/d'}</div>
+                                    <div class="font-black truncate uppercase text-white leading-none">${e.name}</div>
+                                    <div class="text-[8px] text-zinc-500 truncate mt-0.5">${e.venue || 'Sem Local'}</div>
+                                    
+                                    <div class="flex flex-wrap mt-2">
+                                        ${e.shifts.map(s => `<span class="cal-shift-pill">${s.time}</span>`).join('')}
+                                    </div>
+
+                                    ${allStaff.size > 0 ? `
+                                    <div class="cal-staff-tag">
+                                        ${Array.from(allStaff).map(name => `<span>${name}</span>`).join('<span class="text-zinc-800">&bull;</span>')}
+                                    </div>` : ''}
                                 </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 `;
@@ -756,7 +802,6 @@
         function printSingleEvent() { const ev = appData.events.find(e => e.id === appData.activeEventId); if(ev) executePrint(buildEventHTML(ev), true); }
         function printAllEvents() { if(appData.events.length === 0) return; const sorted = [...appData.events].sort((a, b) => (a.date || "").localeCompare(b.date || "")); executePrint(sorted.map(ev => buildEventHTML(ev)).join(''), true); }
         function printTurnos() {
-            // Re-aproveita lógica do updateMonthlyCount para gerar HTML de tabela
             updateMonthlyCount();
             const html = document.getElementById('autoTurnosMap').innerHTML;
             executePrint(`<h1>Mapa de Turnos</h1>${html}`, true);
