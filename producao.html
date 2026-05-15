@@ -772,7 +772,43 @@
             win.document.close();
             setTimeout(() => { win.print(); win.close(); }, 500);
         }
-
+        function printWeeklyMap() {
+            const content = document.getElementById('weeklyMap').innerHTML;
+            const legend = document.getElementById('venueLegend').innerHTML;
+            const monthTitle = document.getElementById('weeklyMapTitle').innerText;
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <head>
+                    <style>
+                        @page { size: landscape; margin: 8mm; }
+                        body { font-family: sans-serif; padding: 0; margin: 0; background: white; color: black; }
+                        table { width: 100%; border-collapse: collapse; table-layout: fixed !important; }
+                        th, td { border: 1px solid black !important; text-align: center; font-size: 6px; height: 16px; color: black !important; overflow: hidden; }
+                        .col-staff { text-align: left !important; font-weight: bold; width: 85px !important; padding-left: 4px; font-size: 7px; overflow: hidden; white-space: nowrap; }
+                        .shift-cell { font-size: 6px !important; color: black !important; background-color: transparent !important; }
+                        .shift-cell.active { background: #eee !important; font-weight: bold; }
+                        .no-print, button { display: none !important; }
+                        
+                        #venueLegend { margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px; border-top: 1px solid #ddd; padding-top: 10px; }
+                        #venueLegend div { display: flex; align-items: center; margin-right: 8px; margin-bottom: 2px; }
+                        #venueLegend .w-2.5 { width: 7px; height: 7px; display: inline-block; border: 1px solid black; margin-right: 3px; }
+                        #venueLegend span { font-size: 7px; font-weight: bold; }
+                        
+                        .sub-header { background: #f0f0f0; font-size: 5px; }
+                        .print-header { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1.5px solid black; padding-bottom: 4px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">MAPA DE TURNOS: ${monthTitle}</div>
+                    ${content}
+                    <div id="venueLegend">${legend}</div>
+                </body>
+                </html>
+            `);
+            win.document.close();
+            setTimeout(() => { win.print(); win.close(); }, 500);
+        }
         function printAllEvents() {
             const win = window.open('', '_blank');
             win.document.write(`<html><head><style>body{font-family:sans-serif;margin:0;} .print-page{page-break-after:always;padding:30px;} table{width:100%;border-collapse:collapse;table-layout:fixed;} th,td{border:1px solid black;padding:6px;font-size:8px;vertical-align:top;word-wrap:break-word;}</style></head><body>${generatePrintHTML(appData.events)}</body></html>`);
