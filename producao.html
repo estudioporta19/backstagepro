@@ -1,1 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backstage PRO - Gestão de Produção & Acolhimento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap');
+        
+        :root { --accent: #6366f1; --bg-dark: #050505; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: #efefef; font-size: 12px; }
 
+        .tab-btn.active { 
+            color: white; border-left: 4px solid var(--accent); padding-left: 12px; 
+            background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%); 
+        }
+        
+        .sub-tab-btn.active {
+            color: white; border-bottom: 2px solid var(--accent);
+        }
+
+        textarea { 
+            background-color: #0d0d0d; border: 1px solid #1a1a1a; color: #efefef; 
+            min-height: 32px; font-size: 11px; padding: 6px; border-radius: 4px; resize: none; overflow: hidden;
+        }
+        
+        textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
+
+        input[type="text"], input[type="date"], input[type="time"] {
+            background-color: #0d0d0d; border: 1px solid #1a1a1a; color: #efefef; padding: 4px 8px; border-radius: 4px; font-size: 11px;
+        }
+
+        /* Mapa de Turnos Dinâmico */
+        .map-container { overflow-x: auto; border: 1px solid #1a1a1a; border-radius: 12px; background: #0a0a0a; margin-bottom: 20px; }
+        .map-table { border-collapse: collapse; font-size: 8px; width: 100%; min-width: 800px; }
+        .map-table th, .map-table td { border: 1px solid #1a1a1a; text-align: center; height: 26px; vertical-align: middle; padding: 0; }
+        
+        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 130px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 8px !important; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .shift-cell { width: 18px; transition: all 0.2s; position: relative; font-size: 0px; } 
+        .shift-cell.active { cursor: help; border: 1px solid rgba(255,255,255,0.05); }
+        .shift-cell.active:hover { filter: brightness(1.3); transform: scale(1.1); z-index: 10; }
+
+        .day-header { border-bottom: 2px solid #1a1a1a !important; font-size: 9px; padding: 6px 0; background: #0f0f0f; }
+        .sub-header { font-size: 7px; color: #555; background: #080808; height: 18px !important; font-weight: 900; }
+
+        /* Calendário Mensal */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #1a1a1a; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .calendar-day { background: #0a0a0a; min-height: 100px; padding: 6px; border: 1px solid #111; }
+        .calendar-day.other-month { opacity: 0.3; background: #050505; }
+        .calendar-day-header { font-weight: 900; font-size: 10px; color: #555; mb-2 flex justify-between; }
+        .calendar-event { font-size: 8px; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: white; text-transform: uppercase; }
+
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white !important; color: black !important; font-size: 9px; }
+            .print-page { padding: 15px; page-break-after: always; }
+            table { width: 100% !important; border-collapse: collapse; }
+            th, td { border: 1px solid black !important; padding: 4px !important; color: black !important; }
+            input, textarea { border: none !important; background: transparent !important; color: black !important; width: 100% !important; }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-52 flex-shrink-0 flex flex-col bg-black border-r border-zinc-900 no-print">
+        <div class="p-4 border-b border-zinc-900">
+            <h1 class="text-lg font-black tracking-tighter italic uppercase leading-none">Backstage<span class="text-indigo-500">PRO</span></h1>
+            <p class="text-[9px] text-zinc-600 font-bold uppercase tracking-widest mt-1">Ops Suite</p>
+        </div>
+
+        <nav class="flex flex-col gap-1 mt-4 px-2">
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📅 Agenda</button>
+            <button onclick="switchTab('monthly')" id="btn-tab-monthly" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">🗓️ Vista Mensal</button>
+            <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📊 Mapa Turnos</button>
+            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">👥 Equipa</button>
+            <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📍 Locais</button>
+        </nav>
+
+        <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
+            <button onclick="createNewEvent()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-lg text-[10px] uppercase tracking-widest transition">+ Novo Evento</button>
+            <button onclick="printAllEvents()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2 rounded-lg text-[9px] uppercase tracking-widest transition">🖨️ Imprimir Agenda</button>
+            <div class="flex gap-1">
+                <button onclick="exportData()" class="flex-1 bg-zinc-900 text-zinc-500 py-1.5 rounded text-[8px] font-bold uppercase">Exp</button>
+                <button onclick="document.getElementById('importFile').click()" class="flex-1 bg-zinc-900 text-zinc-500 py-1.5 rounded text-[8px] font-bold uppercase">Imp</button>
+                <input type="file" id="importFile" class="hidden" onchange="importData(event)">
+            </div>
+            <button onclick="resetSystem()" class="w-full text-zinc-800 hover:text-red-900 text-[8px] font-black uppercase transition italic">Reset Sistema</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto bg-zinc-950 p-6">
+        
+        <!-- Agenda -->
+        <div id="eventsView">
+            <div class="flex gap-6">
+                <!-- Lista Lateral -->
+                <div class="w-48 shrink-0 no-print">
+                    <h2 class="text-[9px] font-black text-zinc-600 uppercase mb-3 px-1">Eventos</h2>
+                    <div id="eventList" class="space-y-1"></div>
+                </div>
+
+                <!-- Editor Principal -->
+                <div id="editorArea" class="flex-1 hidden">
+                    <div class="flex justify-between items-end mb-4 border-b border-zinc-900 pb-4">
+                        <div class="flex-1">
+                            <input type="text" id="curEventName" oninput="updateActiveEvent('name', this.value)" class="bg-transparent border-none text-2xl font-black text-white w-full p-0 focus:ring-0 uppercase" placeholder="NOME DO EVENTO">
+                            <div class="flex gap-4 mt-2">
+                                <input type="date" id="curEventDate" oninput="updateActiveEvent('date', this.value)" class="bg-transparent border-none text-xs text-indigo-400 font-bold [color-scheme:dark]">
+                                <input type="text" id="curEventVenue" oninput="processVenueCode(this)" class="bg-transparent border-none text-xs text-zinc-500 flex-1 p-0 focus:ring-0 uppercase tracking-tighter" placeholder="CÓDIGO DO LOCAL">
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="duplicateEvent()" class="bg-zinc-800 text-zinc-300 px-4 py-2 rounded text-[9px] font-black uppercase italic">Duplicar</button>
+                            <button onclick="deleteEvent()" class="bg-zinc-900 text-red-500 hover:bg-red-900/20 px-4 py-2 rounded text-[9px] font-black uppercase italic">Eliminar</button>
+                        </div>
+                    </div>
+
+                    <!-- Sub-Navegação do Evento -->
+                    <div class="flex gap-6 mb-6 no-print">
+                        <button onclick="switchSubTab('shifts')" id="sub-tab-shifts" class="sub-tab-btn active text-[10px] font-black uppercase pb-2 tracking-widest text-zinc-500 hover:text-white transition">Equipa Local (Turnos)</button>
+                        <button onclick="switchSubTab('hospitality')" id="sub-tab-hospitality" class="sub-tab-btn text-[10px] font-black uppercase pb-2 tracking-widest text-zinc-500 hover:text-white transition">Acolhimento (Companhia)</button>
+                    </div>
+
+                    <!-- Conteúdo: Turnos -->
+                    <div id="sub-view-shifts" class="sub-view">
+                        <div class="rounded-xl border border-zinc-900 overflow-hidden bg-black shadow-2xl">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-zinc-900 text-[8px] font-black text-zinc-500 uppercase">
+                                        <th class="p-2 w-24">Turno/Hora</th>
+                                        <th class="p-2 border-l border-zinc-800">Técnicos</th>
+                                        <th class="p-2 border-l border-zinc-800">Produção</th>
+                                        <th class="p-2 border-l border-zinc-800">Bilheteira</th>
+                                        <th class="p-2 border-l border-zinc-800">Portas</th>
+                                        <th class="p-2 border-l border-zinc-800">Bar/Coz.</th>
+                                        <th class="p-2 border-l border-zinc-800">Segur.</th>
+                                        <th class="p-2 w-8 border-l border-zinc-800"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shiftsBody"></tbody>
+                            </table>
+                            <button onclick="addShift()" class="w-full py-2 bg-zinc-900/30 text-zinc-600 text-[8px] font-black uppercase hover:text-white transition">+ Adicionar Turno Extra</button>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="printSingleEvent()" class="bg-white text-black px-6 py-2 rounded text-[10px] font-black uppercase italic">🖨️ Imprimir Ficha de Turnos</button>
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo: Acolhimento -->
+                    <div id="sub-view-hospitality" class="sub-view hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <!-- Contactos Externos -->
+                            <div class="bg-zinc-900/40 p-4 rounded-xl border border-zinc-800">
+                                <h3 class="text-xs font-black uppercase text-indigo-500 mb-4 tracking-tighter">📞 Contactos da Companhia</h3>
+                                <div class="space-y-3" id="contactsContainer"></div>
+                            </div>
+
+                            <!-- Alojamento -->
+                            <div class="bg-zinc-900/40 p-4 rounded-xl border border-zinc-800">
+                                <h3 class="text-xs font-black uppercase text-indigo-500 mb-4 tracking-tighter">🏨 Alojamento</h3>
+                                <div class="grid grid-cols-2 gap-2 mb-3">
+                                    <div>
+                                        <label class="text-[8px] uppercase font-bold text-zinc-500">Local / Hotel</label>
+                                        <input type="text" id="hosp-hotel" class="w-full mt-1" oninput="updateHosp('hotel', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="text-[8px] uppercase font-bold text-zinc-500">Nº Quartos (SGL/DBL)</label>
+                                        <input type="text" id="hosp-rooms" class="w-full mt-1" oninput="updateHosp('rooms', this.value)">
+                                    </div>
+                                </div>
+                                <label class="text-[8px] uppercase font-bold text-zinc-500">Distribuição / Notas</label>
+                                <textarea id="hosp-hotel-notes" class="w-full mt-1 h-16" oninput="updateHosp('hotelNotes', this.value)"></textarea>
+                            </div>
+
+                            <!-- Alimentação e Restrições -->
+                            <div class="bg-zinc-900/40 p-4 rounded-xl border border-zinc-800 md:col-span-2">
+                                <h3 class="text-xs font-black uppercase text-indigo-500 mb-4 tracking-tighter">🍽️ Restauração e Dieta</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="text-[8px] uppercase font-bold text-zinc-500">Refeições (Horário/Local)</label>
+                                        <textarea id="hosp-meals" class="w-full mt-1 h-24" oninput="updateHosp('meals', this.value)"></textarea>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="text-[8px] uppercase font-bold text-zinc-500">Restrições Alimentares (Vegetarianos, Alergias, Intolerâncias)</label>
+                                        <textarea id="hosp-diet" class="w-full mt-1 h-24 placeholder-zinc-700" placeholder="Ex: 2 Veganos, 1 Alergia a Marisco (João), 1 Sem Glúten..." oninput="updateHosp('diet', this.value)"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Logística Extra -->
+                            <div class="bg-zinc-900/40 p-4 rounded-xl border border-zinc-800 md:col-span-2">
+                                <h3 class="text-xs font-black uppercase text-indigo-500 mb-4 tracking-tighter">🚐 Logística e Viagens</h3>
+                                <textarea id="hosp-logistics" class="w-full h-16" oninput="updateHosp('logistics', this.value)" placeholder="Transferes de aeroporto, viagens locais, matrículas para acesso..."></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <button onclick="printHospitality()" class="bg-indigo-600 text-white px-6 py-2 rounded text-[10px] font-black uppercase italic">🖨️ Imprimir Ficha de Acolhimento</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outras Vistas (Placeholder) -->
+        <div id="monthlyView" class="hidden">
+             <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-black uppercase italic" id="calendarTitle"></h2>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Resumo mensal</p>
+                </div>
+                <div class="flex gap-2 no-print">
+                    <button onclick="changeMonth(-1)" class="bg-zinc-900 p-2 rounded text-xs">◀</button>
+                    <button onclick="renderCalendar(true)" class="bg-zinc-900 px-4 py-2 rounded text-[10px] font-bold uppercase">Hoje</button>
+                    <button onclick="changeMonth(1)" class="bg-zinc-900 p-2 rounded text-xs">▶</button>
+                </div>
+            </div>
+            <div id="calendarHeaderRow" class="grid grid-cols-7 gap-1 mb-2"></div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+
+        <div id="counterView" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-xl font-black uppercase italic" id="weeklyMapTitle">Mapa de Turnos</h2>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Semana Selecionada</p>
+                </div>
+                <div class="flex gap-2 no-print">
+                    <button onclick="changeWeek(-1)" class="bg-zinc-900 p-2 rounded text-xs">◀</button>
+                    <button onclick="renderWeeklyMap(true)" class="bg-zinc-900 px-4 py-2 rounded text-[10px] font-bold uppercase">Hoje</button>
+                    <button onclick="changeWeek(1)" class="bg-zinc-900 p-2 rounded text-xs">▶</button>
+                    <button onclick="printWeeklyMap()" class="bg-indigo-600 px-4 py-2 rounded text-[10px] font-bold uppercase">🖨️ Imprimir Mapa</button>
+                </div>
+            </div>
+            <div class="map-container" id="weeklyMap"></div>
+            <div id="venueLegend" class="flex flex-wrap gap-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-800"></div>
+        </div>
+
+        <div id="staffView" class="hidden"></div>
+        <div id="venuesView" class="hidden"></div>
+
+    </main>
+
+    <div id="quickStaffPicker" class="hidden fixed z-50 bg-zinc-900 border border-zinc-800 rounded shadow-2xl max-h-48 overflow-y-auto w-44"></div>
+
+    <script>
+        // Configurações Base
+        const SHIFT_COLS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
+        const VENUE_PALETTE = ['#4f46e5', '#db2777', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#ea580c', '#525252'];
+        const TURNOS_DEFAULT = [
+            { id: 's_m', label: 'MANHÃ', time: '09:00' },
+            { id: 's_t', label: 'TARDE', time: '14:00' },
+            { id: 's_n', label: 'NOITE', time: '19:00' }
+        ];
+
+        const defaultStaff = {
+            "rs": { name: "Rita Sousa" }, "mv": { name: "Madalena Victorino" }, "gs": { name: "Giacomo Scalisi" },
+            "ss": { name: "Sandra Sanches" }, "is": { name: "Inderjeet Singh" }, "g": { name: "Gurpreet Singh" }
+        };
+
+        const defaultVenues = { "TP": "Teatro de Palha", "EN": "Escola Nova" };
+
+        let appData = JSON.parse(localStorage.getItem('backstage_pro_v11')) || {
+            events: [],
+            staff: defaultStaff,
+            venues: defaultVenues,
+            activeEventId: null
+        };
+
+        let currentMonthDate = new Date();
+        let currentDate = new Date();
+
+        function saveData() { localStorage.setItem('backstage_pro_v11', JSON.stringify(appData)); }
+        function resetSystem() { if(confirm("Cuidado: Isto apaga todos os dados.")) { localStorage.removeItem('backstage_pro_v11'); location.reload(); } }
+
+        // Navegação Geral
+        function switchTab(tab) {
+            ['events', 'staff', 'venues', 'counter', 'monthly'].forEach(t => {
+                const el = document.getElementById(t + 'View');
+                const btn = document.getElementById('btn-tab-' + t);
+                if(el) el.classList.add('hidden');
+                if(btn) btn.classList.remove('active');
+            });
+            document.getElementById(tab + 'View').classList.remove('hidden');
+            document.getElementById('btn-tab-' + tab).classList.add('active');
+            if(tab === 'counter') renderWeeklyMap();
+            if(tab === 'monthly') renderCalendar();
+            if(tab === 'staff') renderManager('staff');
+            if(tab === 'venues') renderManager('venues');
+        }
+
+        // Navegação Sub-Tab (Editor de Evento)
+        function switchSubTab(sub) {
+            document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.sub-view').forEach(v => v.classList.add('hidden'));
+            document.getElementById('sub-tab-' + sub).classList.add('active');
+            document.getElementById('sub-view-' + sub).classList.remove('hidden');
+        }
+
+        // Gestão de Eventos
+        function createNewEvent() {
+            const id = 'ev_' + Date.now();
+            appData.events.push({
+                id, name: "NOVO EVENTO", date: new Date().toISOString().split('T')[0], venue: "",
+                shifts: TURNOS_DEFAULT.map(t => ({ 
+                    id: 's_' + t.id + '_' + Date.now(), label: t.label, time: t.time, 
+                    tecnicos: '', producao: '', bilheteira: '', portas: '', bar: '', seguranca: '' 
+                })),
+                hospitality: {
+                    contacts: [
+                        { role: 'Road Manager', name: '', phone: '' },
+                        { role: 'Técnico de Som', name: '', phone: '' },
+                        { role: 'Técnico de Luz', name: '', phone: '' }
+                    ],
+                    hotel: '', rooms: '', hotelNotes: '',
+                    meals: '', diet: '', logistics: ''
+                }
+            });
+            saveData(); selectEvent(id);
+        }
+
+        function selectEvent(id) {
+            appData.activeEventId = id;
+            const ev = appData.events.find(e => e.id === id);
+            if (!ev) { document.getElementById('editorArea').classList.add('hidden'); return; }
+            
+            // Garantir que campos de acolhimento existem (para retrocompatibilidade)
+            if (!ev.hospitality) ev.hospitality = { contacts: [{role:'Produtor', name:'', phone:''}], hotel:'', rooms:'', hotelNotes:'', meals:'', diet:'', logistics:'' };
+
+            document.getElementById('editorArea').classList.remove('hidden');
+            document.getElementById('curEventName').value = ev.name;
+            document.getElementById('curEventDate').value = ev.date;
+            document.getElementById('curEventVenue').value = ev.venue;
+            
+            renderShifts(ev);
+            renderHospitality(ev);
+            renderEventList();
+        }
+
+        function updateActiveEvent(f, v) { 
+            const ev = appData.events.find(e => e.id === appData.activeEventId); 
+            if(ev) { ev[f] = v; saveData(); if(f==='name'||f==='date') renderEventList(); } 
+        }
+
+        // Renderização Turnos
+        function renderShifts(ev) {
+            const tbody = document.getElementById('shiftsBody');
+            tbody.innerHTML = ev.shifts.map(s => `
+                <tr class="border-b border-zinc-900/50 group">
+                    <td class="p-2 bg-zinc-900/20 text-center relative">
+                        <input type="text" value="${s.label}" onchange="updateShiftField('${s.id}', 'label', this.value)" class="bg-transparent border-none text-[8px] font-black text-indigo-500 uppercase text-center w-full p-0">
+                        <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value)" class="bg-transparent border-none text-[11px] font-black text-white text-center w-full p-0 mt-1">
+                    </td>
+                    ${SHIFT_COLS.map(col => `
+                        <td class="p-1 border-l border-zinc-900">
+                            <textarea onclick="showStaffPicker(this, '${s.id}', '${col}')" onkeyup="processCodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" class="w-full">${s[col] || ''}</textarea>
+                        </td>
+                    `).join('')}
+                    <td class="p-1 border-l border-zinc-900 text-center">
+                        <button onclick="deleteShift('${s.id}')" class="text-zinc-800 hover:text-red-500 transition opacity-0 group-hover:opacity-100 font-bold">×</button>
+                    </td>
+                </tr>
+            `).join('');
+            tbody.querySelectorAll('textarea').forEach(adjustHeight);
+        }
+
+        // Renderização Acolhimento
+        function renderHospitality(ev) {
+            const h = ev.hospitality;
+            const container = document.getElementById('contactsContainer');
+            container.innerHTML = h.contacts.map((c, i) => `
+                <div class="flex gap-2 items-center">
+                    <input type="text" value="${c.role}" placeholder="Cargo" class="w-24 text-[9px] font-bold" oninput="updateContact(${i}, 'role', this.value)">
+                    <input type="text" value="${c.name}" placeholder="Nome" class="flex-1" oninput="updateContact(${i}, 'name', this.value)">
+                    <input type="text" value="${c.phone}" placeholder="Telemóvel" class="w-28" oninput="updateContact(${i}, 'phone', this.value)">
+                    <button onclick="removeContact(${i})" class="text-zinc-700 hover:text-red-500">×</button>
+                </div>
+            `).join('') + `<button onclick="addContact()" class="text-[8px] text-zinc-500 hover:text-white uppercase font-black">+ Adicionar Contacto</button>`;
+
+            document.getElementById('hosp-hotel').value = h.hotel || '';
+            document.getElementById('hosp-rooms').value = h.rooms || '';
+            document.getElementById('hosp-hotel-notes').value = h.hotelNotes || '';
+            document.getElementById('hosp-meals').value = h.meals || '';
+            document.getElementById('hosp-diet').value = h.diet || '';
+            document.getElementById('hosp-logistics').value = h.logistics || '';
+        }
+
+        function updateHosp(field, val) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) { ev.hospitality[field] = val; saveData(); }
+        }
+
+        function updateContact(index, field, val) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) { ev.hospitality.contacts[index][field] = val; saveData(); }
+        }
+
+        function addContact() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            ev.hospitality.contacts.push({ role: '', name: '', phone: '' });
+            saveData(); renderHospitality(ev);
+        }
+
+        function removeContact(index) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            ev.hospitality.contacts.splice(index, 1);
+            saveData(); renderHospitality(ev);
+        }
+
+        // Auxiliares de Interface
+        function adjustHeight(el) { el.style.height = '32px'; if (el.scrollHeight > 32) el.style.height = el.scrollHeight + 'px'; }
+        
+        function processCodes(textarea, sid, col) {
+            const val = textarea.value;
+            const newVal = val.replace(/(\b\w+\b)([ ,;\n\r])/g, (m, code, d) => {
+                const s = appData.staff[code.toLowerCase()];
+                return s ? s.name + d : m;
+            });
+            if(newVal !== val) { textarea.value = newVal; updateShiftField(sid, col, newVal); }
+            else updateShiftField(sid, col, val);
+            adjustHeight(textarea);
+        }
+
+        function updateShiftField(sid, field, val) { 
+            const ev = appData.events.find(e => e.id === appData.activeEventId); 
+            const s = ev.shifts.find(x => x.id === sid); 
+            if(s) { s[field] = val; saveData(); } 
+        }
+
+        function processVenueCode(input) {
+            const val = input.value;
+            for(let code in appData.venues) { 
+                if(val.toUpperCase() === code + " ") { 
+                    input.value = appData.venues[code]; 
+                    updateActiveEvent('venue', appData.venues[code]); 
+                    return; 
+                } 
+            }
+            updateActiveEvent('venue', val);
+        }
+
+        function getVenueInfo(venueName) {
+            const entry = Object.entries(appData.venues).find(([code, name]) => name === venueName);
+            if(entry) {
+                const index = Object.values(appData.venues).indexOf(venueName);
+                return { code: entry[0], color: VENUE_PALETTE[index % VENUE_PALETTE.length], name: venueName };
+            }
+            return { code: "?", color: "#525252", name: venueName || "N/A" };
+        }
+
+        // Impressão Acolhimento
+        function printHospitality() {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(!ev) return;
+            const h = ev.hospitality;
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <head>
+                    <style>
+                        body { font-family: sans-serif; padding: 40px; color: black; line-height: 1.4; }
+                        h1 { border-bottom: 2px solid black; padding-bottom: 10px; text-transform: uppercase; margin-bottom: 20px; font-size: 24px; }
+                        .section { margin-bottom: 25px; }
+                        .section-title { background: #eee; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 12px; margin-bottom: 10px; border: 1px solid black; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 11px; }
+                        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                        .label { font-weight: bold; font-size: 10px; text-transform: uppercase; color: #666; display: block; margin-bottom: 4px; }
+                        .box { border: 1px solid #ccc; padding: 10px; min-height: 40px; font-size: 11px; white-space: pre-wrap; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Acolhimento: ${ev.name}</h1>
+                    <p><b>Data:</b> ${ev.date.split('-').reverse().join('/')} | <b>Local:</b> ${ev.venue}</p>
+
+                    <div class="section">
+                        <div class="section-title">Contactos Companhia</div>
+                        <table>
+                            <tr><th>Cargo</th><th>Nome</th><th>Telemóvel</th></tr>
+                            ${h.contacts.map(c => `<tr><td>${c.role}</td><td>${c.name}</td><td>${c.phone}</td></tr>`).join('')}
+                        </table>
+                    </div>
+
+                    <div class="grid">
+                        <div class="section">
+                            <div class="section-title">Alojamento</div>
+                            <span class="label">Local / Hotel</span>
+                            <div class="box">${h.hotel || 'N/A'}</div>
+                            <span class="label" style="margin-top:10px">Nº Quartos</span>
+                            <div class="box">${h.rooms || 'N/A'}</div>
+                            <span class="label" style="margin-top:10px">Distribuição / Notas</span>
+                            <div class="box">${h.hotelNotes || '-'}</div>
+                        </div>
+                        <div class="section">
+                            <div class="section-title">Logística e Viagens</div>
+                            <div class="box" style="height: 150px">${h.logistics || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Restauração e Dietas</div>
+                        <div class="grid">
+                            <div>
+                                <span class="label">Refeições (Horários e Locais)</span>
+                                <div class="box" style="height: 100px">${h.meals || '-'}</div>
+                            </div>
+                            <div>
+                                <span class="label">Restrições Alimentares</span>
+                                <div class="box" style="height: 100px; border: 2px solid black;"><b>${h.diet || 'Sem restrições reportadas.'}</b></div>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            win.document.close();
+            setTimeout(() => { win.print(); win.close(); }, 500);
+        }
+
+        // Funções de Listagem e Calendário (Herdadas do original)
+        function renderEventList() {
+            const list = document.getElementById('eventList');
+            const sorted = [...appData.events].sort((a,b) => b.date.localeCompare(a.date));
+            list.innerHTML = sorted.map(ev => `
+                <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-2 rounded border transition ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900 border-zinc-900'}">
+                    <div class="text-[7px] font-bold text-zinc-500 uppercase">${ev.date.split('-').reverse().join('/')}</div>
+                    <div class="text-[10px] font-bold text-white truncate uppercase">${ev.name}</div>
+                </button>
+            `).join('');
+        }
+
+        function renderCalendar(resetToToday = false) {
+            if(resetToToday) currentMonthDate = new Date();
+            const grid = document.getElementById('calendarGrid');
+            const title = document.getElementById('calendarTitle');
+            const headerRow = document.getElementById('calendarHeaderRow');
+            title.innerText = currentMonthDate.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
+            const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            headerRow.innerHTML = diasSemana.map(d => `<div class="text-[9px] font-black text-zinc-600 uppercase text-center py-2">${d}</div>`).join('');
+            const firstDayOfMonth = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+            const lastDayOfMonth = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 0);
+            let startDay = firstDayOfMonth.getDay() || 7;
+            const startDate = new Date(firstDayOfMonth);
+            startDate.setDate(startDate.getDate() - (startDay - 1));
+            const endDate = new Date(lastDayOfMonth);
+            let endDay = lastDayOfMonth.getDay() || 7;
+            endDate.setDate(endDate.getDate() + (7 - endDay));
+            let html = "";
+            let curr = new Date(startDate);
+            while(curr <= endDate) {
+                const dateStr = curr.toISOString().split('T')[0];
+                const dayEvents = appData.events.filter(e => e.date === dateStr);
+                const isOtherMonth = curr.getMonth() !== currentMonthDate.getMonth();
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                html += `<div class="calendar-day ${isOtherMonth ? 'other-month' : ''}">
+                    <div class="calendar-day-header"><span class="${isToday ? 'bg-indigo-600 text-white w-5 h-5 flex items-center justify-center rounded-full' : ''}">${curr.getDate()}</span></div>
+                    <div class="space-y-1">${dayEvents.map(ev => {
+                        const info = getVenueInfo(ev.venue);
+                        return `<div onclick="selectEvent('${ev.id}'); switchTab('events');" class="calendar-event" style="background: ${info.color}">[${info.code}] ${ev.name}</div>`;
+                    }).join('')}</div></div>`;
+                curr.setDate(curr.getDate() + 1);
+            }
+            grid.innerHTML = html;
+        }
+
+        function renderWeeklyMap(resetToToday = false) {
+            if(resetToToday) currentDate = new Date();
+            const container = document.getElementById('weeklyMap');
+            const d = new Date(currentDate);
+            const day = d.getDay() || 7;
+            d.setDate(d.getDate() - day + 1);
+            const weekStart = new Date(d);
+            document.getElementById('weeklyMapTitle').innerText = weekStart.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
+
+            const days = [];
+            for(let i=0; i<7; i++) {
+                const cur = new Date(weekStart); cur.setDate(cur.getDate() + i);
+                days.push(cur.toISOString().split('T')[0]);
+            }
+
+            const dayShiftStructure = days.map(dateStr => {
+                const eventsOnDay = appData.events.filter(e => e.date === dateStr);
+                const labels = new Set(['MANHÃ', 'TARDE', 'NOITE']);
+                eventsOnDay.forEach(ev => ev.shifts.forEach(s => labels.add(s.label.toUpperCase().trim())));
+                return { dateStr, labels: Array.from(labels).sort() };
+            });
+
+            const staffSorted = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
+            let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th>`;
+            dayShiftStructure.forEach(day => {
+                const dObj = new Date(day.dateStr);
+                html += `<th colspan="${day.labels.length}" class="day-header uppercase font-black text-[7px] border-l-2 border-zinc-800">${dObj.toLocaleDateString('pt-PT', {weekday: 'short'})} ${dObj.getDate()}/${dObj.getMonth()+1}</th>`;
+            });
+            html += `</tr><tr>`;
+            dayShiftStructure.forEach(day => day.labels.forEach(l => html += `<th class="sub-header border-l border-zinc-900/30">${l.charAt(0)}</th>`));
+            html += `</tr></thead><tbody>`;
+
+            staffSorted.forEach(([code, data]) => {
+                html += `<tr><td class="col-staff uppercase">${data.name}</td>`;
+                dayShiftStructure.forEach(day => {
+                    const dayEvents = appData.events.filter(e => e.date === day.dateStr);
+                    day.labels.forEach(label => {
+                        let activeColor = "";
+                        dayEvents.forEach(ev => {
+                            const s = ev.shifts.find(sh => sh.label.toUpperCase().trim() === label);
+                            if(s && SHIFT_COLS.some(c => s[c].toLowerCase().includes(data.name.toLowerCase()))) activeColor = getVenueInfo(ev.venue).color;
+                        });
+                        html += `<td class="shift-cell ${activeColor ? 'active' : ''}" style="background-color:${activeColor || 'transparent'}"></td>`;
+                    });
+                });
+                html += `</tr>`;
+            });
+            container.innerHTML = html + `</tbody></table>`;
+        }
+
+        function showStaffPicker(t, sid, col) {
+            const p = document.getElementById('quickStaffPicker');
+            p.innerHTML = Object.values(appData.staff).sort((a,b)=>a.name.localeCompare(b.name)).map(s => `<div onclick="pickStaff('${s.name}', '${sid}', '${col}')" class="p-2 text-[10px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${s.name}</div>`).join('');
+            const r = t.getBoundingClientRect(); p.style.top = (r.bottom + window.scrollY) + 'px'; p.style.left = (r.left + window.scrollX) + 'px';
+            p.classList.remove('hidden');
+            const close = (e) => { if(!p.contains(e.target) && e.target !== t) { p.classList.add('hidden'); document.removeEventListener('click', close); } };
+            setTimeout(() => document.addEventListener('click', close), 10);
+        }
+
+        function pickStaff(n, sid, col) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            const s = ev.shifts.find(x => x.id === sid);
+            let current = s[col] || "";
+            if(current.includes(n)) return; 
+            s[col] = current ? (current.trim().endsWith(',') || current.trim().endsWith('\n') ? current + " " + n : current + ", " + n) : n;
+            saveData(); renderShifts(ev);
+        }
+
+        // Export/Import/Render Managers (Simplificado para o exemplo)
+        function renderManager(type) {
+            const v = document.getElementById(type + 'View');
+            const isS = type === 'staff';
+            const d = isS ? appData.staff : appData.venues;
+            v.innerHTML = `<h2 class="text-xl font-black uppercase mb-6 italic">${isS ? 'Equipa' : 'Locais'}</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">${Object.entries(d).sort().map(([c, x]) => `
+                    <div class="bg-zinc-900 p-3 rounded border border-zinc-800 flex justify-between items-center">
+                        <span class="text-[10px] font-bold uppercase"><b class="text-indigo-500 mr-2">${c}</b> ${isS ? x.name : x}</span>
+                        <button onclick="deleteEntry('${type}', '${c}')" class="text-zinc-700 hover:text-red-500 font-bold px-2">×</button>
+                    </div>`).join('')}</div>
+                <div class="flex gap-2 max-w-sm"><input id="add-c" placeholder="Cód" class="w-16 uppercase"><input id="add-n" placeholder="Nome" class="flex-1 uppercase"><button onclick="saveEntry('${type}')" class="bg-indigo-600 px-4 rounded text-[10px] font-black uppercase">Adicionar</button></div>`;
+        }
+
+        function saveEntry(t) { 
+            const c = document.getElementById('add-c').value.toUpperCase(); 
+            const n = document.getElementById('add-n').value; 
+            if(c && n) { if(t === 'staff') appData.staff[c.toLowerCase()] = { name: n }; else appData.venues[c] = n; saveData(); renderManager(t); } 
+        }
+
+        function deleteEntry(t, c) { if(confirm("Eliminar?")) { if(t === 'staff') delete appData.staff[c.toLowerCase()]; else delete appData.venues[c]; saveData(); renderManager(t); } }
+        function exportData() { const b = new Blob([JSON.stringify(appData)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backstage_pro_v11.json'; a.click(); }
+        function importData(e) { const fr = new FileReader(); fr.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); }; fr.readAsText(e.target.files[0]); }
+        function changeMonth(v) { currentMonthDate.setMonth(currentMonthDate.getMonth() + v); renderCalendar(); }
+        function changeWeek(v) { currentDate.setDate(currentDate.getDate() + (v*7)); renderWeeklyMap(); }
+
+        window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
+    </script>
+</body>
+</html>
