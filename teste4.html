@@ -55,9 +55,7 @@
             .col-staff { position: static; background: transparent; width: 90px; border-right: 1px solid black !important; font-size: 8px; }
             .shift-cell { font-size: 7px !important; color: black !important; width: auto; background-color: transparent !important; }
             .shift-cell.active { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #f2f2f2 !important; border: 0.5pt solid black !important; font-weight: bold; }
-            .print-month-title { display: block !important; margin-bottom: 10px; font-size: 14px; font-weight: 900; text-transform: uppercase; }
         }
-        .print-month-title { display: none; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -456,8 +454,50 @@
             const legend = document.getElementById('venueLegend').innerHTML;
             const monthTitle = document.getElementById('weeklyMapTitle').innerText;
             const win = window.open('', '_blank');
-            win.document.write(`<html><head><style>@page{size:landscape;margin:5mm;} body{font-family:sans-serif;padding:10px;background:white;color:black;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid black !important;text-align:center;font-size:7px;height:20px;color:black !important;} .col-staff{text-align:left !important;font-weight:bold;width:100px;padding-left:4px;font-size:8px;} .shift-cell{font-size:7px !important; color: black !important; background-color: transparent !important;} .shift-cell.active{background:#eee !important; font-weight:bold;} .no-print,button{display:none !important;} #venueLegend{margin-top:10px;display:flex;flex-wrap:wrap;} .sub-header{background:#f0f0f0;font-size:6px;} .print-header{font-size:16px; font-weight:900; text-transform:uppercase; margin-bottom:10px;}</style></head><body><div class="print-header">MAPA DE TURNOS: ${monthTitle}</div>${content}<div id="venueLegend">${legend}</div></body></html>`);
-            win.document.close(); setTimeout(() => { win.print(); win.close(); }, 500);
+            win.document.write(`
+                <html>
+                <head>
+                    <style>
+                        @page { size: landscape; margin: 10mm; }
+                        body { font-family: sans-serif; padding: 0; margin: 0; background: white; color: black; }
+                        table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+                        th, td { border: 1px solid black !important; text-align: center; font-size: 7px; height: 18px; color: black !important; }
+                        .col-staff { text-align: left !important; font-weight: bold; width: 100px; padding-left: 4px; font-size: 8px; }
+                        .shift-cell { font-size: 7px !important; color: black !important; background-color: transparent !important; }
+                        .shift-cell.active { background: #eee !important; font-weight: bold; }
+                        .no-print, button { display: none !important; }
+                        
+                        /* Fix Legendas na Impressão */
+                        #venueLegend { 
+                            margin-top: 25px; 
+                            display: flex; 
+                            flex-wrap: wrap; 
+                            gap: 15px; 
+                            border-top: 1px solid #ddd; 
+                            padding-top: 15px;
+                        }
+                        #venueLegend div { 
+                            display: flex; 
+                            align-items: center; 
+                            margin-right: 10px; 
+                            margin-bottom: 5px;
+                        }
+                        #venueLegend .w-2.5 { width: 8px; height: 8px; display: inline-block; border: 1px solid black; margin-right: 4px; }
+                        #venueLegend span { font-size: 8px; font-weight: bold; }
+                        
+                        .sub-header { background: #f0f0f0; font-size: 6px; }
+                        .print-header { font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; border-bottom: 2px solid black; padding-bottom: 5px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">MAPA DE TURNOS: ${monthTitle}</div>
+                    ${content}
+                    <div id="venueLegend">${legend}</div>
+                </body>
+                </html>
+            `);
+            win.document.close();
+            setTimeout(() => { win.print(); win.close(); }, 500);
         }
 
         function adjustHeight(el) { el.style.height = '32px'; if (el.scrollHeight > 32) el.style.height = el.scrollHeight + 'px'; }
