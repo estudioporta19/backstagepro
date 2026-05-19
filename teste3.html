@@ -404,16 +404,34 @@
 }
         
 
-        function fillHospitalityForm(h) {
-            const fields = ['companyName', 'showName', 'contactProd', 'contactTech', 'lodgingPlace', 'lodgingRooms', 'checkIn', 'checkOut', 'lodgingContact', 'mealsPlace', 'mealsTimes', 'dietary', 'hospNotes'];
-            const ids = ['h-comp-name', 'h-show-name', 'h-contact-prod', 'h-contact-tech', 'h-lodging-place', 'h-lodging-rooms', 'h-check-in', 'h-check-out', 'h-lodging-contact', 'h-meals-place', 'h-meals-times', 'h-dietary', 'h-notes'];
-            
-            ids.forEach((id, i) => {
-                const el = document.getElementById(id);
-                if(el) el.value = h[fields[i]] || "";
-            });
-            renderChecklist(h);
+   function fillHospitalityForm(h) {
+    // 1. Adicionamos os novos campos à lista 'fields'
+    // 2. Adicionamos os novos IDs correspondentes à lista 'ids'
+    const fields = [
+        'companyName', 'showName', 'contactProd', 'contactTech', 
+        'lodgingPlace', 'lodgingRooms', 'checkIn', 'checkOut', 
+        'lodgingContact', 'lunchCount', 'dinnerCount', // <-- NOVOS CAMPOS AQUI
+        'mealsPlace', 'mealsTimes', 'dietary', 'hospNotes'
+    ];
+    
+    const ids = [
+        'h-comp-name', 'h-show-name', 'h-contact-prod', 'h-contact-tech', 
+        'h-lodging-place', 'h-lodging-rooms', 'h-check-in', 'h-check-out', 
+        'h-lodging-contact', 'lunchCount', 'dinnerCount', // <-- NOVOS IDS AQUI
+        'h-meals-place', 'h-meals-times', 'h-dietary', 'h-notes'
+    ];
+    
+    ids.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if(el) {
+            // Se o campo for um dos de contagem, garantimos que assume 0 se for vazio
+            const val = h[fields[i]];
+            el.value = (val !== undefined && val !== null) ? val : "";
         }
+    });
+
+    renderChecklist(h);
+}
 
         // --- RENDERIZAR TURNOS ---
         function renderShifts(ev) {
