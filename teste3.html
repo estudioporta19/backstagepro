@@ -779,18 +779,19 @@
                             <span class="val"><pre>${h.dietary || 'Nenhuma informada'}</pre></span>
                         </div>
                     </div>
-<h2>Obrigações Legais</h2>
-<table style="width:100%; border-collapse:collapse; margin-top:10px;">
-    ${checklistItems.map(item => {
-        const isChecked = h[item.id + '_check'] ? '✅' : '☐';
-        const dateVal = h[item.id + '_date'] || '---';
-        return `
-        <tr>
-            <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; width:30px;">${isChecked}</td>
-            <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; font-weight:bold;">${item.label}</td>
-            <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; color:#555;">${dateVal}</td>
-        </tr>`;
-    }).join('')}
+                     <h2>Obrigações Legais</h2>
+                           <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            ${checklistItems.map(item => {
+                                const isChecked = h[item.id + '_check'] ? '✅' : '☐';
+                                const dateVal = h[item.id + '_date'] || '---';
+                                return `
+                                <tr>
+                                    <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; width:30px;">${isChecked}</td>
+                                    <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; font-weight:bold;">${item.label}</td>
+                                    <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; color:#555;">${dateVal}</td>
+                                </tr>`;
+                            }).join('')}
+                        </table>
                     <h2>Notas Adicionais</h2>
                     <div class="item full">
                         <span class="val"><pre>${h.hospNotes || '---'}</pre></span>
