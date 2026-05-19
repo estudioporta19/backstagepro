@@ -394,12 +394,14 @@
         function updateHosp(field, val) {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(ev) {
-                if(!ev.hosp) ev.hosp = {};
-                ev.hosp[field] = val;
-                saveData();
-            }
-        }
-
+            if(!ev.hosp) ev.hosp = {}; // Cria o objeto se não existir
+        
+            // Converte para número se for uma contagem
+            ev.hosp[field] = (field === 'lunchCount' || field === 'dinnerCount') ? parseInt(val) : val;
+        
+        saveData(); // Grava no localStorage
+    }
+}
         
 
         function fillHospitalityForm(h) {
