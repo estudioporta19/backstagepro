@@ -23,38 +23,6 @@
         
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
-        /* Estilos para Alertas de Conflito */
-        textarea.has-double-booking {
-            background-color: rgba(127, 29, 29, 0.45) !important;
-            border-color: #f87171 !important;
-            color: #fca5a5 !important;
-        }
-        textarea.has-double-booking:focus {
-            border-color: #ef4444 !important;
-            background-color: rgba(127, 29, 29, 0.6) !important;
-        }
-        
-        textarea.has-rest-violation {
-            background-color: rgba(120, 53, 4, 0.45) !important;
-            border-color: #fbbf24 !important;
-            color: #fcd34d !important;
-        }
-        textarea.has-rest-violation:focus {
-            border-color: #f59e0b !important;
-            background-color: rgba(120, 53, 4, 0.6) !important;
-        }
-
-        .conflict-badge {
-            font-size: 14px;
-            animation: pulse 2s infinite;
-            pointer-events: auto;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.1); }
-        }
-
         /* Mapa de Turnos Dinâmico */
         .map-container { overflow-x: auto; border: 1px solid #1a1a1a; border-radius: 12px; background: #0a0a0a; margin-bottom: 20px; }
         .map-table { border-collapse: collapse; font-size: 10px; width: 100%; min-width: 900px; } /* Aumentado de 8px para 10px */
@@ -244,6 +212,8 @@
 
                             <!-- Notas Adicionais -->
                             <div class="h-section-title">Notas de Acolhimento (Transportes, etc.)</div>
+                            <div class="h-section-title">Obrigações Legais & Checklist</div>
+                            <div id="checklistContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                             <textarea id="h-notes" oninput="updateHosp('hospNotes', this.value)" class="h-input w-full min-h-[120px]" placeholder="Outras informações relevantes..."></textarea>
                         </div>
                     </div>
@@ -348,173 +318,6 @@
             updateViewToggle();
         }
 
-        // --- SISTEMA INTELIGENTE DE CONFLITOS E SEGURANÇA OPERACIONAL ---
-        function parseShiftInterval(dateStr, timeStr, label) {
-            if (!dateStr) return { start: new Date(), end: new Date() };
-            let hour = 9, minute = 0;
-            const match = (timeStr || "").match(/^(\d{1,2}):(\d{2})$/);
-            
-            if (match) {
-                hour = parseInt(match[1], 10);
-                minute = parseInt(match[2], 10);
-            } else {
-                const l = (label || "").toUpperCase();
-                if (l.includes("MANHÃ") || l.includes("MANHA")) hour = 9;
-                else if (l.includes("TARDE")) hour = 14;
-                else if (l.includes("NOITE")) hour = 19;
-            }
-
-            const start = new Date(`${dateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
-            
-            // Atribuição de durações estimadas para cálculo de descanso
-            let durationHours = 8; 
-            const l = (label || "").toUpperCase();
-            if (l.includes("MANHÃ") || l.includes("MANHA")) durationHours = 5;
-            else if (l.includes("TARDE")) durationHours = 5;
-            else if (l.includes("NOITE") || hour >= 18) durationHours = 7; // Turno Noite termina de madrugada (ex: 19:00 - 02:00)
-            
-            const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
-            return { start, end };
-        }
-
-        function extractStaffInText(text) {
-            if (!text) return [];
-            const found = [];
-            const normText = text.toLowerCase();
-            for (const code in appData.staff) {
-                const name = appData.staff[code].name.toLowerCase();
-                if (normText.includes(name)) {
-                    found.push(appData.staff[code].name);
-                }
-            }
-            return found;
-        }
-
-        function getStaffAssignments() {
-            const assignments = [];
-            appData.events.forEach(ev => {
-                ev.shifts.forEach(s => {
-                    SHIFT_COLS.forEach(col => {
-                        const cellText = s[col] || "";
-                        const assignedStaff = extractStaffInText(cellText);
-                        assignedStaff.forEach(name => {
-                            const { start, end } = parseShiftInterval(ev.date, s.time, s.label);
-                            assignments.push({
-                                staffName: name,
-                                eventId: ev.id,
-                                eventName: ev.name,
-                                shiftId: s.id,
-                                shiftLabel: s.label,
-                                col: col,
-                                start: start,
-                                end: end,
-                                dateStr: ev.date
-                            });
-                        });
-                    });
-                });
-            });
-            return assignments;
-        }
-
-        function validateAssignments() {
-            const assignments = getStaffAssignments();
-            const conflicts = {
-                doubleBooking: {}, 
-                restViolation: {}  
-            };
-
-            const hours11 = 11 * 60 * 60 * 1000; // Tempo mínimo em milissegundos
-
-            for (let i = 0; i < assignments.length; i++) {
-                const a1 = assignments[i];
-                const key1 = `${a1.shiftId}_${a1.col}`;
-
-                for (let j = 0; j < assignments.length; j++) {
-                    if (i === j) continue;
-                    const a2 = assignments[j];
-
-                    if (a1.staffName === a2.staffName) {
-                        // 1. Verificação de Dupla Marcação (Sobreposição de horário)
-                        if (a1.shiftId !== a2.shiftId || a1.col !== a2.col) {
-                            if (a1.start < a2.end && a2.start < a1.end) {
-                                if (!conflicts.doubleBooking[key1]) conflicts.doubleBooking[key1] = [];
-                                if (!conflicts.doubleBooking[key1].some(c => c.staff === a1.staffName && c.otherShift === a2.shiftLabel)) {
-                                    conflicts.doubleBooking[key1].push({
-                                        staff: a1.staffName,
-                                        otherEvent: a2.eventName,
-                                        otherShift: a2.shiftLabel,
-                                        otherTime: a2.start.toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'})
-                                    });
-                                }
-                            }
-                        }
-
-                        // 2. Verificação de Descanso Mínimo (< 11h)
-                        const restTime = a2.start.getTime() - a1.end.getTime();
-                        if (restTime >= 0 && restTime < hours11) {
-                            const key2 = `${a2.shiftId}_${a2.col}`;
-                            if (!conflicts.restViolation[key2]) conflicts.restViolation[key2] = [];
-                            
-                            const hours = (restTime / (1000 * 60 * 60)).toFixed(1);
-                            if (!conflicts.restViolation[key2].some(c => c.staff === a2.staffName && c.prevShift === a1.shiftLabel)) {
-                                conflicts.restViolation[key2].push({
-                                    staff: a2.staffName,
-                                    prevEvent: a1.eventName,
-                                    prevShift: a1.shiftLabel,
-                                    restHours: hours
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-            return conflicts;
-        }
-
-        function liveReevaluateConflicts() {
-            const conflicts = validateAssignments();
-            const textareas = document.querySelectorAll('textarea[data-sid]');
-            
-            textareas.forEach(ta => {
-                const sid = ta.getAttribute('data-sid');
-                const col = ta.getAttribute('data-col');
-                const key = `${sid}_${col}`;
-                
-                const dbList = conflicts.doubleBooking[key] || [];
-                const rvList = conflicts.restViolation[key] || [];
-                
-                const container = ta.parentElement;
-                let badge = container.querySelector('.conflict-badge');
-                
-                ta.classList.remove('has-double-booking', 'has-rest-violation');
-                
-                if (dbList.length > 0) {
-                    ta.classList.add('has-double-booking');
-                    const warnings = dbList.map(c => `${c.staff}: Dupla Marcação em [${c.otherEvent}] (Turno: ${c.otherShift})`).join('\n');
-                    if (!badge) {
-                        badge = document.createElement('div');
-                        badge.className = 'conflict-badge absolute right-2 top-2 text-red-500 cursor-help';
-                        container.appendChild(badge);
-                    }
-                    badge.innerHTML = '⚠️';
-                    badge.title = warnings;
-                } else if (rvList.length > 0) {
-                    ta.classList.add('has-rest-violation');
-                    const warnings = rvList.map(c => `${c.staff}: Descanso insuficiente (${c.restHours}h) após [${c.prevEvent}] (${c.prevShift})`).join('\n');
-                    if (!badge) {
-                        badge = document.createElement('div');
-                        badge.className = 'conflict-badge absolute right-2 top-2 text-amber-500 cursor-help';
-                        container.appendChild(badge);
-                    }
-                    badge.innerHTML = '⏳';
-                    badge.title = warnings;
-                } else {
-                    if (badge) badge.remove();
-                }
-            });
-        }
-
         // --- GESTÃO DE EVENTOS ---
         function renderEventList() {
             const list = document.getElementById('eventList');
@@ -587,23 +390,21 @@
                 const el = document.getElementById(id);
                 if(el) el.value = h[fields[i]] || "";
             });
+            renderChecklist(h);
         }
 
         // --- RENDERIZAR TURNOS ---
         function renderShifts(ev) {
             const tbody = document.getElementById('shiftsBody');
-            
             tbody.innerHTML = ev.shifts.map(s => `
                 <tr class="border-b border-zinc-900/50 group">
                     <td class="p-2 bg-zinc-900/20 text-center relative">
-                        <input type="text" value="${s.label}" onchange="updateShiftField('${s.id}', 'label', this.value); liveReevaluateConflicts();" class="bg-transparent border-none text-[10px] font-black text-indigo-500 uppercase text-center w-full p-0">
-                        <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value); liveReevaluateConflicts();" class="bg-transparent border-none text-[13px] font-black text-white text-center w-full p-0 mt-1">
+                        <input type="text" value="${s.label}" onchange="updateShiftField('${s.id}', 'label', this.value)" class="bg-transparent border-none text-[10px] font-black text-indigo-500 uppercase text-center w-full p-0">
+                        <input type="text" value="${s.time}" onchange="updateShiftField('${s.id}', 'time', this.value)" class="bg-transparent border-none text-[13px] font-black text-white text-center w-full p-0 mt-1">
                     </td>
                     ${SHIFT_COLS.map(col => `
-                        <td class="p-1 border-l border-zinc-900 relative">
-                            <div class="relative w-full">
-                                <textarea data-sid="${s.id}" data-col="${col}" onclick="showStaffPicker(this, '${s.id}', '${col}')" onkeyup="processCodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" class="w-full">${s[col] || ''}</textarea>
-                            </div>
+                        <td class="p-1 border-l border-zinc-900">
+                            <textarea onclick="showStaffPicker(this, '${s.id}', '${col}')" onkeyup="processCodes(this, '${s.id}', '${col}')" oninput="adjustHeight(this)" class="w-full">${s[col] || ''}</textarea>
                         </td>
                     `).join('')}
                     <td class="p-1 border-l border-zinc-900 text-center">
@@ -611,9 +412,7 @@
                     </td>
                 </tr>
             `).join('');
-            
             tbody.querySelectorAll('textarea').forEach(adjustHeight);
-            liveReevaluateConflicts();
         }
 
         function createNewEvent() {
@@ -642,7 +441,7 @@
 
         function updateActiveEvent(f, v) { 
             const ev = appData.events.find(e => e.id === appData.activeEventId); 
-            if(ev) { ev[f] = v; saveData(); if(f==='name'||f==='date') { renderEventList(); liveReevaluateConflicts(); } } 
+            if(ev) { ev[f] = v; saveData(); if(f==='name'||f==='date') renderEventList(); } 
         }
 
         function updateShiftField(sid, field, val) { 
@@ -685,7 +484,6 @@
             if(newVal !== val) { textarea.value = newVal; updateShiftField(sid, col, newVal); }
             else updateShiftField(sid, col, val);
             adjustHeight(textarea);
-            liveReevaluateConflicts();
         }
 
         function processVenueCode(input) {
@@ -795,7 +593,6 @@
             });
 
             const staffSorted = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
-            const conflicts = validateAssignments();
             
             // Header: adicionada coluna "Turnos" logo após o "Colaborador" com tipografia aumentada
             let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th><th rowspan="2" class="day-header col-total border-r-2 border-zinc-800 text-indigo-400 font-black">Turnos</th>`;
@@ -822,51 +619,19 @@
                     const dayEvents = appData.events.filter(e => e.date === day.dateStr);
                     day.labels.forEach(label => {
                         let activeCode = "", activeColor = "";
-                        let isDoubleBooked = false;
-                        let isRestViolated = false;
-
                         dayEvents.forEach(ev => {
                             const matchingShift = ev.shifts.find(s => s.label.toUpperCase().trim() === label);
                             if(matchingShift) {
-                                SHIFT_COLS.forEach(c => { 
-                                    if(matchingShift[c] && matchingShift[c].toLowerCase().includes(staffName)) {
-                                        const info = getVenueInfo(ev.venue); 
-                                        activeCode = info.code; 
-                                        activeColor = info.color; 
-                                        
-                                        const key = `${matchingShift.id}_${c}`;
-                                        if (conflicts.doubleBooking[key]?.some(x => x.staff.toLowerCase() === staffName)) {
-                                            isDoubleBooked = true;
-                                        }
-                                        if (conflicts.restViolation[key]?.some(x => x.staff.toLowerCase() === staffName)) {
-                                            isRestViolated = true;
-                                        }
-                                    } 
-                                });
+                                let isWorking = false;
+                                SHIFT_COLS.forEach(c => { if(matchingShift[c] && matchingShift[c].toLowerCase().includes(staffName)) isWorking = true; });
+                                if(isWorking) { const info = getVenueInfo(ev.venue); activeCode = info.code; activeColor = info.color; }
                             }
                         });
                         
                         // Incrementa o total se o colaborador trabalhar neste turno específico
                         if(activeCode) weeklyTotal++;
                         
-                        let cellStyle = activeCode ? `background-color: ${activeColor};` : '';
-                        let cellClass = `shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/30`;
-                        let content = activeCode;
-                        let tooltip = "";
-                        
-                        if (activeCode) {
-                            if (isDoubleBooked) {
-                                cellStyle += " outline: 2px solid #ef4444; outline-offset: -2px;";
-                                content += " ⚠️";
-                                tooltip = `CONFLITO: ${data.name} em Dupla Marcação!`;
-                            } else if (isRestViolated) {
-                                cellStyle += " outline: 2px dashed #f59e0b; outline-offset: -2px;";
-                                content += " ⏳";
-                                tooltip = `CONFLITO: Descanso insuficiente (<11h) para ${data.name}!`;
-                            }
-                        }
-
-                        cellsHtml += `<td class="${cellClass}" style="${cellStyle}" title="${tooltip || (activeCode ? `${data.name} em ${activeCode}` : '')}">${content}</td>`;
+                        cellsHtml += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/30" style="background-color: ${activeCode ? activeColor : 'transparent'}">${activeCode}</td>`;
                     });
                 });
 
@@ -889,7 +654,6 @@
 
         // --- IMPRESSÃO E EXPORTAÇÃO ---
         function generatePrintHTML(events) {
-            const conflicts = validateAssignments();
             return events.map(ev => `
                 <div class="print-page">
                     <h1 style="font-size:20px; font-weight:900; margin:0; border-bottom:1.5px solid black;">${ev.name.toUpperCase()}</h1>
@@ -906,36 +670,16 @@
                                 <th style="width:14%; border:1px solid black; padding:6px; font-size:10px;">Segur.</th>
                             </tr>
                         </thead>
-                        <tbody>${ev.shifts.map(s => {
-                            return `<tr>
+                        <tbody>${ev.shifts.map(s => `
+                            <tr>
                                 <td style="text-align:center; border:1px solid black; padding:6px; font-size:10px;"><b>${s.label}</b><br>${s.time}</td>
-                                ${SHIFT_COLS.map(col => {
-                                    const key = `${s.id}_${col}`;
-                                    const hasDb = conflicts.doubleBooking[key]?.length > 0;
-                                    const hasRv = conflicts.restViolation[key]?.length > 0;
-                                    
-                                    let borderStyle = "border:1px solid black;";
-                                    let warningText = "";
-                                    
-                                    if (hasDb) {
-                                        // Engrossar o contorno duplo em caso de Dupla Marcação
-                                        borderStyle = "border:3px double #000000; background-color: #fecaca !important; -webkit-print-color-adjust: exact;";
-                                        const dbStaff = conflicts.doubleBooking[key].map(c => `${c.staff} (Dupla Marcação em [${c.otherEvent}])`).join(', ');
-                                        warningText = `<div style="font-size:7px; font-weight:900; color: #7f1d1d; margin-top:4px;">⚠️ ${dbStaff}</div>`;
-                                    } else if (hasRv) {
-                                        // Contorno tracejado grosso em caso de violação de Descanso Mínimo
-                                        borderStyle = "border:3px dashed #000000; background-color: #fef3c7 !important; -webkit-print-color-adjust: exact;";
-                                        const rvStaff = conflicts.restViolation[key].map(c => `${c.staff} (Descanso curto: ${c.restHours}h após [${c.prevEvent}])`).join(', ');
-                                        warningText = `<div style="font-size:7px; font-weight:900; color: #78350f; margin-top:4px;">⏳ ${rvStaff}</div>`;
-                                    }
-                                    
-                                    return `<td style="text-align:left; ${borderStyle} padding:6px; font-size:10px; vertical-align:top;">
-                                        ${(s[col] || '').replace(/\n/g, '<br>')}
-                                        ${warningText}
-                                    </td>`;
-                                }).join('')}
-                            </tr>`;
-                        }).join('')}
+                                <td style="text-align:left; border:1px solid black; padding:6px; font-size:10px;">${s.tecnicos.replace(/\n/g, '<br>')}</td>
+                                <td style="text-align:left; border:1px solid black; padding:6px; font-size:10px;">${s.producao.replace(/\n/g, '<br>')}</td>
+                                <td style="text-align:left; border:1px solid black; padding:6px; font-size:10px;">${s.bilheteira.replace(/\n/g, '<br>')}</td>
+                                <td style="text-align:left; border:1px solid black; padding:6px; font-size:10px;">${s.portas.replace(/\n/g, '<br>')}</td>
+                                <td style="text-align:left; border:1px solid black; padding:6px; font-size:10px;">${s.bar.replace(/\n/g, '<br>')}</td>
+                                <td style="text-align:left; border:1px solid black; padding:6px; font-size:10px;">${s.seguranca.replace(/\n/g, '<br>')}</td>
+                            </tr>`).join('')}
                         </tbody>
                     </table>
                 </div>`).join('');
@@ -1090,6 +834,7 @@
             setTimeout(() => { win.print(); win.close(); }, 500);
         }
 
+        // Modificado com IDs únicos por tipo (${type}-add-c e ${type}-add-n) e tipografia de 12px
         function renderManager(type) {
             const v = document.getElementById(type + 'View');
             const isS = type === 'staff';
@@ -1117,12 +862,44 @@
                 renderManager(t); 
             } 
         }
+const checklistItems = [
+    { id: 'spa', label: 'Licença SPA' },
+    { id: 'igac', label: 'Licença IGAC' },
+    { id: 'classif', label: 'Classificação Etária' },
+    { id: 'seguro', label: 'Seguro Resp. Civil' },
+    { id: 'segpriv', label: 'Segurança Privada' },
+    { id: 'ruido', label: 'Licença de Ruído' }
+];
 
+function renderChecklist(h) {
+    const container = document.getElementById('checklistContainer');
+    container.innerHTML = checklistItems.map(item => `
+        <div class="flex items-center gap-3 bg-zinc-900 p-3 rounded border border-zinc-800">
+            <input type="checkbox" ${h[item.id + '_check'] ? 'checked' : ''} 
+                   onchange="updateChecklist('${item.id}', 'check', this.checked)">
+            <span class="flex-1 text-[11px] font-bold uppercase text-zinc-400">${item.label}</span>
+            <input type="date" value="${h[item.id + '_date'] || ''}" 
+                   onchange="updateChecklist('${item.id}', 'date', this.value)"
+                   class="bg-black border border-zinc-700 text-[10px] text-white p-1 rounded [color-scheme:dark]">
+        </div>
+    `).join('');
+}
+
+function updateChecklist(id, field, val) {
+    const ev = appData.events.find(e => e.id === appData.activeEventId);
+    if(ev) {
+        if(!ev.hosp) ev.hosp = {};
+        ev.hosp[id + '_' + field] = val;
+        saveData();
+    }
+}
         function deleteEntry(t, c) { if(confirm("Eliminar?")) { if(t === 'staff') delete appData.staff[c.toLowerCase()]; else delete appData.venues[c]; saveData(); renderManager(t); } }
         function exportData() { const b = new Blob([JSON.stringify(appData)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup_backstage.json'; a.click(); }
         function importData(e) { const fr = new FileReader(); fr.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); }; fr.readAsText(e.target.files[0]); }
 
         window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
+
+        
     </script>
 </body>
 </html>
