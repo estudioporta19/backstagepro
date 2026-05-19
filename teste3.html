@@ -399,6 +399,8 @@
             }
         }
 
+        
+
         function fillHospitalityForm(h) {
             const fields = ['companyName', 'showName', 'contactProd', 'contactTech', 'lodgingPlace', 'lodgingRooms', 'checkIn', 'checkOut', 'lodgingContact', 'mealsPlace', 'mealsTimes', 'dietary', 'hospNotes'];
             const ids = ['h-comp-name', 'h-show-name', 'h-contact-prod', 'h-contact-tech', 'h-lodging-place', 'h-lodging-rooms', 'h-check-in', 'h-check-out', 'h-lodging-contact', 'h-meals-place', 'h-meals-times', 'h-dietary', 'h-notes'];
@@ -794,7 +796,11 @@
                             <span class="label">Restrições Alimentares</span>
                             <span class="val"><pre>${h.dietary || 'Nenhuma informada'}</pre></span>
                         </div>
+                        
                     </div>
+                    <div style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                    <p><strong>Refeições:</strong> ${h.lunchCount || 0} Almoços | ${h.dinnerCount || 0} Jantares</p>
+                        </div>
                      <h2>Obrigações Legais</h2>
                            <table style="width:100%; border-collapse:collapse; margin-top:10px;">
                             ${checklistItems.map(item => {
