@@ -677,7 +677,96 @@
             else updateShiftField(sid, col, val);
             adjustHeight(textarea);
         }
-
+function showStaffPicker(t, sid, col) {
+            const p = document.getElementById('quickStaffPicker');
+ 
+            // --- Descobrir a data do evento activo ---
+            const activeEv = appData.events.find(e => e.id === appData.activeEventId);
+            const evDate = activeEv ? activeEv.date : null;
+ 
+            // --- Pessoas do Plano Geral para essa data ---
+            let planoNames = [];
+            if (evDate && appData.plano && appData.plano.length) {
+                const planoLines = appData.plano.filter(l => l.date === evDate && l.equipa);
+                planoLines.forEach(l => {
+                    l.equipa.split(/[,\n]+/).map(n => n.trim()).filter(Boolean).forEach(n => {
+                        if (!planoNames.includes(n)) planoNames.push(n);
+                    });
+                });
+            }
+            planoNames.sort((a, b) => a.localeCompare(b));
+ 
+            // --- Toda a staff (fallback e secção "outros") ---
+            const allStaff = Object.values(appData.staff).map(s => s.name).sort((a, b) => a.localeCompare(b));
+ 
+            // --- Construir lista ---
+            let html = '';
+ 
+            if (planoNames.length) {
+                // Cabeçalho da secção filtrada
+                html += `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-400 bg-zinc-950 border-b border-zinc-800">
+                            Plano do dia
+                         </div>`;
+                html += planoNames.map(n =>
+                    `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
+                          class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800 font-semibold">${n}</div>`
+                ).join('');
+ 
+                // Restante staff que não está no plano
+                const others = allStaff.filter(n => !planoNames.includes(n));
+                if (others.length) {
+                    html += `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-600 bg-zinc-950 border-b border-zinc-800">
+                                Outros
+                             </div>`;
+                    html += others.map(n =>
+                        `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
+                              class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800 text-zinc-400">${n}</div>`
+                    ).join('');
+                }
+            } else {
+                // Sem plano para esta data — mostra tudo normalmente
+                html = allStaff.map(n =>
+                    `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
+                          class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${n}</div>`
+                ).join('');
+            }
+ 
+            p.innerHTML = html;
+            const r = t.getBoundingClientRect();
+            p.style.top  = (r.bottom + window.scrollY) + 'px';
+            p.style.left = (r.left   + window.scrollX) + 'px';
+            p.classList.remove('hidden');
+ 
+            const close = (e) => {
+                if (!p.contains(e.target) && e.target !== t) {
+                    p.classList.add('hidden');
+                    document.removeEventListener('click', close);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', close), 10);
+        }
+ 
+        function pickStaff(n, sid, col) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            const s = ev.shifts.find(x => x.id === sid);
+            let current = s[col] || '';
+            // Permite adicionar à mesma célula mas não duplica nessa célula
+            if (current.split(/[,\n]+/).map(x => x.trim()).includes(n)) return;
+            s[col] = current
+                ? (current.trim().endsWith(',') || current.trim().endsWith('\n')
+                    ? current + ' ' + n
+                    : current + ', ' + n)
+                : n;
+            saveData();
+            renderShifts(ev);
+            // Manter o picker aberto para adicionar mais pessoas
+            const p = document.getElementById('quickStaffPicker');
+            if (!p.classList.contains('hidden')) {
+                // Reabrir com o mesmo contexto para reflectir o estado actualizado
+                const textarea = document.querySelector(`#shiftsBody textarea[onclick*="${sid}"][onclick*="${col}"]`);
+                if (textarea) showStaffPicker(textarea, sid, col);
+            }
+        }
         function processVenueCode(input) {
             const val = input.value;
             for(let code in appData.venues) { 
@@ -690,23 +779,9 @@
             updateActiveEvent('venue', val);
         }
 
-        function showStaffPicker(t, sid, col) {
-            const p = document.getElementById('quickStaffPicker');
-            p.innerHTML = Object.values(appData.staff).sort((a,b)=>a.name.localeCompare(b.name)).map(s => `<div onclick="pickStaff('${s.name}', '${sid}', '${col}')" class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${s.name}</div>`).join('');
-            const r = t.getBoundingClientRect(); p.style.top = (r.bottom + window.scrollY) + 'px'; p.style.left = (r.left + window.scrollX) + 'px';
-            p.classList.remove('hidden');
-            const close = (e) => { if(!p.contains(e.target) && e.target !== t) { p.classList.add('hidden'); document.removeEventListener('click', close); } };
-            setTimeout(() => document.addEventListener('click', close), 10);
-        }
+      
 
-        function pickStaff(n, sid, col) {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            const s = ev.shifts.find(x => x.id === sid);
-            let current = s[col] || "";
-            if(current.includes(n)) return; 
-            s[col] = current ? (current.trim().endsWith(',') || current.trim().endsWith('\n') ? current + " " + n : current + ", " + n) : n;
-            saveData(); renderShifts(ev);
-        }
+       
 
         // --- MAPA DE TURNOS E CALENDÁRIO ---
         function getVenueInfo(venueName) {
@@ -1104,16 +1179,89 @@ function updateChecklist(id, field, val) {
         function deleteEntry(t, c) { if(confirm("Eliminar?")) { if(t === 'staff') delete appData.staff[c.toLowerCase()]; else delete appData.venues[c]; saveData(); renderManager(t); } }
 
 // ── Helpers ──────────────────────────────────────────────────
-
+function showPlanoStaffPicker(textarea, lineId) {
+            const p = document.getElementById('quickStaffPicker');
+            const allStaff = Object.values(appData.staff)
+                .map(s => s.name)
+                .sort((a, b) => a.localeCompare(b));
+ 
+            p.innerHTML = `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-400 bg-zinc-950 border-b border-zinc-800">Adicionar à equipa</div>` +
+                allStaff.map(n =>
+                    `<div onclick="pickPlanoStaff('${n.replace(/'/g,"\\'")}','${lineId}')"
+                          class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${n}</div>`
+                ).join('');
+ 
+            const r = textarea.getBoundingClientRect();
+            p.style.top  = (r.bottom + window.scrollY) + 'px';
+            p.style.left = (r.left   + window.scrollX) + 'px';
+            p.classList.remove('hidden');
+ 
+            const close = (e) => {
+                if (!p.contains(e.target) && e.target !== textarea) {
+                    p.classList.add('hidden');
+                    document.removeEventListener('click', close);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', close), 10);
+        }
+ 
+        function pickPlanoStaff(name, lineId) {
+            const line = appData.plano.find(l => l.id === lineId);
+            if (!line) return;
+ 
+            const current = (line.equipa || '').split(/[,\n]+/).map(n => n.trim()).filter(Boolean);
+            if (current.includes(name)) return; // já está, não duplica
+ 
+            line.equipa = current.length ? current.join(', ') + ', ' + name : name;
+            line.autoFilled = false;
+            saveData();
+ 
+            // Actualizar só a textarea desta linha sem re-renderizar tudo
+            const row = document.querySelector(`#planoBody tr[data-id="${lineId}"]`);
+            if (row) {
+                const ta = row.querySelector(`textarea.plano-cell`);
+                // A primeira textarea editável da linha de equipa é a 5ª coluna (index 4 dentro do tr)
+                const tds = row.querySelectorAll('td');
+                // equipa é a coluna 7 (index 7)
+                const equipaTd = tds[7];
+                if (equipaTd) {
+                    const equipaTa = equipaTd.querySelector('textarea');
+                    if (equipaTa) {
+                        equipaTa.value = line.equipa;
+                        planoAutoResize(equipaTa);
+                    }
+                }
+            }
+ 
+            // Manter picker aberto para adicionar mais pessoas
+            const pRow = document.querySelector(`#planoBody tr[data-id="${lineId}"]`);
+            if (pRow) {
+                const tds = pRow.querySelectorAll('td');
+                const equipaTd = tds[7];
+                if (equipaTd) {
+                    const equipaTa = equipaTd.querySelector('textarea');
+                    if (equipaTa) showPlanoStaffPicker(equipaTa, lineId);
+                }
+            }
+        }
+ 
         function planoFmtDate(iso) {
             if (!iso) return '';
             const [y, m, d] = iso.split('-');
             return `${d}/${m}/${String(y).slice(2)}`;
         }
 
-        function planoCellTA(lineId, field, val, extraClass = '') {
+    function planoCellTA(lineId, field, val, extraClass = '') {
             const cls = `plano-cell${extraClass ? ' ' + extraClass : ''}`;
             const escaped = (val || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+ 
+            // Campo equipa: abre picker ao clicar; os restantes: só texto livre
+            if (field === 'equipa') {
+                return `<textarea class="${cls}" rows="1"
+                    onclick="showPlanoStaffPicker(this,'${lineId}')"
+                    oninput="planoAutoResize(this); updatePlanoLine('${lineId}','${field}',this.value)"
+                    >${escaped}</textarea>`;
+            }
             return `<textarea class="${cls}" rows="1"
                 oninput="planoAutoResize(this); updatePlanoLine('${lineId}','${field}',this.value)"
                 >${escaped}</textarea>`;
