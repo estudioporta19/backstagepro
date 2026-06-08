@@ -378,8 +378,8 @@
                     <p class="text-[11px] text-zinc-600 mt-1 font-bold uppercase tracking-widest">Teatro de Palha · Lavrar o Mar</p>
                 </div>
                 <div class="flex gap-2 items-center">
-                    <button onclick="sincronizarPlanoParaAgenda()" class="bg-indigo-700/30 text-indigo-300 border border-indigo-600/40 px-4 py-2 rounded text-[11px] font-black uppercase hover:bg-indigo-700/60 transition">
-                        ↓ Sincronizar para Agenda
+                    <button onclick="PlanoParaAgenda()" class="bg-indigo-700/30 text-indigo-300 border border-indigo-600/40 px-4 py-2 rounded text-[11px] font-black uppercase hover:bg-indigo-700/60 transition">
+                        ↓  para Agenda
                     </button>
                     <button onclick="autoFillPlanoFromEvents()" class="bg-emerald-900/30 text-emerald-400 border border-emerald-700/40 px-4 py-2 rounded text-[11px] font-black uppercase hover:bg-emerald-800/40 transition">
                         ⟳ Auto-Preencher da Agenda
@@ -1513,120 +1513,126 @@
         // ── Sincronizar Plano Geral → Agenda ──────────────────────────
  
         function sincronizarPlanoParaAgenda() {
-            if (!appData.plano || !appData.plano.length) {
-                alert('O Plano Geral está vazio. Adiciona linhas primeiro.');
-                return;
-            }
- 
-            // Agrupar linhas do Plano Geral por DATA + LOCAL + DIA (gestão de múltiplos D1 paralelos)
-            const grupos = {};
-            appData.plano.forEach(line => {
-                if (!line.day || !line.date) return; 
-                const localKey = line.local || 'SEM_LOCAL';
-                const key = `${line.date}_${localKey}_${line.day}`;
-                if (!grupos[key]) {
-                    grupos[key] = {
-                        day: line.day,
-                        date: line.date,
-                        local: line.local,
-                        lines: []
-                    };
-                }
-                grupos[key].lines.push(line);
-            });
- 
-            if (!Object.keys(grupos).length) {
-                alert('Nenhuma linha do plano possui Dia e Data preenchidos.');
-                return;
-            }
- 
-            const aSubstituir = [];
-            const aCriar     = [];
- 
-            Object.entries(grupos).forEach(([key, group]) => {
-                const data = group.date;
-                const day = group.day;
-                const localCode = group.local || '';
-                const localName = appData.venues[localCode] || localCode || 'Sem Local';
+    if (!appData.plano || !appData.plano.length) {
+        alert('O Plano Geral está vazio. Adiciona linhas primeiro.');
+        return;
+    }
 
-                // Recolhe as actividades únicas deste dia de produção
-                const uniqueActs = [...new Set(group.lines.map(l => l.actividade).filter(Boolean))];
-                const activityStr = uniqueActs.length ? uniqueActs.join(', ') : '';
-                
-                // Nome do evento passa a ser focado no Local: "Local - Dx (Actividades)"
-                const calculatedName = activityStr ? `${localName} - ${day} (${activityStr})` : `${localName} - ${day}`;
-
-                // Verifica se já existe um evento na Agenda sincronizado ou com características equivalentes
-                const existente = appData.events.find(e =>
-                    e.id === `ev_pg_${key}` || 
-                    (e.date === data && e.venue === localName && e.name.includes(day))
-                );
-
-                if (existente) {
-                    aSubstituir.push({ key, group, name: calculatedName, data, existente });
-                } else {
-                    aCriar.push({ key, group, name: calculatedName, data });
-                }
-            });
- 
-            // Preparar janela de confirmação para o utilizador
-            let msg = '';
-            if (aCriar.length) {
-                msg += `✚ Criar ${aCriar.length} evento(s) novo(s) na Agenda:\n`;
-                aCriar.forEach(g => {
-                    const fmtDate = g.data.split('-').reverse().join('/');
-                    msg += `  · ${g.name} (${fmtDate})  — ${g.group.lines.length} turno(s)\n`;
-                });
-            }
-            if (aSubstituir.length) {
-                msg += `\n⚠ Mapear e substituir turnos em ${aSubstituir.length} evento(s) existente(s):\n`;
-                aSubstituir.forEach(g => {
-                    const fmtDate = g.data.split('-').reverse().join('/');
-                    msg += `  · ${g.existente.name} (${fmtDate})  — substituir turnos?\n`;
-                });
-            }
- 
-            if (!confirm(msg + '\nConfirmar a sincronização para a Agenda?')) return;
- 
-            [...aCriar, ...aSubstituir].forEach(item => {
-                const group = item.group;
-                const localCode = group.local || '';
-                const localName = appData.venues[localCode] || localCode || 'Sem Local';
-
-                // Cada linha do plano associado a este grupo vira um turno na Agenda
-                const novosShifts = group.lines.map(line => ({
-                    id: 'pg_shift_' + line.id,
-                    label: (line.tarefa || line.actividade || 'TURNO').toUpperCase(),
-                    time: line.horaInicio || '09:00',
-                    tecnicos: line.equipa || '',        // Sincroniza a equipa preenchida
-                    producao: line.responsavel || '',   // Sincroniza o responsável na produção
-                    bilheteira: '',
-                    portas: '',
-                    bar: '',
-                    seguranca: '',
-                    planoLineId: line.id                // Preserva o vínculo para o picker de equipa
-                }));
- 
-                if (item.existente) {
-                    item.existente.name = item.name;   // Atualiza o nome com a atividade real
-                    item.existente.venue = localName;  // Garante a atribuição correta do local
-                    item.existente.shifts = novosShifts;
-                } else {
-                    appData.events.push({
-                        id: `ev_pg_${item.key}`,
-                        name: item.name,              // Nome estruturado: "Local - Dia (Actividades)"
-                        date: group.date,
-                        venue: localName,             // Define automaticamente o local no evento
-                        shifts: novosShifts,
-                        hosp: {}
-                    });
-                }
-            });
- 
-            saveData();
-            renderEventList();
-            alert(`✓ Sincronização terminada: ${aCriar.length} criado(s), ${aSubstituir.length} atualizado(s).`);
+    // Agrupar linhas do Plano Geral por DATA + LOCAL + DIA (gestão de múltiplos D1 paralelos)
+    const grupos = {};
+    appData.plano.forEach(line => {
+        if (!line.day || !line.date) return; 
+        const localKey = line.local || 'SEM_LOCAL';
+        const key = `${line.date}_${localKey}_${line.day}`;
+        if (!grupos[key]) {
+            grupos[key] = {
+                day: line.day,
+                date: line.date,
+                local: line.local,
+                lines: []
+            };
         }
+        grupos[key].lines.push(line);
+    });
+
+    if (!Object.keys(grupos).length) {
+        alert('Nenhuma linha do plano possui Dia e Data preenchidos.');
+        return;
+    }
+
+    const aSubstituir = [];
+    const aCriar     = [];
+
+    Object.entries(grupos).forEach(([key, group]) => {
+        const data = group.date;
+        const day = group.day;
+        const localCode = group.local || '';
+        const localName = appData.venues[localCode] || localCode || 'Sem Local';
+
+        // Recolhe as actividades únicas deste dia de produção
+        const uniqueActs = [...new Set(group.lines.map(l => l.actividade).filter(Boolean))];
+        const activityStr = uniqueActs.length ? uniqueActs.join(', ') : '';
+        
+        // Nome do evento passa a ser focado no Local: "Local - Dx (Actividades)"
+        const calculatedName = activityStr ? `${localName} - ${day} (${activityStr})` : `${localName} - ${day}`;
+
+        // Verifica se já existe um evento na Agenda sincronizado ou com características equivalentes
+        const existente = appData.events.find(e =>
+            e.id === `ev_pg_${key}` || 
+            (e.date === data && e.venue === localName && e.name.includes(day))
+        );
+
+        if (existente) {
+            aSubstituir.push({ key, group, name: calculatedName, data, existente });
+        } else {
+            aCriar.push({ key, group, name: calculatedName, data });
+        }
+    });
+
+    // Preparar janela de confirmação para o utilizador
+    let msg = '';
+    if (aCriar.length) {
+        msg += `✚ Criar ${aCriar.length} evento(s) novo(s) na Agenda:\n`;
+        aCriar.forEach(g => {
+            const fmtDate = g.data.split('-').reverse().join('/');
+            msg += `  · ${g.name} (${fmtDate})  — ${g.group.lines.length} turno(s)\n`;
+        });
+    }
+    if (aSubstituir.length) {
+        msg += `\n⚠ Mapear e substituir turnos em ${aSubstituir.length} evento(s) existente(s):\n`;
+        aSubstituir.forEach(g => {
+            const fmtDate = g.data.split('-').reverse().join('/');
+            msg += `  · ${g.existente.name} (${fmtDate})  — substituir turnos?\n`;
+        });
+    }
+
+    if (!confirm(msg + '\nConfirmar a sincronização para a Agenda?')) return;
+
+    [...aCriar, ...aSubstituir].forEach(item => {
+        const group = item.group;
+        const localCode = group.local || '';
+        const localName = appData.venues[localCode] || localCode || 'Sem Local';
+
+        // Cada linha do plano associado a este grupo vira um turno na Agenda
+        const novosShifts = group.lines.map(line => ({
+            id: 'pg_shift_' + line.id,
+            label: (line.tarefa || line.actividade || 'TURNO').toUpperCase(),
+            time: line.horaInicio || '09:00',
+            tecnicos: '',                       // CORRIGIDO: Sempre limpo para o utilizador preencher manualmente
+            producao: line.responsavel || '',   // Sincroniza o responsável na produção
+            bilheteira: '',
+            portas: '',
+            bar: '',
+            seguranca: '',
+            planoLineId: line.id                // Preserva o vínculo para o picker rápido de equipa
+        }));
+
+        if (item.existente) {
+            item.existente.name = item.name;   // Atualiza o nome com a atividade real
+            item.existente.venue = localName;  // Garante a atribuição correta do local
+            item.existente.shifts = novosShifts;
+        } else {
+            appData.events.push({
+                id: `ev_pg_${item.key}`,
+                name: item.name,              // Nome estruturado: "Local - Dia (Actividades)"
+                date: group.date,
+                venue: localName,             // Define automaticamente o local no evento
+                shifts: novosShifts,
+                hosp: {}
+            });
+        }
+    });
+
+    saveData();
+    renderEventList();
+    
+    // CORRIGIDO: Se o evento sincronizado estiver aberto no editor da agenda, atualiza-o imediatamente no ecrã
+    if (appData.activeEventId) {
+        selectEvent(appData.activeEventId);
+    }
+    
+    alert(`✓ Sincronização terminada: ${aCriar.length} criado(s), ${aSubstituir.length} atualizado(s).`);
+}
 
         // --- SISTEMA DE EXPORTAÇÃO E IMPORTAÇÃO ---
         function exportData() {
