@@ -63,52 +63,52 @@
         }
          /* ── PLANO GERAL ── */
         #planoView table.plano-table { border-collapse: collapse; width: 100%; font-size: 11px; }
-        #View table.-table th {
+        #planoView table.plano-table th {
             background: #0d0d0d; color: #555; font-size: 9px; font-weight: 900;
             text-transform: uppercase; letter-spacing: .06em;
             padding: 8px 6px; border: 1px solid #1a1a1a; white-space: nowrap;
         }
-        #View table.-table td {
-            border: 1px solid #141414; vertical-align: middle; padding: 4px 5px;
+        #planoView table.plano-table td {
+            border: 1px solid #141414; vertical-align: top; padding: 3px 4px;
             background: #090909;
         }
-        #View table.-table tr.-day-sep td {
+        #planoView table.plano-table tr.plano-day-sep td {
             background: #0f0f0f; border-top: 2px solid #6366f1;
         }
-        #View table.-table tr:hover td { background: #0e0e0e; }
+        #planoView table.plano-table tr:hover td { background: #0e0e0e; }
 
-        .-day-badge {
+        .plano-day-badge {
             display: inline-block; background: #6366f1; color: white;
             font-size: 9px; font-weight: 900; padding: 2px 7px;
             border-radius: 4px; text-transform: uppercase; letter-spacing: .05em;
             white-space: nowrap;
         }
-        .-act-badge {
+        .plano-act-badge {
             display: block; font-size: 9px; font-weight: 900; color: #6366f1;
             text-transform: uppercase; letter-spacing: .04em; margin-top: 2px;
         }
-        .-auto-badge {
+        .plano-auto-badge {
             display: inline-block; background: #059669; color: white;
             font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 3px;
             letter-spacing: .04em; margin-left: 4px; vertical-align: middle;
         }
-        #View textarea.-cell, #View input.-cell {
+        #planoView textarea.plano-cell, #planoView input.plano-cell {
             background: transparent; border: none; color: #e5e5e5;
             font-size: 11px; font-family: inherit; resize: none;
             width: 100%; padding: 2px 3px; min-height: 28px;
             overflow: hidden; line-height: 1.4;
         }
-        #View textarea.-cell:focus, #View input.-cell:focus {
+        #planoView textarea.plano-cell:focus, #planoView input.plano-cell:focus {
             outline: none; background: #0d0d0d;
             box-shadow: inset 0 0 0 1px #6366f1; border-radius: 3px;
         }
-        #View textarea.-cell.auto-filled { color: #34d399; }
-        #View input.-cell.time-cell { width: 54px; text-align: center; font-weight: 700; color: #a1a1aa; }
+        #planoView textarea.plano-cell.auto-filled { color: #34d399; }
+        #planoView input.plano-cell.time-cell { width: 54px; text-align: center; font-weight: 700; color: #a1a1aa; }
 
-        .-add-row-btn {
-            font-size: 9px; font-weight: 900; color: #a1a1aa; text-transform: uppercase;
-            letter-spacing: .06em; padding: 4px 8px; cursor: pointer;
-            background: none; border: 1px dashed #27272a; border-radius: 4px;
+        .plano-add-row-btn {
+            font-size: 9px; font-weight: 900; color: #3f3f46; text-transform: uppercase;
+            letter-spacing: .06em; padding: 3px 8px; cursor: pointer;
+            background: none; border: 1px dashed #1f1f1f; border-radius: 4px;
             transition: all .15s;
         }
         .plano-add-row-btn:hover { color: #6366f1; border-color: #6366f1; }
