@@ -63,49 +63,49 @@
         }
          /* ── PLANO GERAL ── */
         #planoView table.plano-table { border-collapse: collapse; width: 100%; font-size: 11px; }
-        #planoView table.plano-table th {
+        #View table.-table th {
             background: #0d0d0d; color: #555; font-size: 9px; font-weight: 900;
             text-transform: uppercase; letter-spacing: .06em;
             padding: 8px 6px; border: 1px solid #1a1a1a; white-space: nowrap;
         }
-        #planoView table.plano-table td {
+        #View table.-table td {
             border: 1px solid #141414; vertical-align: middle; padding: 4px 5px;
             background: #090909;
         }
-        #planoView table.plano-table tr.plano-day-sep td {
+        #View table.-table tr.-day-sep td {
             background: #0f0f0f; border-top: 2px solid #6366f1;
         }
-        #planoView table.plano-table tr:hover td { background: #0e0e0e; }
+        #View table.-table tr:hover td { background: #0e0e0e; }
 
-        .plano-day-badge {
+        .-day-badge {
             display: inline-block; background: #6366f1; color: white;
             font-size: 9px; font-weight: 900; padding: 2px 7px;
             border-radius: 4px; text-transform: uppercase; letter-spacing: .05em;
             white-space: nowrap;
         }
-        .plano-act-badge {
+        .-act-badge {
             display: block; font-size: 9px; font-weight: 900; color: #6366f1;
             text-transform: uppercase; letter-spacing: .04em; margin-top: 2px;
         }
-        .plano-auto-badge {
+        .-auto-badge {
             display: inline-block; background: #059669; color: white;
             font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 3px;
             letter-spacing: .04em; margin-left: 4px; vertical-align: middle;
         }
-        #planoView textarea.plano-cell, #planoView input.plano-cell {
+        #View textarea.-cell, #View input.-cell {
             background: transparent; border: none; color: #e5e5e5;
             font-size: 11px; font-family: inherit; resize: none;
             width: 100%; padding: 2px 3px; min-height: 28px;
             overflow: hidden; line-height: 1.4;
         }
-        #planoView textarea.plano-cell:focus, #planoView input.plano-cell:focus {
+        #View textarea.-cell:focus, #View input.-cell:focus {
             outline: none; background: #0d0d0d;
             box-shadow: inset 0 0 0 1px #6366f1; border-radius: 3px;
         }
-        #planoView textarea.plano-cell.auto-filled { color: #34d399; }
-        #planoView input.plano-cell.time-cell { width: 54px; text-align: center; font-weight: 700; color: #a1a1aa; }
+        #View textarea.-cell.auto-filled { color: #34d399; }
+        #View input.-cell.time-cell { width: 54px; text-align: center; font-weight: 700; color: #a1a1aa; }
 
-        .plano-add-row-btn {
+        .-add-row-btn {
             font-size: 9px; font-weight: 900; color: #a1a1aa; text-transform: uppercase;
             letter-spacing: .06em; padding: 4px 8px; cursor: pointer;
             background: none; border: 1px dashed #27272a; border-radius: 4px;
@@ -168,12 +168,13 @@
         </div>
 
         <nav class="flex flex-col gap-1.5 mt-4 px-2">
+            <button onclick="switchTab('plano')" id="btn-tab-plano" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📋 Plano Geral</button>
             <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📅 Agenda</button>
             <button onclick="switchTab('monthly')" id="btn-tab-monthly" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">🗓️ Vista Mensal</button>
             <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📊 Mapa Turnos</button>
             <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">👥 Equipa</button>
             <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📍 Locais</button>
-            <button onclick="switchTab('plano')" id="btn-tab-plano" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📋 Plano Geral</button>
+            
         </nav>
 
         <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
