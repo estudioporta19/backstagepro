@@ -384,6 +384,10 @@
                     <p class="text-[11px] text-zinc-600 mt-1 font-bold uppercase tracking-widest">Teatro de Palha · Lavrar o Mar</p>
                 </div>
                 <div class="flex gap-2 items-center">
+                     <button onclick="sincronizarPlanoParaAgenda()"
+           class="bg-indigo-700/30 text-indigo-300 border border-indigo-600/40 px-4 py-2 rounded text-[11px] font-black uppercase hover:bg-indigo-700/60 transition">
+           ↓ Sincronizar para Agenda
+       </button>
                     <button onclick="autoFillPlanoFromEvents()" class="bg-emerald-900/30 text-emerald-400 border border-emerald-700/40 px-4 py-2 rounded text-[11px] font-black uppercase hover:bg-emerald-800/40 transition">
                         ⟳ Auto-Preencher da Agenda
                     </button>
@@ -680,51 +684,44 @@
 function showStaffPicker(t, sid, col) {
             const p = document.getElementById('quickStaffPicker');
  
-            // --- Descobrir a data do evento activo ---
+            // Descobrir equipa associada a este turno via planoLineId
             const activeEv = appData.events.find(e => e.id === appData.activeEventId);
-            const evDate = activeEv ? activeEv.date : null;
+            const shift = activeEv ? activeEv.shifts.find(s => s.id === sid) : null;
+            const planoLineId = shift ? shift.planoLineId : null;
  
-            // --- Pessoas do Plano Geral para essa data ---
-            let planoNames = [];
-            if (evDate && appData.plano && appData.plano.length) {
-                const planoLines = appData.plano.filter(l => l.date === evDate && l.equipa);
-                planoLines.forEach(l => {
-                    l.equipa.split(/[,\n]+/).map(n => n.trim()).filter(Boolean).forEach(n => {
-                        if (!planoNames.includes(n)) planoNames.push(n);
-                    });
-                });
+            let filteredNames = [];
+            if (planoLineId && appData.plano) {
+                const line = appData.plano.find(l => l.id === planoLineId);
+                if (line && line.equipa) {
+                    filteredNames = line.equipa.split(/[,\n]+/).map(n => n.trim()).filter(Boolean);
+                    filteredNames.sort((a, b) => a.localeCompare(b));
+                }
             }
-            planoNames.sort((a, b) => a.localeCompare(b));
  
-            // --- Toda a staff (fallback e secção "outros") ---
-            const allStaff = Object.values(appData.staff).map(s => s.name).sort((a, b) => a.localeCompare(b));
+            const allStaff = Object.values(appData.staff)
+                .map(s => s.name)
+                .sort((a, b) => a.localeCompare(b));
  
-            // --- Construir lista ---
             let html = '';
  
-            if (planoNames.length) {
-                // Cabeçalho da secção filtrada
-                html += `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-400 bg-zinc-950 border-b border-zinc-800">
-                            Plano do dia
-                         </div>`;
-                html += planoNames.map(n =>
+            if (filteredNames.length) {
+                // Secção com equipa do plano
+                html += `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-400 bg-zinc-950 border-b border-zinc-800">Equipa deste turno</div>`;
+                html += filteredNames.map(n =>
                     `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
                           class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800 font-semibold">${n}</div>`
                 ).join('');
  
-                // Restante staff que não está no plano
-                const others = allStaff.filter(n => !planoNames.includes(n));
+                // Restantes
+                const others = allStaff.filter(n => !filteredNames.includes(n));
                 if (others.length) {
-                    html += `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-600 bg-zinc-950 border-b border-zinc-800">
-                                Outros
-                             </div>`;
+                    html += `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-600 bg-zinc-950 border-b border-zinc-800">Outros</div>`;
                     html += others.map(n =>
                         `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
                               class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800 text-zinc-400">${n}</div>`
                     ).join('');
                 }
             } else {
-                // Sem plano para esta data — mostra tudo normalmente
                 html = allStaff.map(n =>
                     `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
                           class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${n}</div>`
@@ -750,7 +747,7 @@ function showStaffPicker(t, sid, col) {
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             const s = ev.shifts.find(x => x.id === sid);
             let current = s[col] || '';
-            // Permite adicionar à mesma célula mas não duplica nessa célula
+            // Não duplica dentro da mesma célula
             if (current.split(/[,\n]+/).map(x => x.trim()).includes(n)) return;
             s[col] = current
                 ? (current.trim().endsWith(',') || current.trim().endsWith('\n')
@@ -759,14 +756,16 @@ function showStaffPicker(t, sid, col) {
                 : n;
             saveData();
             renderShifts(ev);
-            // Manter o picker aberto para adicionar mais pessoas
+            // Manter picker aberto para continuar a distribuir
             const p = document.getElementById('quickStaffPicker');
             if (!p.classList.contains('hidden')) {
-                // Reabrir com o mesmo contexto para reflectir o estado actualizado
-                const textarea = document.querySelector(`#shiftsBody textarea[onclick*="${sid}"][onclick*="${col}"]`);
+                const textarea = document.querySelector(
+                    `#shiftsBody textarea[onclick*="${sid}"][onclick*="${col}"]`
+                );
                 if (textarea) showStaffPicker(textarea, sid, col);
             }
         }
+ 
         function processVenueCode(input) {
             const val = input.value;
             for(let code in appData.venues) { 
@@ -1251,11 +1250,9 @@ function showPlanoStaffPicker(textarea, lineId) {
             return `${d}/${m}/${String(y).slice(2)}`;
         }
 
-    function planoCellTA(lineId, field, val, extraClass = '') {
+function planoCellTA(lineId, field, val, extraClass = '') {
             const cls = `plano-cell${extraClass ? ' ' + extraClass : ''}`;
             const escaped = (val || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
- 
-            // Campo equipa: abre picker ao clicar; os restantes: só texto livre
             if (field === 'equipa') {
                 return `<textarea class="${cls}" rows="1"
                     onclick="showPlanoStaffPicker(this,'${lineId}')"
@@ -1466,7 +1463,160 @@ function showPlanoStaffPicker(textarea, lineId) {
             setTimeout(() => document.body.classList.remove('printing-plano'), 1000);
         }
 
-
+ /* --- Picker de staff no Plano Geral --- */
+ 
+        function showPlanoStaffPicker(textarea, lineId) {
+            const p = document.getElementById('quickStaffPicker');
+            const allStaff = Object.values(appData.staff)
+                .map(s => s.name)
+                .sort((a, b) => a.localeCompare(b));
+ 
+            p.innerHTML =
+                `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-400 bg-zinc-950 border-b border-zinc-800">Adicionar à equipa</div>` +
+                allStaff.map(n =>
+                    `<div onclick="pickPlanoStaff('${n.replace(/'/g,"\\'")}','${lineId}')"
+                          class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${n}</div>`
+                ).join('');
+ 
+            const r = textarea.getBoundingClientRect();
+            p.style.top  = (r.bottom + window.scrollY) + 'px';
+            p.style.left = (r.left   + window.scrollX) + 'px';
+            p.classList.remove('hidden');
+ 
+            const close = (e) => {
+                if (!p.contains(e.target) && e.target !== textarea) {
+                    p.classList.add('hidden');
+                    document.removeEventListener('click', close);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', close), 10);
+        }
+ 
+        function pickPlanoStaff(name, lineId) {
+            const line = appData.plano.find(l => l.id === lineId);
+            if (!line) return;
+            const current = (line.equipa || '').split(/[,\n]+/).map(n => n.trim()).filter(Boolean);
+            if (current.includes(name)) return;
+            line.equipa = [...current, name].join(', ');
+            line.autoFilled = false;
+            saveData();
+ 
+            // Actualizar a textarea sem re-render completo
+            const row = document.querySelector(`#planoBody tr[data-id="${lineId}"]`);
+            if (row) {
+                const tds = row.querySelectorAll('td');
+                if (tds[7]) {
+                    const ta = tds[7].querySelector('textarea');
+                    if (ta) { ta.value = line.equipa; planoAutoResize(ta); }
+                }
+            }
+ 
+            // Manter picker aberto
+            const row2 = document.querySelector(`#planoBody tr[data-id="${lineId}"]`);
+            if (row2) {
+                const tds = row2.querySelectorAll('td');
+                if (tds[7]) {
+                    const ta = tds[7].querySelector('textarea');
+                    if (ta) showPlanoStaffPicker(ta, lineId);
+                }
+            }
+        }
+ 
+ 
+        /* --- Sincronizar Plano Geral → Agenda --- */
+ 
+        function sincronizarPlanoParaAgenda() {
+            if (!appData.plano || !appData.plano.length) {
+                alert('O Plano Geral está vazio. Adiciona linhas primeiro.');
+                return;
+            }
+ 
+            // Agrupar linhas por (day + actividade) — cada grupo = 1 evento
+            const grupos = {};
+            appData.plano.forEach(line => {
+                if (!line.actividade || !line.date) return; // ignora linhas sem actividade ou data
+                const key = line.day + '||' + line.actividade;
+                if (!grupos[key]) grupos[key] = [];
+                grupos[key].push(line);
+            });
+ 
+            if (!Object.keys(grupos).length) {
+                alert('Nenhuma linha com Actividade e Data preenchidas. Preenche esses campos primeiro.');
+                return;
+            }
+ 
+            // Para cada grupo, verificar se já existe evento com mesmo nome+data
+            const aSubstituir = [];
+            const aCriar = [];
+ 
+            Object.entries(grupos).forEach(([key, lines]) => {
+                const nome = lines[0].actividade.trim();
+                const data = lines[0].date;
+                const existente = appData.events.find(e =>
+                    e.name.toUpperCase() === nome.toUpperCase() && e.date === data
+                );
+                if (existente) {
+                    aSubstituir.push({ key, lines, nome, data, existente });
+                } else {
+                    aCriar.push({ key, lines, nome, data });
+                }
+            });
+ 
+            // Resumo para confirmação
+            let msg = '';
+            if (aCriar.length) {
+                msg += `✚ Criar ${aCriar.length} evento(s) novo(s):\n`;
+                aCriar.forEach(g => msg += `  · ${g.nome} (${g.data.split('-').reverse().join('/')})\n`);
+            }
+            if (aSubstituir.length) {
+                msg += `\n⚠ Já existem ${aSubstituir.length} evento(s) com o mesmo nome e data:\n`;
+                aSubstituir.forEach(g => msg += `  · ${g.nome} (${g.data.split('-').reverse().join('/')})\n`);
+                msg += `\nSubstituir os turnos destes eventos pelos do Plano Geral?`;
+            }
+ 
+            if (!msg) { alert('Nada para sincronizar.'); return; }
+            if (!confirm(msg)) return;
+ 
+            // Criar / substituir
+            const todosGrupos = [...aCriar, ...aSubstituir];
+ 
+            todosGrupos.forEach(grupo => {
+                // Construir turnos a partir das linhas do plano
+                const novosShifts = grupo.lines.map(line => ({
+                    id: 'pg_shift_' + line.id,
+                    label: (line.tarefa || line.actividade || 'TURNO').toUpperCase(),
+                    time: line.horaInicio || '09:00',
+                    tecnicos: '',
+                    producao: '',
+                    bilheteira: '',
+                    portas: '',
+                    bar: '',
+                    seguranca: '',
+                    planoLineId: line.id   // ← ligação ao plano para o picker filtrado
+                }));
+ 
+                if (grupo.existente) {
+                    // Substituir apenas os turnos
+                    grupo.existente.shifts = novosShifts;
+                } else {
+                    // Criar evento novo
+                    const novoEv = {
+                        id: 'ev_pg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                        name: grupo.nome,
+                        date: grupo.data,
+                        venue: '',
+                        shifts: novosShifts,
+                        hosp: {}
+                    };
+                    appData.events.push(novoEv);
+                }
+            });
+ 
+            saveData();
+            renderEventList();
+            alert(`✓ Sincronização concluída.\n${aCriar.length} criado(s), ${aSubstituir.length} actualizado(s).`);
+        }
+ 
         
         function exportData() {
             const b = new Blob([JSON.stringify(appData)], {type:'application/json'});
