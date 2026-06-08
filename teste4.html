@@ -1525,96 +1525,93 @@ function planoCellTA(lineId, field, val, extraClass = '') {
  
         /* --- Sincronizar Plano Geral → Agenda --- */
  
-        function sincronizarPlanoParaAgenda() {
+         function sincronizarPlanoParaAgenda() {
             if (!appData.plano || !appData.plano.length) {
                 alert('O Plano Geral está vazio. Adiciona linhas primeiro.');
                 return;
             }
  
-            // Agrupar linhas por (day + actividade) — cada grupo = 1 evento
+            // Agrupar linhas por DIA (D1, D2…)
             const grupos = {};
             appData.plano.forEach(line => {
-                if (!line.actividade || !line.date) return; // ignora linhas sem actividade ou data
-                const key = line.day + '||' + line.actividade;
-                if (!grupos[key]) grupos[key] = [];
-                grupos[key].push(line);
+                if (!line.day || !line.date) return; // ignora linhas sem dia ou data
+                if (!grupos[line.day]) grupos[line.day] = [];
+                grupos[line.day].push(line);
             });
  
             if (!Object.keys(grupos).length) {
-                alert('Nenhuma linha com Actividade e Data preenchidas. Preenche esses campos primeiro.');
+                alert('Nenhuma linha com Dia e Data preenchidos.');
                 return;
             }
  
-            // Para cada grupo, verificar se já existe evento com mesmo nome+data
+            // Para cada dia, ver se já existe evento com esse nome (D1, D2…) e data
             const aSubstituir = [];
-            const aCriar = [];
+            const aCriar     = [];
  
-            Object.entries(grupos).forEach(([key, lines]) => {
-                const nome = lines[0].actividade.trim();
+            Object.entries(grupos).forEach(([day, lines]) => {
                 const data = lines[0].date;
                 const existente = appData.events.find(e =>
-                    e.name.toUpperCase() === nome.toUpperCase() && e.date === data
+                    e.name.toUpperCase() === day.toUpperCase() && e.date === data
                 );
                 if (existente) {
-                    aSubstituir.push({ key, lines, nome, data, existente });
+                    aSubstituir.push({ day, lines, data, existente });
                 } else {
-                    aCriar.push({ key, lines, nome, data });
+                    aCriar.push({ day, lines, data });
                 }
             });
  
-            // Resumo para confirmação
+            // Confirmação
             let msg = '';
             if (aCriar.length) {
                 msg += `✚ Criar ${aCriar.length} evento(s) novo(s):\n`;
-                aCriar.forEach(g => msg += `  · ${g.nome} (${g.data.split('-').reverse().join('/')})\n`);
+                aCriar.forEach(g => {
+                    const fmtDate = g.data.split('-').reverse().join('/');
+                    msg += `  · ${g.day}  (${fmtDate})  — ${g.lines.length} turno(s)\n`;
+                });
             }
             if (aSubstituir.length) {
-                msg += `\n⚠ Já existem ${aSubstituir.length} evento(s) com o mesmo nome e data:\n`;
-                aSubstituir.forEach(g => msg += `  · ${g.nome} (${g.data.split('-').reverse().join('/')})\n`);
-                msg += `\nSubstituir os turnos destes eventos pelos do Plano Geral?`;
+                msg += `\n⚠ Já existem ${aSubstituir.length} evento(s):\n`;
+                aSubstituir.forEach(g => {
+                    const fmtDate = g.data.split('-').reverse().join('/');
+                    msg += `  · ${g.day}  (${fmtDate})  — substituir turnos?\n`;
+                });
             }
  
-            if (!msg) { alert('Nada para sincronizar.'); return; }
-            if (!confirm(msg)) return;
+            if (!confirm(msg + '\nConfirmar?')) return;
  
-            // Criar / substituir
-            const todosGrupos = [...aCriar, ...aSubstituir];
+            [...aCriar, ...aSubstituir].forEach(grupo => {
  
-            todosGrupos.forEach(grupo => {
-                // Construir turnos a partir das linhas do plano
+                // Cada linha do plano → 1 turno
                 const novosShifts = grupo.lines.map(line => ({
-                    id: 'pg_shift_' + line.id,
-                    label: (line.tarefa || line.actividade || 'TURNO').toUpperCase(),
-                    time: line.horaInicio || '09:00',
-                    tecnicos: '',
-                    producao: '',
+                    id       : 'pg_shift_' + line.id,
+                    label    : (line.tarefa || line.actividade || 'TURNO').toUpperCase(),
+                    time     : line.horaInicio || '09:00',
+                    tecnicos : '',
+                    producao : '',
                     bilheteira: '',
-                    portas: '',
-                    bar: '',
+                    portas   : '',
+                    bar      : '',
                     seguranca: '',
-                    planoLineId: line.id   // ← ligação ao plano para o picker filtrado
+                    planoLineId: line.id   // ← picker vai usar isto para filtrar equipa
                 }));
  
                 if (grupo.existente) {
-                    // Substituir apenas os turnos
                     grupo.existente.shifts = novosShifts;
                 } else {
-                    // Criar evento novo
-                    const novoEv = {
-                        id: 'ev_pg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                        name: grupo.nome,
-                        date: grupo.data,
-                        venue: '',
+                    appData.events.push({
+                        id    : 'ev_pg_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+                        name  : grupo.day,          // nome do evento = "D1", "D2"…
+                        date  : grupo.data,
+                        venue : '',
                         shifts: novosShifts,
-                        hosp: {}
-                    };
-                    appData.events.push(novoEv);
+                        hosp  : {}
+                    });
                 }
             });
  
             saveData();
             renderEventList();
-            alert(`✓ Sincronização concluída.\n${aCriar.length} criado(s), ${aSubstituir.length} actualizado(s).`);
+            alert(`✓ Feito: ${aCriar.length} criado(s), ${aSubstituir.length} actualizado(s).`);
         }
  
         
