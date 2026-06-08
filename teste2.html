@@ -1,15 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
-<head>
-    <meta charset="UTF-8">
+<html lang="pt-PT"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Backstage PRO - Gestão de Produção</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600;800;900&display=swap');
         
         :root { --accent: #6366f1; --bg-dark: #050505; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: #efefef; font-size: 14px; } /* Aumentado de 12px para 14px */
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: #efefef; font-size: 14px; }
 
         .tab-btn.active { 
             color: white; border-left: 4px solid var(--accent); padding-left: 12px; 
@@ -19,38 +17,43 @@
         textarea { 
             background-color: #0d0d0d; border: 1px solid #1a1a1a; color: #efefef; 
             min-height: 36px; font-size: 13px; padding: 8px; border-radius: 4px; resize: none; overflow: hidden;
-        } /* Aumentado de 11px para 13px */
+        }
         
         textarea:focus { border-color: var(--accent) !important; outline: none; background-color: #121212 !important; }
 
         /* Mapa de Turnos Dinâmico */
         .map-container { overflow-x: auto; border: 1px solid #1a1a1a; border-radius: 12px; background: #0a0a0a; margin-bottom: 20px; }
-        .map-table { border-collapse: collapse; font-size: 10px; width: 100%; min-width: 900px; } /* Aumentado de 8px para 10px */
+        .map-table { border-collapse: collapse; font-size: 10px; width: 100%; min-width: 900px; }
         .map-table th, .map-table td { border: 1px solid #1a1a1a; text-align: center; height: 32px; vertical-align: middle; padding: 0; }
         
-        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 140px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 10px !important; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* Aumentado de 9px para 11px */
-        .col-total { font-weight: 800; font-size: 11px; width: 55px; background: #0a0a0a; } /* Aumentado de 9px para 11px */
+        .col-staff { position: sticky; left: 0; background: #0d0d0d; z-index: 20; width: 140px; text-align: left !important; font-weight: 800; border-right: 2px solid #1a1a1a !important; padding-left: 10px !important; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .col-total { font-weight: 800; font-size: 11px; width: 55px; background: #0a0a0a; }
 
         .shift-cell { width: 22px; transition: all 0.2s; position: relative; font-size: 0px; } 
         .shift-cell.active { cursor: help; border: 1px solid rgba(255,255,255,0.05); }
         .shift-cell.active:hover { filter: brightness(1.3); transform: scale(1.1); z-index: 10; }
 
-        .day-header { border-bottom: 2px solid #1a1a1a !important; font-size: 11px; padding: 8px 0; background: #0f0f0f; } /* Aumentado de 9px para 11px */
-        .sub-header { font-size: 9px; color: #555; background: #080808; height: 22px !important; font-weight: 900; } /* Aumentado de 7px para 9px */
+        .day-header { border-bottom: 2px solid #1a1a1a !important; font-size: 11px; padding: 8px 0; background: #0f0f0f; }
+        .sub-header { font-size: 9px; color: #555; background: #080808; height: 22px !important; font-weight: 900; }
 
         /* Calendário Mensal */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #1a1a1a; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
-        .calendar-day { background: #0a0a0a; min-height: 120px; padding: 8px; border: 1px solid #111; }
+        .calendar-day { background: #0a0a0a; height: 120px; padding: 8px; border: 1px solid #111; display: flex; flex-direction: column; overflow: hidden; }
         .calendar-day.other-month { opacity: 0.3; background: #050505; }
-        .calendar-day-header { font-weight: 900; font-size: 12px; color: #555; margin-bottom: 10px; display: flex; justify-content: space-between; } /* Aumentado de 10px para 12px */
-        .calendar-event { font-size: 10px; padding: 3px 6px; border-radius: 3px; margin-bottom: 3px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: white; text-transform: uppercase; } /* Aumentado de 8px para 10px */
+        .calendar-day-header { font-weight: 900; font-size: 12px; color: #555; margin-bottom: 10px; display: flex; justify-content: space-between; flex-shrink: 0; }
+        
+        .calendar-events-container { flex: 1; overflow-y: auto; overflow-x: hidden; padding-right: 2px; }
+        .calendar-events-container::-webkit-scrollbar { width: 3px; }
+        .calendar-events-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        
+        .calendar-event { font-size: 10px; padding: 3px 6px; border-radius: 3px; margin-bottom: 3px; cursor: pointer; font-weight: 700; color: white; text-transform: uppercase; white-space: normal; line-height: 1.2; word-break: break-word; }
 
         /* Ficha de Acolhimento */
         .hospitality-card { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 24px; }
-        .h-section-title { font-size: 12px; font-weight: 900; text-transform: uppercase; color: #6366f1; letter-spacing: 1px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 16px; margin-top: 24px; } /* Aumentado de 10px para 12px */
+        .h-section-title { font-size: 12px; font-weight: 900; text-transform: uppercase; color: #6366f1; letter-spacing: 1px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 16px; margin-top: 24px; }
         .h-input-group { display: flex; flex-direction: column; gap: 4px; }
-        .h-label { font-size: 10px; font-weight: 800; color: #555; text-transform: uppercase; } /* Aumentado de 8px para 10px */
-        .h-input { background: #0d0d0d; border: 1px solid #1a1a1a; color: white; padding: 10px; border-radius: 6px; font-size: 13px; } /* Aumentado de 11px para 13px */
+        .h-label { font-size: 10px; font-weight: 800; color: #555; text-transform: uppercase; }
+        .h-input { background: #0d0d0d; border: 1px solid #1a1a1a; color: white; padding: 10px; border-radius: 6px; font-size: 13px; }
         .h-input:focus { outline: none; border-color: #6366f1; }
 
         @media print { 
@@ -61,7 +64,104 @@
             .h-label { color: #333; }
             .h-section-title { color: black; border-bottom: 2px solid black; }
         }
+         /* ── PLANO GERAL ── */
+        #planoView table.plano-table { border-collapse: collapse; width: 100%; font-size: 11px; }
+        #planoView table.plano-table th {
+            background: #0d0d0d; color: #555; font-size: 9px; font-weight: 900;
+            text-transform: uppercase; letter-spacing: .06em;
+            padding: 8px 6px; border: 1px solid #1a1a1a; white-space: nowrap;
+        }
+        #planoView table.plano-table td {
+            border: 1px solid #141414; vertical-align: top; padding: 3px 4px;
+            background: #090909;
+        }
+        #planoView table.plano-table tr.plano-day-sep td {
+            background: #0f0f0f; border-top: 2px solid #6366f1;
+        }
+        #planoView table.plano-table tr:hover td { background: #0e0e0e; }
+
+        .plano-day-badge {
+            display: inline-block; background: #6366f1; color: white;
+            font-size: 9px; font-weight: 900; padding: 2px 7px;
+            border-radius: 4px; text-transform: uppercase; letter-spacing: .05em;
+            white-space: nowrap;
+        }
+        .plano-act-badge {
+            display: block; font-size: 9px; font-weight: 900; color: #6366f1;
+            text-transform: uppercase; letter-spacing: .04em; margin-top: 2px;
+        }
+        .plano-auto-badge {
+            display: inline-block; background: #059669; color: white;
+            font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 3px;
+            letter-spacing: .04em; margin-left: 4px; vertical-align: middle;
+        }
+        #planoView textarea.plano-cell, #planoView input.plano-cell {
+            background: transparent; border: none; color: #e5e5e5;
+            font-size: 11px; font-family: inherit; resize: none;
+            width: 100%; padding: 2px 3px; min-height: 28px;
+            overflow: hidden; line-height: 1.4;
+        }
+        #planoView textarea.plano-cell:focus, #planoView input.plano-cell:focus {
+            outline: none; background: #0d0d0d;
+            box-shadow: inset 0 0 0 1px #6366f1; border-radius: 3px;
+        }
+        #planoView textarea.plano-cell.auto-filled { color: #34d399; }
+        #planoView input.plano-cell.time-cell { width: 54px; text-align: center; font-weight: 700; color: #a1a1aa; }
+
+        .plano-add-row-btn {
+            font-size: 9px; font-weight: 900; color: #3f3f46; text-transform: uppercase;
+            letter-spacing: .06em; padding: 3px 8px; cursor: pointer;
+            background: none; border: 1px dashed #1f1f1f; border-radius: 4px;
+            transition: all .15s;
+        }
+        .plano-add-row-btn:hover { color: #6366f1; border-color: #6366f1; }
+
+        /* ── IMPRESSÃO PLANO GERAL (horizontal) ── */
+        @media print {
+            body.printing-plano * { visibility: hidden; }
+            body.printing-plano #planoView,
+            body.printing-plano #planoView * { visibility: visible; }
+            body.printing-plano #planoView { position: absolute; top: 0; left: 0; width: 100%; }
+            body.printing-plano .no-print-plano { display: none !important; }
+
+            body.printing-plano table.plano-table {
+                font-size: 7.5pt; border-collapse: collapse; width: 100%;
+                page-break-inside: auto;
+            }
+            body.printing-plano table.plano-table th {
+                background: #eee !important; color: #222 !important;
+                font-size: 6.5pt; padding: 4px 3px; border: 1px solid #bbb;
+                print-color-adjust: exact; -webkit-print-color-adjust: exact;
+            }
+            body.printing-plano table.plano-table td {
+                background: white !important; color: #111 !important;
+                border: 1px solid #ccc; padding: 3px 3px;
+            }
+            body.printing-plano table.plano-table tr.plano-day-sep td {
+                background: #f3f0ff !important; border-top: 2px solid #6366f1 !important;
+                print-color-adjust: exact; -webkit-print-color-adjust: exact;
+            }
+            body.printing-plano .plano-day-badge {
+                background: #6366f1 !important; color: white !important;
+                print-color-adjust: exact; -webkit-print-color-adjust: exact;
+            }
+            body.printing-plano .plano-act-badge { color: #4f46e5 !important; }
+            body.printing-plano .plano-auto-badge {
+                background: #059669 !important; color: white !important;
+                print-color-adjust: exact; -webkit-print-color-adjust: exact;
+            }
+            body.printing-plano textarea.plano-cell,
+            body.printing-plano input.plano-cell {
+                color: #111 !important; background: transparent !important;
+                font-size: 7.5pt; border: none;
+            }
+            body.printing-plano textarea.plano-cell.auto-filled { color: #065f46 !important; }
+            @page { size: A4 landscape; margin: 10mm 8mm; }
+        }
+
     </style>
+    <!-- Incluindo uma versão leve do tailwind via CDN apenas para utilitários -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="flex h-screen overflow-hidden">
 
@@ -73,11 +173,13 @@
         </div>
 
         <nav class="flex flex-col gap-1.5 mt-4 px-2">
-            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn active text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📅 Agenda</button>
+            <button onclick="switchTab('plano')" id="btn-tab-plano" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📋 Plano Geral</button>
+            <button onclick="switchTab('events')" id="btn-tab-events" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📅 Agenda</button>
             <button onclick="switchTab('monthly')" id="btn-tab-monthly" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">🗓️ Vista Mensal</button>
             <button onclick="switchTab('counter')" id="btn-tab-counter" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📊 Mapa Turnos</button>
-            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">👥 Equipa</button>
+            <button onclick="switchTab('staff')" id="btn-tab-staff" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition active">👥 Equipa</button>
             <button onclick="switchTab('venues')" id="btn-tab-venues" class="tab-btn text-left py-2.5 px-3 text-[12px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition">📍 Locais</button>
+            
         </nav>
 
         <div class="mt-auto p-4 border-t border-zinc-900 space-y-2">
@@ -95,13 +197,15 @@
     <main class="flex-1 overflow-y-auto bg-zinc-950 p-6">
         
         <!-- Agenda & Detalhes -->
-        <div id="eventsView">
+        <div id="eventsView" class="hidden">
             <div class="flex gap-6">
                 <div class="w-52 shrink-0 no-print">
                     <h2 class="text-[11px] font-black text-zinc-600 uppercase mb-3 px-1">Eventos</h2>
-                    <div id="eventList" class="space-y-1.5"></div>
+                    <div id="eventList" class="space-y-1.5">
+                        <!-- Renderizado via JS -->
+                    </div>
                 </div>
-                <div id="editorArea" class="flex-1 hidden">
+                <div id="editorArea" class="flex-1">
                     <!-- Event Header Toolbar -->
                     <div class="flex justify-between items-end mb-6 border-b border-zinc-900 pb-4">
                         <div class="flex-1">
@@ -119,7 +223,7 @@
                         </div>
                     </div>
 
-                    <!-- Shifts Grid (Visible by default) -->
+                    <!-- Shifts Grid -->
                     <div id="shiftsContainer" class="rounded-xl border border-zinc-900 overflow-hidden bg-black shadow-2xl">
                         <table class="w-full border-collapse">
                             <thead>
@@ -134,7 +238,9 @@
                                     <th class="p-3 w-10 border-l border-zinc-800"></th>
                                 </tr>
                             </thead>
-                            <tbody id="shiftsBody"></tbody>
+                            <tbody id="shiftsBody">
+                                <!-- Renderizado via JS -->
+                            </tbody>
                         </table>
                         <button onclick="addShift()" class="w-full py-3 bg-zinc-900/30 text-zinc-600 text-[10px] font-black uppercase hover:text-white transition">+ Adicionar Turno Extra</button>
                     </div>
@@ -148,7 +254,7 @@
                             </div>
                             
                             <!-- Companhia e Contactos -->
-                            <div class="h-section-title">Companhia & Contactos Chave</div>
+                            <div class="h-section-title">Companhia &amp; Contactos Chave</div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="h-input-group">
                                     <label class="h-label">Nome da Companhia / Artista</label>
@@ -194,7 +300,17 @@
                             </div>
 
                             <!-- Restauração -->
-                            <div class="h-section-title">Restauração & Catering</div>
+                            <div class="h-section-title">Restauração &amp; Catering</div>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Almoços</label>
+                                    <input type="number" id="lunchCount" onchange="updateHosp('lunchCount', this.value)" class="w-full bg-zinc-900 border border-zinc-700 p-2 rounded text-white text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Jantares</label>
+                                    <input type="number" id="dinnerCount" onchange="updateHosp('dinnerCount', this.value)" class="w-full bg-zinc-900 border border-zinc-700 p-2 rounded text-white text-sm">
+                                </div>
+                            </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="h-input-group">
                                     <label class="h-label">Local das Refeições (Restaurante/Catering)</label>
@@ -211,8 +327,13 @@
                             </div>
 
                             <!-- Notas Adicionais -->
-                            <div class="h-section-title">Notas de Acolhimento (Transportes, etc.)</div>
+                            <div class="h-section-title">Notas de Acolhimento (Transportes, etc.)</div>                        
                             <textarea id="h-notes" oninput="updateHosp('hospNotes', this.value)" class="h-input w-full min-h-[120px]" placeholder="Outras informações relevantes..."></textarea>
+                            
+                            <div class="h-section-title">Obrigações Legais &amp; Checklist</div>
+                            <div id="checklistContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Renderizado via JS -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -223,8 +344,8 @@
         <div id="monthlyView" class="hidden">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-2xl font-black uppercase italic" id="calendarTitle"></h2>
-                    <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest">Resumo mensal</p>
+                    <h2 class="text-2xl font-black uppercase italic" id="calendarTitle">Resumo mensal</h2>
+                    <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest">Vista Mensal</p>
                 </div>
                 <div class="flex gap-2 no-print">
                     <button onclick="changeMonth(-1)" class="bg-zinc-900 p-2 rounded text-sm">◀</button>
@@ -240,7 +361,7 @@
         <div id="counterView" class="hidden">
             <div class="flex justify-between items-center mb-4">
                 <div>
-                    <h2 class="text-2xl font-black uppercase italic" id="weeklyMapTitle">Mapa de Turnos</h2>
+                    <h2 class="text-2xl font-black uppercase italic" id="weeklyMapTitle">Semana</h2>
                     <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest">Semana Selecionada</p>
                 </div>
                 <div class="flex gap-2 no-print">
@@ -257,12 +378,69 @@
             </div>
         </div>
 
-        <div id="staffView" class="hidden"></div>
+        <div id="staffView" class=""></div>
         <div id="venuesView" class="hidden"></div>
+        
+        <!-- Plano Geral -->
+        <div id="planoView" class="hidden">
+            <!-- Cabeçalho -->
+            <div class="flex justify-between items-center mb-6 no-print-plano">
+                <div>
+                    <h2 class="text-2xl font-black uppercase italic">Plano Geral</h2>
+                    <p class="text-[11px] text-zinc-600 mt-1 font-bold uppercase tracking-widest">Gestão de Produção e Equipas</p>
+                </div>
+                <div class="flex gap-2 items-center">
+                    <button onclick="PlanoParaAgenda()" class="bg-indigo-700/30 text-indigo-300 border border-indigo-600/40 px-4 py-2 rounded text-[11px] font-black uppercase hover:bg-indigo-700/60 transition">
+                        ↓  para Agenda
+                    </button>
+                    <button onclick="autoFillPlanoFromEvents()" class="bg-emerald-900/30 text-emerald-400 border border-emerald-700/40 px-4 py-2 rounded text-[11px] font-black uppercase hover:bg-emerald-800/40 transition">
+                        ⟳ Auto-Preencher da Agenda
+                    </button>
+                    <button onclick="addPlanoDay()" class="bg-zinc-800 text-zinc-300 px-4 py-2 rounded text-[11px] font-black uppercase hover:bg-zinc-700 transition">
+                        + Novo Dia
+                    </button>
+                    <button onclick="printPlanoGeral()" class="bg-white text-black px-4 py-2 rounded text-[11px] font-black uppercase italic hover:bg-zinc-200 transition">
+                        🖨️ Imprimir Plano
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros Rápidos -->
+            <div class="mb-6 no-print-plano" id="planoFilterBar"></div>
+
+            <!-- Tabela -->
+            <div class="overflow-x-auto rounded-xl border border-zinc-900 bg-black shadow-2xl">
+                <table class="plano-table">
+                    <thead>
+                        <tr>
+                            <th style="width:48px">Dia</th>
+                            <th style="width:72px">Data</th>
+                            <th style="width:90px">Local</th>
+                            <th style="width:54px">Início</th>
+                            <th style="width:54px">Fim</th>
+                            <th style="width:160px">Actividade</th>
+                            <th style="width:160px">Tarefa</th>
+                            <th style="width:130px">Responsável</th>
+                            <th style="width:200px">Equipa</th>
+                            <th style="width:120px">Refeições</th>
+                            <th style="width:160px">Observações</th>
+                            <th style="width:160px">Notas</th>
+                            <th style="width:28px" class="no-print-plano"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="planoBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Rodapé -->
+            <div class="mt-4 text-[10px] text-zinc-700 font-bold uppercase no-print-plano">
+                <span id="planoLineCount">0 linhas</span> · Guardado automaticamente
+            </div>
+        </div>
 
     </main>
 
-    <div id="quickStaffPicker" class="hidden fixed z-50 bg-zinc-900 border border-zinc-800 rounded shadow-2xl max-h-56 overflow-y-auto w-48"></div>
+    <div id="quickStaffPicker" class="fixed z-50 bg-zinc-900 border border-zinc-800 rounded shadow-2xl max-h-56 overflow-y-auto w-48 hidden"></div>
 
     <script>
         const SHIFT_COLS = ['tecnicos', 'producao', 'bilheteira', 'portas', 'bar', 'seguranca'];
@@ -287,18 +465,24 @@
             events: [],
             staff: defaultStaff,
             venues: defaultVenues,
-            activeEventId: null
+            activeEventId: null,
+            plano: []
         };
+        
+        if (!appData.plano) appData.plano = [];
 
         let currentDate = new Date();
         let currentMonthDate = new Date();
         let isHospitalityView = false;
+        
+        let currentPlanoLocalFilter = '';
+        let currentPlanoActFilter = '';
 
         function saveData() { localStorage.setItem('backstage_pro_v11', JSON.stringify(appData)); }
         function resetSystem() { if(confirm("Cuidado: Isto apaga todos os dados.")) { localStorage.removeItem('backstage_pro_v11'); location.reload(); } }
 
         function switchTab(tab) {
-            ['events', 'staff', 'venues', 'counter', 'monthly'].forEach(t => {
+            ['events', 'staff', 'venues', 'counter', 'monthly', 'plano'].forEach(t => {
                 const el = document.getElementById(t + 'View');
                 const btn = document.getElementById('btn-tab-' + t);
                 if(el) el.classList.add('hidden');
@@ -310,8 +494,7 @@
             if(tab === 'monthly') renderCalendar();
             if(tab === 'staff') renderManager('staff');
             if(tab === 'venues') renderManager('venues');
-            
-            // Se mudarmos de tab, voltamos à vista de turnos por defeito
+            if(tab === 'plano') renderPlanoGeral();
             isHospitalityView = false;
             updateViewToggle();
         }
@@ -324,6 +507,7 @@
                 <button onclick="selectEvent('${ev.id}')" class="w-full text-left p-3.5 rounded border transition ${appData.activeEventId === ev.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-zinc-900 border-zinc-900'}">
                     <div class="text-[9px] font-bold text-zinc-500 uppercase">${ev.date.split('-').reverse().join('/')}</div>
                     <div class="text-[12px] font-bold text-white truncate uppercase mt-0.5">${ev.name}</div>
+                    <div class="text-[9px] text-zinc-600 font-bold truncate uppercase">${ev.venue || 'Sem Local'}</div>
                 </button>
             `).join('');
         }
@@ -340,7 +524,6 @@
             document.getElementById('curEventDate').value = ev.date;
             document.getElementById('curEventVenue').value = ev.venue || "";
             
-            // Garantir que objeto hospitalidade existe
             if(!ev.hosp) ev.hosp = {};
             
             renderShifts(ev);
@@ -375,19 +558,35 @@
             const ev = appData.events.find(e => e.id === appData.activeEventId);
             if(ev) {
                 if(!ev.hosp) ev.hosp = {};
-                ev.hosp[field] = val;
+                ev.hosp[field] = (field === 'lunchCount' || field === 'dinnerCount') ? parseInt(val) : val;
                 saveData();
             }
         }
 
         function fillHospitalityForm(h) {
-            const fields = ['companyName', 'showName', 'contactProd', 'contactTech', 'lodgingPlace', 'lodgingRooms', 'checkIn', 'checkOut', 'lodgingContact', 'mealsPlace', 'mealsTimes', 'dietary', 'hospNotes'];
-            const ids = ['h-comp-name', 'h-show-name', 'h-contact-prod', 'h-contact-tech', 'h-lodging-place', 'h-lodging-rooms', 'h-check-in', 'h-check-out', 'h-lodging-contact', 'h-meals-place', 'h-meals-times', 'h-dietary', 'h-notes'];
+            const fields = [
+                'companyName', 'showName', 'contactProd', 'contactTech', 
+                'lodgingPlace', 'lodgingRooms', 'checkIn', 'checkOut', 
+                'lodgingContact', 'lunchCount', 'dinnerCount', 
+                'mealsPlace', 'mealsTimes', 'dietary', 'hospNotes'
+            ];
+            
+            const ids = [
+                'h-comp-name', 'h-show-name', 'h-contact-prod', 'h-contact-tech', 
+                'h-lodging-place', 'h-lodging-rooms', 'h-check-in', 'h-check-out', 
+                'h-lodging-contact', 'lunchCount', 'dinnerCount', 
+                'h-meals-place', 'h-meals-times', 'h-dietary', 'h-notes'
+            ];
             
             ids.forEach((id, i) => {
                 const el = document.getElementById(id);
-                if(el) el.value = h[fields[i]] || "";
+                if(el) {
+                    const val = h[fields[i]];
+                    el.value = (val !== undefined && val !== null) ? val : "";
+                }
             });
+
+            renderChecklist(h);
         }
 
         // --- RENDERIZAR TURNOS ---
@@ -438,7 +637,7 @@
 
         function updateActiveEvent(f, v) { 
             const ev = appData.events.find(e => e.id === appData.activeEventId); 
-            if(ev) { ev[f] = v; saveData(); if(f==='name'||f==='date') renderEventList(); } 
+            if(ev) { ev[f] = v; saveData(); if(f==='name'||f==='date'||f==='venue') renderEventList(); } 
         }
 
         function updateShiftField(sid, field, val) { 
@@ -483,6 +682,84 @@
             adjustHeight(textarea);
         }
 
+        function showStaffPicker(t, sid, col) {
+            const p = document.getElementById('quickStaffPicker');
+            const activeEv = appData.events.find(e => e.id === appData.activeEventId);
+            const shift = activeEv ? activeEv.shifts.find(s => s.id === sid) : null;
+            const planoLineId = shift ? shift.planoLineId : null;
+ 
+            let filteredNames = [];
+            if (planoLineId && appData.plano) {
+                const line = appData.plano.find(l => l.id === planoLineId);
+                if (line && line.equipa) {
+                    filteredNames = line.equipa.split(/[,\n]+/).map(n => n.trim()).filter(Boolean);
+                    filteredNames.sort((a, b) => a.localeCompare(b));
+                }
+            }
+ 
+            const allStaff = Object.values(appData.staff)
+                .map(s => s.name)
+                .sort((a, b) => a.localeCompare(b));
+ 
+            let html = '';
+ 
+            if (filteredNames.length) {
+                html += `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-400 bg-zinc-950 border-b border-zinc-800">Equipa deste turno</div>`;
+                html += filteredNames.map(n =>
+                    `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
+                          class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800 font-semibold">${n}</div>`
+                ).join('');
+ 
+                const others = allStaff.filter(n => !filteredNames.includes(n));
+                if (others.length) {
+                    html += `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-600 bg-zinc-950 border-b border-zinc-800">Outros</div>`;
+                    html += others.map(n =>
+                        `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
+                              class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800 text-zinc-400">${n}</div>`
+                    ).join('');
+                }
+            } else {
+                html = allStaff.map(n =>
+                    `<div onclick="pickStaff('${n.replace(/'/g,"\\'")}','${sid}','${col}')"
+                          class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${n}</div>`
+                ).join('');
+            }
+ 
+            p.innerHTML = html;
+            const r = t.getBoundingClientRect();
+            p.style.top  = (r.bottom + window.scrollY) + 'px';
+            p.style.left = (r.left   + window.scrollX) + 'px';
+            p.classList.remove('hidden');
+ 
+            const close = (e) => {
+                if (!p.contains(e.target) && e.target !== t) {
+                    p.classList.add('hidden');
+                    document.removeEventListener('click', close);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', close), 10);
+        }
+ 
+        function pickStaff(n, sid, col) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            const s = ev.shifts.find(x => x.id === sid);
+            let current = s[col] || '';
+            if (current.split(/[,\n]+/).map(x => x.trim()).includes(n)) return;
+            s[col] = current
+                ? (current.trim().endsWith(',') || current.trim().endsWith('\n')
+                    ? current + ' ' + n
+                    : current + ', ' + n)
+                : n;
+            saveData();
+            renderShifts(ev);
+            
+            const p = document.getElementById('quickStaffPicker');
+            if (!p.classList.contains('hidden')) {
+                const textarea = document.querySelector(`#shiftsBody textarea[onclick*="${sid}"][onclick*="${col}"]`);
+                if (textarea) showStaffPicker(textarea, sid, col);
+            }
+        }
+ 
         function processVenueCode(input) {
             const val = input.value;
             for(let code in appData.venues) { 
@@ -493,24 +770,6 @@
                 } 
             }
             updateActiveEvent('venue', val);
-        }
-
-        function showStaffPicker(t, sid, col) {
-            const p = document.getElementById('quickStaffPicker');
-            p.innerHTML = Object.values(appData.staff).sort((a,b)=>a.name.localeCompare(b.name)).map(s => `<div onclick="pickStaff('${s.name}', '${sid}', '${col}')" class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${s.name}</div>`).join('');
-            const r = t.getBoundingClientRect(); p.style.top = (r.bottom + window.scrollY) + 'px'; p.style.left = (r.left + window.scrollX) + 'px';
-            p.classList.remove('hidden');
-            const close = (e) => { if(!p.contains(e.target) && e.target !== t) { p.classList.add('hidden'); document.removeEventListener('click', close); } };
-            setTimeout(() => document.addEventListener('click', close), 10);
-        }
-
-        function pickStaff(n, sid, col) {
-            const ev = appData.events.find(e => e.id === appData.activeEventId);
-            const s = ev.shifts.find(x => x.id === sid);
-            let current = s[col] || "";
-            if(current.includes(n)) return; 
-            s[col] = current ? (current.trim().endsWith(',') || current.trim().endsWith('\n') ? current + " " + n : current + ", " + n) : n;
-            saveData(); renderShifts(ev);
         }
 
         // --- MAPA DE TURNOS E CALENDÁRIO ---
@@ -550,7 +809,7 @@
                 const isToday = dateStr === new Date().toISOString().split('T')[0];
                 html += `<div class="calendar-day ${isOtherMonth ? 'other-month' : ''}">
                     <div class="calendar-day-header"><span class="${isToday ? 'bg-indigo-600 text-white w-6 h-6 flex items-center justify-center rounded-full' : ''}">${curr.getDate()}</span></div>
-                    <div class="space-y-1.5">${dayEvents.map(ev => {
+                    <div class="calendar-events-container space-y-1.5">${dayEvents.map(ev => {
                         const info = getVenueInfo(ev.venue);
                         return `<div onclick="selectEvent('${ev.id}'); switchTab('events');" class="calendar-event" style="background: ${info.color}">[${info.code}] ${ev.name}</div>`;
                     }).join('')}</div></div>`;
@@ -591,7 +850,6 @@
 
             const staffSorted = Object.entries(appData.staff).sort((a,b) => a[1].name.localeCompare(b[1].name));
             
-            // Header: adicionada coluna "Turnos" logo após o "Colaborador" com tipografia aumentada
             let html = `<table class="map-table"><thead><tr><th rowspan="2" class="col-staff day-header">Colaborador</th><th rowspan="2" class="day-header col-total border-r-2 border-zinc-800 text-indigo-400 font-black">Turnos</th>`;
             dayShiftStructure.forEach(day => {
                 const dObj = new Date(day.dateStr);
@@ -625,7 +883,6 @@
                             }
                         });
                         
-                        // Incrementa o total se o colaborador trabalhar neste turno específico
                         if(activeCode) weeklyTotal++;
                         
                         cellsHtml += `<td class="shift-cell ${activeCode ? 'active' : ''} border-l border-zinc-900/30" style="background-color: ${activeCode ? activeColor : 'transparent'}">${activeCode}</td>`;
@@ -713,7 +970,7 @@
                 <body>
                     <div class="header">
                         <h1>Ficha de Acolhimento</h1>
-                        <p><b>Evento:</b> ${ev.name} | <b>Data:</b> ${ev.date.split('-').reverse().join('/')}</p>
+                        <p><b>Evento:</b> ${ev.name} | <b>Data:</b> ${ev.date.split('-').reverse().join('/')} | <b>Local:</b> ${ev.venue}</p>
                     </div>
 
                     <h2>Companhia / Artista</h2>
@@ -775,9 +1032,24 @@
                             <span class="val"><pre>${h.dietary || 'Nenhuma informada'}</pre></span>
                         </div>
                     </div>
-
+                    <div style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 5px; margin-top: 15px;">
+                        <p><strong>Refeições:</strong> ${h.lunchCount || 0} Almoços | ${h.dinnerCount || 0} Jantares</p>
+                    </div>
+                    <h2>Obrigações Legais</h2>
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        ${checklistItems.map(item => {
+                            const isChecked = h[item.id + '_check'] ? '✅' : '☐';
+                            const dateVal = h[item.id + '_date'] || '---';
+                            return `
+                            <tr>
+                                <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; width:30px;">${isChecked}</td>
+                                <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; font-weight:bold;">${item.label}</td>
+                                <td style="padding:5px; border-bottom:1px solid #eee; font-size:12px; color:#555;">${dateVal}</td>
+                            </tr>`;
+                        }).join('')}
+                    </table>
                     <h2>Notas Adicionais</h2>
-                    <div class="item full">
+                    <div class="item full" style="margin-top:10px;">
                         <span class="val"><pre>${h.hospNotes || '---'}</pre></span>
                     </div>
                 </body>
@@ -786,6 +1058,7 @@
             win.document.close();
             setTimeout(() => { win.print(); win.close(); }, 500);
         }
+
         function printWeeklyMap() {
             const content = document.getElementById('weeklyMap').innerHTML;
             const legend = document.getElementById('venueLegend').innerHTML;
@@ -824,6 +1097,7 @@
             win.document.close();
             setTimeout(() => { win.print(); win.close(); }, 500);
         }
+
         function printAllEvents() {
             const win = window.open('', '_blank');
             win.document.write(`<html><head><style>body{font-family:sans-serif;margin:0;} .print-page{page-break-after:always;padding:30px;} table{width:100%;border-collapse:collapse;table-layout:fixed;} th,td{border:1px solid black;padding:8px;font-size:10px;vertical-align:top;word-wrap:break-word;}</style></head><body>${generatePrintHTML(appData.events)}</body></html>`);
@@ -831,7 +1105,6 @@
             setTimeout(() => { win.print(); win.close(); }, 500);
         }
 
-        // Modificado com IDs únicos por tipo (${type}-add-c e ${type}-add-n) e tipografia de 12px
         function renderManager(type) {
             const v = document.getElementById(type + 'View');
             const isS = type === 'staff';
@@ -860,11 +1133,556 @@
             } 
         }
 
-        function deleteEntry(t, c) { if(confirm("Eliminar?")) { if(t === 'staff') delete appData.staff[c.toLowerCase()]; else delete appData.venues[c]; saveData(); renderManager(t); } }
-        function exportData() { const b = new Blob([JSON.stringify(appData)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup_backstage.json'; a.click(); }
-        function importData(e) { const fr = new FileReader(); fr.onload = (ev) => { appData = JSON.parse(ev.target.result); saveData(); location.reload(); }; fr.readAsText(e.target.files[0]); }
+        const checklistItems = [
+            { id: 'spa', label: 'Licença SPA' },
+            { id: 'igac', label: 'Licença IGAC' },
+            { id: 'classif', label: 'Classificação Etária' },
+            { id: 'seguro', label: 'Seguro Resp. Civil' },
+            { id: 'segpriv', label: 'Segurança Privada' },
+            { id: 'ruido', label: 'Licença de Ruído' }
+        ];
 
-        window.onload = () => { renderEventList(); if(appData.activeEventId) selectEvent(appData.activeEventId); };
+        function renderChecklist(h) {
+            const container = document.getElementById('checklistContainer');
+            container.innerHTML = checklistItems.map(item => `
+                <div class="flex items-center gap-3 bg-zinc-900 p-3 rounded border border-zinc-800">
+                    <input type="checkbox" ${h[item.id + '_check'] ? 'checked' : ''} 
+                           onchange="updateChecklist('${item.id}', 'check', this.checked)">
+                    <span class="flex-1 text-[11px] font-bold uppercase text-zinc-400">${item.label}</span>
+                    <input type="date" value="${h[item.id + '_date'] || ''}" 
+                           onchange="updateChecklist('${item.id}', 'date', this.value)"
+                           class="bg-black border border-zinc-700 text-[10px] text-white p-1 rounded [color-scheme:dark]">
+                </div>
+            `).join('');
+        }
+
+        function updateChecklist(id, field, val) {
+            const ev = appData.events.find(e => e.id === appData.activeEventId);
+            if(ev) {
+                if(!ev.hosp) ev.hosp = {};
+                ev.hosp[id + '_' + field] = val;
+                saveData();
+            }
+        }
+
+        function deleteEntry(t, c) { if(confirm("Eliminar?")) { if(t === 'staff') delete appData.staff[c.toLowerCase()]; else delete appData.venues[c]; saveData(); renderManager(t); } }
+
+
+        // ── HELPERS PLANO GERAL ──────────────────────────────────────
+        
+        function showPlanoStaffPicker(textarea, lineId) {
+            const p = document.getElementById('quickStaffPicker');
+            const allStaff = Object.values(appData.staff)
+                .map(s => s.name)
+                .sort((a, b) => a.localeCompare(b));
+ 
+            p.innerHTML = `<div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-400 bg-zinc-950 border-b border-zinc-800">Adicionar à equipa</div>` +
+                allStaff.map(n =>
+                    `<div onclick="pickPlanoStaff('${n.replace(/'/g,"\\'")}','${lineId}')"
+                          class="p-2.5 text-[12px] hover:bg-indigo-600 cursor-pointer border-b border-zinc-800">${n}</div>`
+                ).join('');
+ 
+            const r = textarea.getBoundingClientRect();
+            p.style.top  = (r.bottom + window.scrollY) + 'px';
+            p.style.left = (r.left   + window.scrollX) + 'px';
+            p.classList.remove('hidden');
+ 
+            const close = (e) => {
+                if (!p.contains(e.target) && e.target !== textarea) {
+                    p.classList.add('hidden');
+                    document.removeEventListener('click', close);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', close), 10);
+        }
+ 
+        function pickPlanoStaff(name, lineId) {
+            const line = appData.plano.find(l => l.id === lineId);
+            if (!line) return;
+ 
+            const current = (line.equipa || '').split(/[,\n]+/).map(n => n.trim()).filter(Boolean);
+            if (current.includes(name)) return;
+ 
+            line.equipa = current.length ? current.join(', ') + ', ' + name : name;
+            line.autoFilled = false;
+            saveData();
+ 
+            const row = document.querySelector(`#planoBody tr[data-id="${lineId}"]`);
+            if (row) {
+                const tds = row.querySelectorAll('td');
+                if (tds[8]) {
+                    const equipaTa = tds[8].querySelector('textarea');
+                    if (equipaTa) {
+                        equipaTa.value = line.equipa;
+                        planoAutoResize(equipaTa);
+                    }
+                }
+            }
+ 
+            const pRow = document.querySelector(`#planoBody tr[data-id="${lineId}"]`);
+            if (pRow) {
+                const tds = pRow.querySelectorAll('td');
+                if (tds[8]) {
+                    const equipaTa = tds[8].querySelector('textarea');
+                    if (equipaTa) showPlanoStaffPicker(equipaTa, lineId);
+                }
+            }
+        }
+ 
+        function planoFmtDate(iso) {
+            if (!iso) return '';
+            const [y, m, d] = iso.split('-');
+            return `${d}/${m}/${String(y).slice(2)}`;
+        }
+
+        function planoCellTA(lineId, field, val, extraClass = '') {
+            const cls = `plano-cell${extraClass ? ' ' + extraClass : ''}`;
+            const escaped = (val || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+            if (field === 'equipa') {
+                return `<textarea class="${cls}" rows="1"
+                    onclick="showPlanoStaffPicker(this,'${lineId}')"
+                    oninput="planoAutoResize(this); updatePlanoLine('${lineId}','${field}',this.value)"
+                    >${escaped}</textarea>`;
+            }
+            return `<textarea class="${cls}" rows="1"
+                oninput="planoAutoResize(this); updatePlanoLine('${lineId}','${field}',this.value)"
+                >${escaped}</textarea>`;
+        }
+
+        function planoCellInput(lineId, field, val, extraClass = '') {
+            const cls = `plano-cell${extraClass ? ' ' + extraClass : ''}`;
+            const escaped = (val || '').replace(/"/g, '&quot;');
+            return `<input type="text" class="${cls}" value="${escaped}"
+                onchange="updatePlanoLine('${lineId}','${field}',this.value)">`;
+        }
+
+        function planoCellLocalSelect(lineId, val) {
+            const options = Object.entries(appData.venues).map(([code, name]) => {
+                const isSelected = (val === code) ? 'selected' : '';
+                return `<option value="${code}" ${isSelected}>${code} (${name})</option>`;
+            }).join('');
+
+            return `
+                <select class="plano-cell bg-[#0d0d0d] border border-zinc-900 text-white text-[11px] font-black uppercase rounded p-1 w-full focus:ring-1 focus:ring-indigo-500"
+                    onchange="updatePlanoLine('${lineId}','local',this.value); renderPlanoGeral();">
+                    <option value="">--</option>
+                    ${options}
+                </select>
+            `;
+        }
+
+        function planoAutoResize(el) {
+            el.style.height = '28px';
+            if (el.scrollHeight > 28) el.style.height = el.scrollHeight + 'px';
+        }
+
+        function planoResizeAll() {
+            document.querySelectorAll('#planoBody textarea.plano-cell').forEach(planoAutoResize);
+        }
+
+        // ── CRUD PLANO GERAL ─────────────────────────────────────────
+
+        function updatePlanoLine(id, field, val) {
+            const line = appData.plano.find(l => l.id === id);
+            if (line) {
+                line[field] = val;
+                if (['equipa','responsavel'].includes(field)) line.autoFilled = false;
+                saveData();
+                updatePlanoCount();
+            }
+        }
+
+        function deletePlanoLine(id) {
+            appData.plano = appData.plano.filter(l => l.id !== id);
+            saveData();
+            renderPlanoGeral();
+        }
+
+        function addPlanoLine(day, date, local) {
+            const id = 'pg_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+            appData.plano.push({
+                id, day: day || 'D?', date: date || '', local: local || '',
+                horaInicio: '', horaFim: '', actividade: '', tarefa: '',
+                responsavel: '', equipa: '', refeicoes: '', observacoes: '', notas: '',
+                autoFilled: false
+            });
+            saveData();
+            renderPlanoGeral();
+            
+            setTimeout(() => {
+                const rows = document.querySelectorAll('#planoBody tr[data-id="' + id + '"] textarea');
+                if (rows.length) rows[0].focus();
+            }, 80);
+        }
+
+        function addPlanoDay() {
+            const days = [...new Set(appData.plano.map(l => l.day))];
+            const lastDay = days.length ? days[days.length - 1] : 'D0';
+            const num = parseInt(lastDay.replace('D','')) || 0;
+            const newDay = 'D' + (num + 1);
+            
+            const lastLine = appData.plano[appData.plano.length - 1];
+            const lastLocal = lastLine ? lastLine.local : '';
+            addPlanoLine(newDay, '', lastLocal);
+        }
+
+        function addPlanoLineAfterDay(day) {
+            const ref = appData.plano.find(l => l.day === day);
+            addPlanoLine(day, ref ? ref.date : '', ref ? ref.local : '');
+        }
+
+        // ── RENDER PLANO GERAL ───────────────────────────────────────
+
+        function renderPlanoGeral() {
+            const tbody = document.getElementById('planoBody');
+            if (!tbody) return;
+
+            const lines = appData.plano;
+            if (!lines.length) {
+                tbody.innerHTML = `<tr><td colspan="13" class="text-center py-10 text-zinc-700 text-[11px] font-bold uppercase">
+                    Sem linhas no plano. Clica em "+ Novo Dia" para começar.
+                </td></tr>`;
+                updatePlanoCount();
+                renderPlanoFilterBar();
+                return;
+            }
+
+            const filteredLines = lines.filter(l => {
+                const matchLocal = !currentPlanoLocalFilter || l.local === currentPlanoLocalFilter;
+                const matchAct = !currentPlanoActFilter || l.actividade === currentPlanoActFilter;
+                return matchLocal && matchAct;
+            });
+
+            if (!filteredLines.length) {
+                tbody.innerHTML = `<tr><td colspan="13" class="text-center py-10 text-zinc-700 text-[11px] font-bold uppercase">
+                    Nenhuma linha corresponde aos filtros aplicados.
+                </td></tr>`;
+                updatePlanoCount();
+                renderPlanoFilterBar();
+                return;
+            }
+
+            const days = [...new Set(filteredLines.map(l => l.day))];
+            let html = '';
+
+            days.forEach(day => {
+                const dayLines = filteredLines.filter(l => l.day === day);
+                dayLines.forEach((line, idx) => {
+                    const isFirst = idx === 0;
+                    const autoTag = line.autoFilled ? `<span class="plano-auto-badge">auto</span>` : '';
+                    const equipaCls = line.autoFilled ? 'auto-filled' : '';
+
+                    html += `<tr class="${isFirst ? 'plano-day-sep' : ''}" data-id="${line.id}">
+                        <td style="text-align:center; white-space:nowrap">
+                            ${isFirst ? `<span class="plano-day-badge">${day}</span>` : ''}
+                        </td>
+                        <td>
+                            <input type="date" class="plano-cell" style="width:100%;font-size:10px;color:#71717a;[color-scheme:dark]"
+                                value="${line.date || ''}"
+                                onchange="updatePlanoLine('${line.id}','date',this.value)">
+                        </td>
+                        <td>
+                            ${planoCellLocalSelect(line.id, line.local)}
+                        </td>
+                        <td><input type="text" class="plano-cell time-cell" value="${line.horaInicio||''}" placeholder="--:--"
+                            onchange="updatePlanoLine('${line.id}','horaInicio',this.value)"></td>
+                        <td><input type="text" class="plano-cell time-cell" value="${line.horaFim||''}" placeholder="--:--"
+                            onchange="updatePlanoLine('${line.id}','horaFim',this.value)"></td>
+                        <td>${planoCellTA(line.id,'actividade',line.actividade)}</td>
+                        <td>${planoCellTA(line.id,'tarefa',line.tarefa)}</td>
+                        <td>${planoCellTA(line.id,'responsavel',line.responsavel)}</td>
+                        <td>
+                            ${autoTag}
+                            ${planoCellTA(line.id,'equipa',line.equipa, equipaCls)}
+                        </td>
+                        <td>${planoCellTA(line.id,'refeicoes',line.refeicoes)}</td>
+                        <td>${planoCellTA(line.id,'observacoes',line.observacoes)}</td>
+                        <td>${planoCellTA(line.id,'notas',line.notas)}</td>
+                        <td class="no-print-plano" style="text-align:center; vertical-align:middle">
+                            <button onclick="deletePlanoLine('${line.id}')" class="text-zinc-800 hover:text-red-500 font-bold text-sm transition" title="Eliminar linha">×</button>
+                        </td>
+                    </tr>`;
+                });
+
+                html += `<tr class="no-print-plano">
+                    <td colspan="13" style="padding:4px 6px; background:#050505; border-top:none">
+                        <button class="plano-add-row-btn" onclick="addPlanoLineAfterDay('${day}')">+ linha em ${day}</button>
+                    </td>
+                </tr>`;
+            });
+
+            tbody.innerHTML = html;
+            planoResizeAll();
+            updatePlanoCount();
+            renderPlanoFilterBar();
+        }
+
+        function updatePlanoCount() {
+            const el = document.getElementById('planoLineCount');
+            if (el) el.textContent = appData.plano.length + ' linha' + (appData.plano.length !== 1 ? 's' : '');
+        }
+
+        function renderPlanoFilterBar() {
+            const bar = document.getElementById('planoFilterBar');
+            if (!bar) return;
+
+            const locals = [...new Set(appData.plano.map(l => l.local).filter(Boolean))];
+            const acts = [...new Set(appData.plano.map(l => l.actividade).filter(Boolean))];
+
+            let html = `
+                <div class="flex flex-col gap-3.5 bg-zinc-900/30 p-4 rounded-xl border border-zinc-900 w-full mb-4">
+                    <div class="flex flex-col md:flex-row md:items-center gap-2">
+                        <span class="text-[10px] text-zinc-500 font-black uppercase tracking-wider w-24">Filtrar Local:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="setPlanoFilters('', currentPlanoActFilter)" class="plano-add-row-btn ${!currentPlanoLocalFilter ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/50' : 'border-zinc-800'}" style="border-style:solid;">Todos</button>
+                            ${locals.map(loc => {
+                                const active = currentPlanoLocalFilter === loc;
+                                return `<button onclick="setPlanoFilters('${loc.replace(/'/g,"\\'")}', currentPlanoActFilter)" class="plano-add-row-btn ${active ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/50' : 'border-zinc-800'}" style="border-style:solid;">${loc}</button>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div class="flex flex-col md:flex-row md:items-center gap-2 border-t border-zinc-900/50 pt-2.5">
+                        <span class="text-[10px] text-zinc-500 font-black uppercase tracking-wider w-24">Actividade:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="setPlanoFilters(currentPlanoLocalFilter, '')" class="plano-add-row-btn ${!currentPlanoActFilter ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/50' : 'border-zinc-800'}" style="border-style:solid;">Todas</button>
+                            ${acts.map(act => {
+                                const active = currentPlanoActFilter === act;
+                                return `<button onclick="setPlanoFilters(currentPlanoLocalFilter, '${act.replace(/'/g,"\\'")}')" class="plano-add-row-btn ${active ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/50' : 'border-zinc-800'}" style="border-style:solid;">${act}</button>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            bar.innerHTML = html;
+        }
+
+        function setPlanoFilters(local, act) {
+            currentPlanoLocalFilter = local;
+            currentPlanoActFilter = act;
+            renderPlanoGeral();
+        }
+
+        // ── Auto-preenchimento a partir da Agenda ─────────────────────
+
+        function autoFillPlanoFromEvents() {
+            let filled = 0;
+            appData.plano.forEach(line => {
+                if (!line.date) return;
+
+                const localName = appData.venues[line.local] || line.local || '';
+                const match = appData.events.find(ev => {
+                    const dateMatch = ev.date === line.date;
+                    const venueMatch = !line.local || ev.venue === localName || ev.venue === line.local;
+                    return dateMatch && venueMatch;
+                });
+
+                if (!match) return;
+
+                const actLower = (line.actividade || '').toLowerCase();
+                const evLower = (match.name || '').toLowerCase();
+                if (actLower && evLower && !actLower.includes(evLower) && !evLower.includes(actLower)) return;
+
+                const allPeople = new Set();
+                (match.shifts || []).forEach(s => {
+                    SHIFT_COLS.forEach(col => {
+                        if (s[col]) s[col].split(/[,\n]+/).map(n => n.trim()).filter(Boolean).forEach(n => allPeople.add(n));
+                    });
+                });
+
+                if (allPeople.size === 0) return;
+
+                if (!line.equipa || line.autoFilled) {
+                    line.equipa = [...allPeople].join(', ');
+                    line.autoFilled = true;
+                    filled++;
+                }
+            });
+
+            saveData();
+            renderPlanoGeral();
+            alert(filled > 0
+                ? `✓ ${filled} linha(s) preenchida(s) a partir da Agenda.`
+                : 'Nenhuma correspondência encontrada. Verifica se as datas e locais coincidem com os eventos na Agenda.');
+        }
+
+        // ── Impressão ─────────────────────────────────────────────────
+
+        function printPlanoGeral() {
+            document.body.classList.add('printing-plano');
+            window.print();
+            setTimeout(() => document.body.classList.remove('printing-plano'), 1000);
+        }
+
+        // ── Sincronizar Plano Geral → Agenda ──────────────────────────
+ 
+        function PlanoParaAgenda() {
+            if (!appData.plano || !appData.plano.length) {
+                alert('O Plano Geral está vazio. Adiciona linhas primeiro.');
+                return;
+            }
+
+            const grupos = {};
+            appData.plano.forEach(line => {
+                if (!line.day || !line.date) return; 
+                const localKey = line.local || 'SEM_LOCAL';
+                const key = `${line.date}_${localKey}_${line.day}`;
+                if (!grupos[key]) {
+                    grupos[key] = {
+                        day: line.day,
+                        date: line.date,
+                        local: line.local,
+                        lines: []
+                    };
+                }
+                grupos[key].lines.push(line);
+            });
+
+            if (!Object.keys(grupos).length) {
+                alert('Nenhuma linha do plano possui Dia e Data preenchidos.');
+                return;
+            }
+
+            const aSubstituir = [];
+            const aCriar     = [];
+            let numRemovidos = 0;
+
+            Object.entries(grupos).forEach(([key, group]) => {
+                const data = group.date;
+                const day = group.day;
+                const localCode = group.local || '';
+                const localName = appData.venues[localCode] || localCode || 'Sem Local';
+
+                const existente = appData.events.find(e =>
+                    e.id === `ev_pg_${key}` || 
+                    (e.date === data && e.venue === localName && e.name.includes(day))
+                );
+
+                // FILTRO DE FOLGAS: Ignora as linhas onde a actividade é explicitamente 'FOLGA'
+                const validLines = group.lines.filter(l => (l.actividade || '').toUpperCase().trim() !== 'FOLGA');
+
+                if (validLines.length === 0) {
+                    if (existente) {
+                        appData.events = appData.events.filter(e => e.id !== existente.id);
+                        numRemovidos++;
+                    }
+                    return;
+                }
+
+                const uniqueActs = [...new Set(validLines.map(l => l.actividade).filter(Boolean))];
+                const activityStr = uniqueActs.length ? uniqueActs.join(', ') : '';
+                
+                const calculatedName = activityStr ? `${localName} - ${day} (${activityStr})` : `${localName} - ${day}`;
+
+                if (existente) {
+                    aSubstituir.push({ key, group, name: calculatedName, data, existente, validLines });
+                } else {
+                    aCriar.push({ key, group, name: calculatedName, data, validLines });
+                }
+            });
+
+            let msg = '';
+            if (aCriar.length) {
+                msg += `✚ Criar ${aCriar.length} evento(s) novo(s):\n`;
+                aCriar.forEach(g => {
+                    const fmtDate = g.data.split('-').reverse().join('/');
+                    msg += `  · ${g.name} (${fmtDate})  — ${g.validLines.length} turno(s)\n`;
+                });
+            }
+            if (aSubstituir.length) {
+                msg += `\n⚠ Atualizar/Limpar ${aSubstituir.length} evento(s) existente(s):\n`;
+                aSubstituir.forEach(g => {
+                    const fmtDate = g.data.split('-').reverse().join('/');
+                    msg += `  · ${g.existente.name} (${fmtDate})\n`;
+                });
+            }
+            if (numRemovidos > 0) {
+                msg += `\n🗑️ Remover ${numRemovidos} evento(s) da agenda (marcados unicamente como FOLGA).\n`;
+            }
+            if (!aCriar.length && !aSubstituir.length && numRemovidos === 0) {
+                alert('Não há novos turnos válidos para sincronizar (as Folgas são ignoradas).');
+                return;
+            }
+
+            if (!confirm(msg + '\nConfirmar a sincronização para a Agenda? (Nota: os turnos gerados ficarão com as equipas em branco).')) return;
+
+            [...aCriar, ...aSubstituir].forEach(item => {
+                const group = item.group;
+                const validLines = item.validLines;
+                const localCode = group.local || '';
+                const localName = appData.venues[localCode] || localCode || 'Sem Local';
+
+                const novosShifts = validLines.map(line => ({
+                    id: 'pg_shift_' + line.id,
+                    label: (line.tarefa || line.actividade || 'TURNO').toUpperCase(),
+                    time: line.horaInicio || '09:00',
+                    tecnicos: '',                       
+                    producao: '',   
+                    bilheteira: '',
+                    portas: '',
+                    bar: '',
+                    seguranca: '',
+                    planoLineId: line.id                
+                }));
+
+                if (item.existente) {
+                    item.existente.name = item.name;   
+                    item.existente.venue = localName;  
+                    item.existente.shifts = novosShifts;
+                } else {
+                    appData.events.push({
+                        id: `ev_pg_${item.key}`,
+                        name: item.name,              
+                        date: item.data,
+                        venue: localName,             
+                        shifts: novosShifts,
+                        hosp: {}
+                    });
+                }
+            });
+
+            saveData();
+            renderEventList();
+            
+            if (appData.activeEventId && !appData.events.find(e => e.id === appData.activeEventId)) {
+                appData.activeEventId = null;
+                document.getElementById('editorArea').classList.add('hidden');
+            } else if (appData.activeEventId) {
+                selectEvent(appData.activeEventId);
+            }
+            
+            alert(`✓ Sincronização terminada.`);
+        }
+
+        // --- SISTEMA DE EXPORTAÇÃO E IMPORTAÇÃO ---
+        function exportData() {
+            const b = new Blob([JSON.stringify(appData)], {type:'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(b);
+            a.download = 'backup_backstage.json';
+            a.click();
+        }
+
+        function importData(e) {
+            const fr = new FileReader();
+            fr.onload = (ev) => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    if (!imported.plano) imported.plano = [];
+                    appData = imported;
+                    saveData();
+                    location.reload();
+                } catch(err) {
+                    alert("Erro ao importar ficheiro JSON. Verifica a formatação.");
+                }
+            };
+            fr.readAsText(e.target.files[0]);
+        }
+
+        window.onload = () => { 
+            renderEventList(); 
+            if(appData.activeEventId) selectEvent(appData.activeEventId); 
+        };
+        
     </script>
 </body>
 </html>
